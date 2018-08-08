@@ -1,126 +1,282 @@
-module GameModel where
+module GameModel exposing (..)
 
-import Char (KeyCode)
+--import Generator
+--import Generator.Standard
+--import Keyboard
 
+import Dict exposing (Dict)
+import Element
 import Grid
-import Generator
-import Generator.Standard
+import Text
 
-type State = { player : Player
-             , enemies : [Enemy]
-             , level : Grid.Grid Tile
-             , explored : Grid.Grid Visibility
-             , log : [String]
-             , generator : Random
-             }
 
-type Player = { location : Location
-              , avatar : Element
-              , name : String
-              , health : Int
-              , energy : Int
-              , hunger : Int
-              , stealth : Int
-              , armor : Int
-              , protection : Int
-              , coordination : Int
-              , power : Int
-              , initiative : Int
-              , placed : Bool
-              }
+type alias EnemyId =
+    Int
 
-type Enemy = { location : Location
-             , avatar : Element
-             , name : String
-             , health : Int
-             , stealth : Int
-             , armor : Int
-             , protection : Int
-             , coordination : Int
-             , power : Int
-             , initiative : Int
-             , placed : Bool
-             }
 
-type Location = Grid.Coordinate
-data Tile = Floor
-          | Wall
-          | Door
-          | Acid
-data Visibility = Visible
-                | Unexplored
-                | Explored
+type alias State =
+    { player : Player
+    , enemies : Dict EnemyId Enemy
+    , level : Grid.Grid Tile
+    , explored : Grid.Grid Visibility
+    , log : List String
+    , pseudoRandomIntsPool : List Int
 
-data Input = Up | Down | Left | Right | Nop
+    --, generator : Random
+    }
 
-type Random = Generator.Generator Generator.Standard.Standard
 
-player : Element -> String -> Random -> (Player, Random)
-player elem name gen =
-    let (initiative, gen') = Generator.int32Range (1, 100) gen
-    in  (Player (Grid.Coordinate 2 2) elem name 10 10 10 20 1 50 100 2 initiative False, gen')
+type alias Player =
+    { location : Location
+    , avatar : Element.Element
+    , name : String
+    , health : Int
+    , energy : Int
+    , hunger : Int
+    , stealth : Int
+    , armor : Int
+    , protection : Int
+    , coordination : Int
+    , power : Int
+    , initiative : Int
+    , placed : Bool
+    }
 
-enemy : Element -> String -> Random -> (Enemy, Random)
-enemy elem name gen = 
-    let (initiative, gen') = Generator.int32Range (1, 100) gen
-    in  (Enemy (Grid.Coordinate 14 4) elem name 10 20 1 50 100 2 initiative False, gen')
+
+type alias Enemy =
+    { location : Location
+    , id : EnemyId
+    , avatar : Element.Element
+    , name : String
+    , health : Int
+    , stealth : Int
+    , armor : Int
+    , protection : Int
+    , coordination : Int
+    , power : Int
+    , initiative : Int
+    , placed : Bool
+    }
+
+
+type alias Location =
+    Grid.Coordinate
+
+
+type Tile
+    = Floor
+    | Wall
+    | Door
+    | Acid
+    | NoTileYet
+
+
+type Visibility
+    = Visible
+    | Unexplored
+    | Explored
+
+
+type Input
+    = Up
+    | Down
+    | Left
+    | Right
+    | Nop
+
+
+
+--type Random = Generator.Generator Generator.Standard.Standard
+
+
+player : Element.Element -> String -> Player
+player elem name =
+    --let (initiative, gen') = Generator.int32Range (1, 100) gen
+    --in
+    let
+        initiative =
+            50
+
+        -- have too rewrite this so its random
+    in
+    Player (Grid.Coordinate 2 2) elem name 10 10 10 20 1 50 100 2 initiative False
+
+
+enemy : Element.Element -> EnemyId -> String -> Enemy
+enemy elem enemyid name =
+    --let (initiative, gen') = Generator.int32Range (1, 100) gen
+    --in
+    let
+        initiative =
+            50
+
+        -- have too rewrite this so its random
+    in
+    Enemy (Grid.Coordinate 14 4) enemyid elem name 10 20 1 50 100 2 initiative False
+
 
 location : Int -> Int -> Location
-location = Grid.Coordinate
+location =
+    Grid.Coordinate
 
-handle : KeyCode -> Input
-handle key =
-    case key of
-        37 -> Left
-        38 -> Up
-        39 -> Right
-        40 -> Down
-        _  -> Nop
+
+
+{-
+   handle : KeyCode -> Input
+   handle key =
+       case key of
+           37 ->
+               Left
+
+           38 ->
+               Up
+
+           39 ->
+               Right
+
+           40 ->
+               Down
+
+           _ ->
+               Nop
+-}
+
 
 validLocation : Location -> State -> Bool
-validLocation location state = Grid.inGrid location state.level
+validLocation location state =
+    Grid.inGrid location state.level
+
 
 pathable : Location -> State -> Bool
 pathable location state =
-    let level = state.level
-        tile  = Grid.get location level
-    in  case tile of
-            Nothing -> False
-            Just Floor  -> True
-            Just _  -> False
+    let
+        level =
+            state.level
 
-getRandomPathable : State -> (Location, State)
-getRandomPathable state = 
-  let (x, gen') = Generator.int32Range (1, state.level.size.width) state.generator
-      (y, gen'') = Generator.int32Range (1, state.level.size.height) gen'
-      locn = location x y
-      state' = {state | generator <- gen''}
-  in  case pathable locn state' of
-          True -> (locn, state')
-          False -> getRandomPathable state'
+        tile =
+            Grid.get location level
+    in
+    case tile of
+        Nothing ->
+            False
 
-placeEnemy : Enemy -> State -> State
-placeEnemy a state = 
-  let (loc, state') = getRandomPathable state
-  in  {state'| enemies <- {a| location <- loc, placed <- True} :: tail state'.enemies}
+        Just Floor ->
+            True
 
-placePlayer : State -> State
-placePlayer state = 
-  let (loc, state') = getRandomPathable state
-      player' = state'.player
-  in  {state'| player <- {player'| location <- loc, placed <- True}}
+        Just _ ->
+            False
 
-showTile : Tile -> Element
+
+
+{-
+      getRandomPathable : State -> ( Location, State )
+      getRandomPathable state =
+          let
+              ( x, gen' ) =
+                  Generator.int32Range ( 1, state.level.size.width ) state.generator
+
+              ( y, gen'' ) =
+                  Generator.int32Range ( 1, state.level.size.height ) gen'
+
+              locn =
+                  location x y
+
+              state' =
+                  { state | generator = gen'' }
+          in
+          case pathable locn state' of
+              True ->
+                  ( locn, state' )
+
+              False ->
+                  getRandomPathable state'
+
+
+
+
+   placeEnemy : Enemy -> State -> State
+   placeEnemy a state =
+       let
+           ( loc, state' ) =
+               getRandomPathable state
+       in
+       { state' | enemies = { a | location = loc, placed = True } :: tail state'.enemies }
+
+-}
+{-
+   placePlayer : State -> State
+   placePlayer state =
+       let
+           ( loc, state' ) =
+               getRandomPathable state
+
+           player' =
+               state'.player
+       in
+       { state' | player = { player' | location = loc, placed = True } }
+-}
+
+
+mbUpdateEnemyLocation : Location -> Maybe Enemy -> Maybe Enemy
+mbUpdateEnemyLocation loc mbenemy =
+    case mbenemy of
+        Nothing ->
+            Nothing
+
+        Just en ->
+            Just { en | location = loc, placed = True }
+
+
+placeExistingEnemy : EnemyId -> Location -> Dict EnemyId Enemy -> Dict EnemyId Enemy
+placeExistingEnemy enid loc dictacc =
+    case Dict.get enid dictacc of
+        Nothing ->
+            dictacc
+
+        Just enemy ->
+            Dict.update enid (\mbenemy -> mbUpdateEnemyLocation loc mbenemy) dictacc
+
+
+randomlyPlaceExistingEnemies : List ( Location, EnemyId ) -> State -> State
+randomlyPlaceExistingEnemies lpairIntIds state =
+    let
+        dictenemies =
+            state.enemies
+
+        newDictEnemies =
+            List.foldl (\( loc, enid ) dictacc -> placeExistingEnemy enid loc dictacc) dictenemies lpairIntIds
+    in
+    { state | enemies = newDictEnemies }
+
+
+showTile : Tile -> Element.Element
 showTile tile =
-    let c = case tile of
-                Floor -> " "
-                Wall  -> "#"
-                Door  -> "+"
-                Acid  -> "~"
-    in  centered << monospace << toText <| c
+    let
+        c =
+            case tile of
+                Floor ->
+                    " "
 
-visible : State -> [Location]
-visible state = Grid.neighborhood2 state.player.location
+                Wall ->
+                    "#"
+
+                Door ->
+                    "+"
+
+                Acid ->
+                    "~"
+
+                NoTileYet ->
+                    "n"
+    in
+    Element.centered << Text.monospace << Text.fromString <| c
+
+
+visible : State -> List Location
+visible state =
+    Grid.neighborhood2 state.player.location
+
 
 visibility : State -> Location -> Visibility
-visibility state location = Grid.getOrElse Unexplored location state.explored
+visibility state location =
+    Grid.getWithDefault Unexplored location state.explored

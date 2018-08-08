@@ -1,116 +1,300 @@
-module Grid where
+module Grid exposing (..)
 
-import List
 import Array
+import List
 
-type Grid a = { grid : Array.Array (Array.Array a), size : Size }
-type Size = { width : Int, height : Int }
-type Coordinate = { x : Int, y : Int }
+
+type alias Grid a =
+    { grid : Array.Array (Array.Array a)
+    , size : Size
+    }
+
+
+type alias Size =
+    { width : Int
+    , height : Int
+    }
+
+
+type alias Coordinate =
+    { x : Int
+    , y : Int
+    }
+
 
 initialize : Size -> a -> Grid a
-initialize ({width, height} as size) a = Grid (Array.repeat height << Array.repeat width <| a) size
+initialize ({ width, height } as size) a =
+    Grid (Array.repeat height << Array.repeat width <| a) size
 
-toList : Grid a -> [[a]]
-toList = List.map Array.toList << Array.toList << .grid
 
-fromList : [[a]] -> Grid a
+getGridBoundsToPlacePlayer : Grid a -> { minX : Int, maxX : Int, minY : Int, maxY : Int }
+getGridBoundsToPlacePlayer grid =
+    { minX = 1
+    , maxX = grid.size.width - 1
+    , minY = 1
+    , maxY = grid.size.height - 1
+    }
+
+
+getGridBoundsToPlaceEnemy : Grid a -> { minX : Int, maxX : Int, minY : Int, maxY : Int }
+getGridBoundsToPlaceEnemy grid =
+    { minX = 1
+    , maxX = grid.size.width - 1
+    , minY = 1
+    , maxY = grid.size.height - 1
+    }
+
+
+toList : Grid a -> List (List a)
+toList =
+    List.map Array.toList << Array.toList << .grid
+
+
+fromList : List (List a) -> Grid a
 fromList xs =
-    let row x = Array.fromList x
-        grid = Array.fromList <| List.map row xs
-    in  Grid grid <| Size (length << head <| xs) (length xs)
+    let
+        row x =
+            Array.fromList x
 
-toCoordinates : Grid a -> [Coordinate]
+        grid =
+            Array.fromList <| List.map row xs
+    in
+    Grid grid <| Size (getTheLength << List.head <| xs) (List.length xs)
+
+
+getTheLength : Maybe (List a) -> Int
+getTheLength mbla =
+    case mbla of
+        Just l ->
+            List.length l
+
+        Nothing ->
+            0
+
+
+toCoordinates : Grid a -> List Coordinate
 toCoordinates gridder =
-    let s : Size
-        s = gridder.size
-        xs : Int -> [(Int, Int)]
-        xs y = List.map (\x -> (x, y)) [0..s.width - 1]
-        pairs = concatMap xs [0..s.height - 1]
-    in  List.map (\(x, y) -> Coordinate x y) pairs
+    let
+        s : Size
+        s =
+            gridder.size
+
+        xs : Int -> List ( Int, Int )
+        xs y =
+            List.map (\x -> ( x, y )) (List.range 0 (s.width - 1))
+
+        pairs =
+            List.concatMap xs (List.range 0 (s.height - 1))
+    in
+    List.map (\( x, y ) -> Coordinate x y) pairs
+
 
 set : Coordinate -> a -> Grid a -> Grid a
-set {x, y} a grid =
-    if | x < 0 -> grid
-       | y < 0 -> grid
-       | x >= grid.size.width  -> grid
-       | y >= grid.size.height -> grid
-       | otherwise -> let row = Array.getOrFail y grid.grid
-                          row' = Array.set x a row
-                      in  {grid | grid <- Array.set y row' grid.grid}
+set { x, y } a grid =
+    if x < 0 then
+        grid
+    else if y < 0 then
+        grid
+    else if x >= grid.size.width then
+        grid
+    else if y >= grid.size.height then
+        grid
+    else
+        let
+            row =
+                --Array.getOrFail y grid.grid
+                case Array.get y grid.grid of
+                    Just r ->
+                        r
+
+                    Nothing ->
+                        Array.fromList []
+
+            row_ =
+                Array.set x a row
+        in
+        { grid | grid = Array.set y row_ grid.grid }
+
 
 get : Coordinate -> Grid a -> Maybe a
-get {x, y} grid =
+get { x, y } grid =
     case Array.get y grid.grid of
-        Nothing  -> Nothing
-        Just row -> Array.get x row
+        Nothing ->
+            Nothing
 
-getOrFail : Coordinate -> Grid a -> a
-getOrFail {x, y} grid =
-    let row = Array.getOrFail y grid.grid
-    in  Array.getOrFail x row
+        Just row ->
+            Array.get x row
 
-getOrElse : a -> Coordinate -> Grid a -> a
-getOrElse default coordinate grid =
+
+
+{- }
+   getOrFail : Coordinate -> Grid a -> a
+   getOrFail { x, y } grid =
+       let
+           row =
+               --Array.getOrFail y grid.grid
+               case Array.get y grid.grid of
+                   Just r ->
+                       r
+
+                   Nothing ->
+                       []
+       in
+       --Array.getOrFail x row
+       case Array.get y grid.grid of
+           Just elem ->
+               elem
+
+           Nothing ->
+               []
+-}
+
+
+getWithDefault : a -> Coordinate -> Grid a -> a
+getWithDefault default coordinate grid =
     case get coordinate grid of
-        Nothing -> default
-        Just a  -> a
+        Nothing ->
+            default
 
-getRow : Int -> Grid a -> Maybe [a]
+        Just a ->
+            a
+
+
+getRow : Int -> Grid a -> List a
 getRow n grid =
-    if | n < 0                 -> Nothing
-       | n >= grid.size.height -> Nothing
-       | otherwise             -> Just << getRowOrFail n <| grid
+    if n < 0 then
+        []
+    else if n >= grid.size.height then
+        []
+    else
+        getRowOrEmptyList n grid
 
-getRowOrFail : Int -> Grid a -> [a]
-getRowOrFail n = Array.toList << Array.getOrFail n << .grid
 
-getRowOrElse : [a] -> Int -> Grid a -> [a]
-getRowOrElse default n grid =
-    case getRow n grid of
-        Nothing  -> default
-        Just row -> row
+getRowOrEmptyList : Int -> Grid a -> List a
+getRowOrEmptyList n grid =
+    --Array.toList << Array.getOrFail n << .grid
+    case Array.get n grid.grid of
+        Just r ->
+            r |> Array.toList
 
-getColumn : Int -> Grid a -> Maybe [a]
-getColumn n grid =
-    if | n < 0                -> Nothing
-       | n >= grid.size.width -> Nothing
-       | otherwise            -> Just << getColumnOrFail n <| grid
+        Nothing ->
+            []
 
-getColumnOrFail : Int -> Grid a -> [a]
-getColumnOrFail n = List.map (Array.getOrFail n) << Array.toList << .grid
 
-getColumnOrElse : [a] -> Int -> Grid a -> [a]
-getColumnOrElse default n grid =
-    case getColumn n grid of
-        Nothing     -> default
-        Just column -> column
+getRowWithDefault : List a -> Int -> Grid a -> List a
+getRowWithDefault default n grid =
+    let
+        lrow =
+            getRow n grid
+    in
+    if List.length lrow == 0 then
+        default
+    else
+        lrow
+
+
+
+{-
+   getColumn : Int -> Grid a -> Maybe (List a)
+   getColumn n grid =
+       if n < 0 then
+           Nothing
+       else if n >= grid.size.width then
+           Nothing
+       else
+           Just << getColumnOrFail n <| grid
+
+
+   getColumnOrFail : Int -> Grid a -> List a
+   getColumnOrFail n grid =
+       --List.map (Array.getOrFail n) << Array.toList << .grid
+       --getElem arr = case
+       --lgrid = Array.toList grid.grid
+       toCoordinates grid
+           |> List.filter (\( x, y ) -> x == n)
+           |> List.map (\( x, y ) -> getOrElse GameModel.NoTileYet (Coordinate x y) grid)
+           |> List.filter (\x -> x /= GameModel.NoTileYet)
+
+
+   getColumnOrElse : List a -> Int -> Grid a -> List a
+   getColumnOrElse default n grid =
+       case getColumn n grid of
+           Nothing ->
+               default
+
+           Just column ->
+               column
+-}
+
 
 inGrid : Coordinate -> Grid a -> Bool
-inGrid {x, y} grid =
-    let {height, width} = grid.size
-    in  if | x < 0       -> False
-           | x >= width  -> False
-           | y < 0       -> False
-           | y >= height -> False
-           | otherwise   -> True
+inGrid { x, y } grid =
+    let
+        { height, width } =
+            grid.size
+    in
+    if x < 0 then
+        False
+    else if x >= width then
+        False
+    else if y < 0 then
+        False
+    else if y >= height then
+        False
+    else
+        True
+
 
 map : (a -> b) -> Grid a -> Grid b
 map f grid =
-    let grid' = Array.map (\row -> Array.map f row) grid.grid
-    in  {grid| grid <- grid'}
+    let
+        grid_ =
+            Array.map (\row -> Array.map f row) grid.grid
+    in
+    { grid | grid = grid_ }
 
-neighborhood : Coordinate -> [Coordinate]
-neighborhood {x, y} = List.map (\(a, b) -> Coordinate a b)
-    [ (x - 1, y - 1), (x, y - 1), (x + 1, y - 1)
-    , (x - 1, y),     (x, y),     (x + 1, y)
-    , (x - 1, y + 1), (x, y + 1), (x + 1, y + 1)
-    ]
 
-neighborhood2 : Coordinate -> [Coordinate]
-neighborhood2 {x, y} = List.map (\(c, b) -> Coordinate c b)
-    [ (x - 2, y - 2), (x - 1, y - 2), (x, y - 2), (x + 1, y - 2), (x + 2, y - 2)
-    , (x - 2, y - 1), (x - 1, y - 1), (x, y - 1), (x + 1, y - 1), (x + 2, y - 1)
-    , (x - 2, y),     (x - 1, y),     (x, y),     (x + 1, y),     (x + 2, y)
-    , (x - 2, y + 1), (x - 1, y + 1), (x, y + 1), (x + 1, y + 1), (x + 2, y + 1)
-    , (x - 2, y + 2), (x - 1, y + 2), (x, y + 2), (x + 1, y + 2), (x + 2, y + 2)
-    ]
+neighborhood : Coordinate -> List Coordinate
+neighborhood { x, y } =
+    List.map (\( a, b ) -> Coordinate a b)
+        [ ( x - 1, y - 1 )
+        , ( x, y - 1 )
+        , ( x + 1, y - 1 )
+        , ( x - 1, y )
+        , ( x, y )
+        , ( x + 1, y )
+        , ( x - 1, y + 1 )
+        , ( x, y + 1 )
+        , ( x + 1, y + 1 )
+        ]
+
+
+neighborhood2 : Coordinate -> List Coordinate
+neighborhood2 { x, y } =
+    List.map (\( c, b ) -> Coordinate c b)
+        [ ( x - 2, y - 2 )
+        , ( x - 1, y - 2 )
+        , ( x, y - 2 )
+        , ( x + 1, y - 2 )
+        , ( x + 2, y - 2 )
+        , ( x - 2, y - 1 )
+        , ( x - 1, y - 1 )
+        , ( x, y - 1 )
+        , ( x + 1, y - 1 )
+        , ( x + 2, y - 1 )
+        , ( x - 2, y )
+        , ( x - 1, y )
+        , ( x, y )
+        , ( x + 1, y )
+        , ( x + 2, y )
+        , ( x - 2, y + 1 )
+        , ( x - 1, y + 1 )
+        , ( x, y + 1 )
+        , ( x + 1, y + 1 )
+        , ( x + 2, y + 1 )
+        , ( x - 2, y + 2 )
+        , ( x - 1, y + 2 )
+        , ( x, y + 2 )
+        , ( x + 1, y + 2 )
+        , ( x + 2, y + 2 )
+        ]

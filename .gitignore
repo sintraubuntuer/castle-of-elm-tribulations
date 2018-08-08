@@ -1,8 +1,10 @@
 *~
 build/
+dist/
 cache/
 *.elmi
 *.elmo
+elm-stuff/
 node_modules/
 elm_dependencies/
 docs/
