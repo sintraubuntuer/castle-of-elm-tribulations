@@ -21,8 +21,6 @@ type alias State =
     , explored : Grid.Grid Visibility
     , log : List String
     , pseudoRandomIntsPool : List Int
-
-    --, generator : Random
     }
 
 
@@ -55,6 +53,8 @@ type alias Enemy =
     , coordination : Int
     , power : Int
     , initiative : Int
+    , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
+    , nrMovesInCurrentTurn : Int
     , placed : Bool
     }
 
@@ -91,15 +91,20 @@ type Input
 
 player : Element.Element -> String -> Player
 player elem name =
-    --let (initiative, gen') = Generator.int32Range (1, 100) gen
-    --in
-    let
-        initiative =
-            50
-
-        -- have too rewrite this so its random
-    in
-    Player (Grid.Coordinate 2 2) elem name 10 10 10 20 1 50 100 2 initiative False
+    { location = Grid.Coordinate 10 10
+    , avatar = elem
+    , name = name
+    , health = 10
+    , energy = 10
+    , hunger = 10
+    , stealth = 20
+    , armor = 1
+    , protection = 50
+    , coordination = 100
+    , power = 2
+    , initiative = 2 -- this will be altered by generating a random int between 1 and 100
+    , placed = False
+    }
 
 
 enemy : Element.Element -> EnemyId -> String -> Enemy
@@ -108,11 +113,11 @@ enemy elem enemyid name =
     --in
     let
         initiative =
-            50
+            1
 
         -- have too rewrite this so its random
     in
-    Enemy (Grid.Coordinate 14 4) enemyid elem name 10 20 1 50 100 2 initiative False
+    Enemy (Grid.Coordinate 14 4) enemyid elem name 10 20 1 50 100 2 initiative 10 0 False
 
 
 location : Int -> Int -> Location
@@ -215,6 +220,20 @@ pathable location state =
        in
        { state' | player = { player' | location = loc, placed = True } }
 -}
+
+
+mbUpdateEnemyInitiativeByMbEnemyId : Int -> Maybe EnemyId -> State -> State
+mbUpdateEnemyInitiativeByMbEnemyId intval mbEnemyid state =
+    case mbEnemyid of
+        Nothing ->
+            state
+
+        Just enemyid ->
+            let
+                newEnemies =
+                    Dict.update enemyid (\mbEnemy -> mbEnemy |> Maybe.map (\enemy -> { enemy | initiative = intval })) state.enemies
+            in
+            { state | enemies = newEnemies }
 
 
 mbUpdateEnemyLocation : Location -> Maybe Enemy -> Maybe Enemy

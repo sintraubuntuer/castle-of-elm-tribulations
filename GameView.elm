@@ -297,15 +297,15 @@ sidebar state =
         bar =
             flow down
                 [ flow right [ state.player.avatar, text <| ": " ++ state.player.name ]
-                , flow right [ text "Health: ", show state.player.health ]
-                , flow right [ text "Energy: ", show state.player.energy ]
-                , flow right [ text "Hunger: ", show state.player.hunger ]
-                , flow right [ text "Stealth: ", show state.player.stealth, text "%" ]
-                , flow right [ text "Armor: ", show state.player.armor ]
-                , flow right [ text "Protection: ", show state.player.protection, text "%" ]
-                , flow right [ text "Coordination: ", show state.player.coordination, text "%" ]
-                , flow right [ text "Power: ", show state.player.power ]
-                , flow right [ text "Initiative: ", show state.player.initiative ]
+                , flow right [ text <| "Health: " ++ toString state.player.health ]
+                , flow right [ text <| "Energy: " ++ toString state.player.energy ]
+                , flow right [ text <| "Hunger: " ++ toString state.player.hunger ]
+                , flow right [ text <| "Stealth: " ++ toString state.player.stealth ++ "%" ]
+                , flow right [ text <| "Armor: " ++ toString state.player.armor ]
+                , flow right [ text <| "Protection: " ++ toString state.player.protection ++ "%" ]
+                , flow right [ text <| "Coordination: " ++ toString state.player.coordination ++ "%" ]
+                , flow right [ text <| "Power: " ++ toString state.player.power ]
+                , flow right [ text <| "Initiative: " ++ toString state.player.initiative ]
                 ]
     in
     container (widthOf bar + 20) (heightOf bar) midTop bar
@@ -379,7 +379,7 @@ view model =
         ([ display model
             |> Element.toHtml
          ]
-            ++ [ viewDebugPlayer model ]
-            ++ viewDebugEnemies model
+         --  ++ [ viewDebugPlayer model ]
+         --  ++ viewDebugEnemies model
          --++ viewDebugGrid model.level
         )

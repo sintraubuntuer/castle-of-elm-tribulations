@@ -111,20 +111,15 @@ randomTile rfloat =
 randomMap : ( Int, Int ) -> List Float -> Grid.Grid GameModel.Tile
 randomMap ( w, h ) lfloats =
     let
-        -- w
         -- lfloats should have w*h elements
         initialGrid =
             Grid.initialize { width = w, height = h } GameModel.NoTileYet
 
-        -- map2 (,) [1,2,3] ['a','b'] == [ (1,'a'), (2,'b') ]
-        --set { x, y } a grid -- x < width  , y < height
         lcoordinates =
             Grid.toCoordinates initialGrid
 
-        --List.map2 (\x y -> Grid.Coordinate x y) (List.range 0 w) (List.range 0 h)
         lcoordsFloats =
             List.map2 (\gcoord rfl -> ( gcoord, rfl )) lcoordinates lfloats
-                |> Debug.log "lcoordsFloats is : "
     in
     List.foldl (\( gcoord, rfl ) accy -> Grid.set gcoord (randomTile rfl) accy) initialGrid lcoordsFloats
 
@@ -176,9 +171,6 @@ randomCave ( w, h ) lfloats =
         -- lfloats should have w*h elements
         bedrock =
             randomMap ( w, h ) lfloats
-
-        _ =
-            Debug.log "just generated a random map with lfloats : "
     in
     bedrock |> iterate2 |> iterate2 |> iterate2 |> iterate2 |> iterate |> iterate |> iterate
 

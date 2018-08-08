@@ -56,6 +56,7 @@ type Msg
     | NewRandomPointToPlacePlayer ( Int, Int )
     | NewRandomPointToPlaceEnemy GameModel.EnemyId ( Int, Int )
     | NewRandomFloatsForGenCave (List Float)
+    | RandomInitiativeValue String (Maybe GameModel.EnemyId) Int
     | NewRandomIntsAddToPool (List Int)
 
 
@@ -116,10 +117,13 @@ update msg state =
                                 }
 
                         Nothing ->
-                            { state | player = move ( x_, y_ ) state player }
+                            if x_ /= 0 || y_ /= 0 then
+                                { state | player = move ( x_, y_ ) state player }
+                            else
+                                state
 
                 newState2 =
-                    newState |> cleanup |> ai |> reveal
+                    newState |> cleanup |> resetEnemyMovesCurrentTurn |> ai |> reveal
             in
             ( newState2, cmdFillRandomIntsPool newState2 )
 
@@ -139,10 +143,12 @@ update msg state =
             in
             case GameModel.pathable newLocation state of
                 True ->
-                    ( { state | player = newPlayer }, Cmd.none )
+                    ( { state | player = newPlayer }
+                        |> reveal
+                    , Cmd.none
+                    )
 
                 False ->
-                    --( { state | player = newPlayer }, Cmd.none )
                     ( state, cmdGetRandomPositionedPlayer oldPlayer gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
         NewRandomPointToPlaceEnemy enemyId tupPosition ->
@@ -188,6 +194,25 @@ update msg state =
             in
             ( { state | level = newGrid }, Cmd.none )
 
+        RandomInitiativeValue strCharacter mbCharacterId intval ->
+            if strCharacter == "player" then
+                let
+                    oldPlayer =
+                        state.player
+
+                    newPlayer =
+                        { oldPlayer | initiative = intval }
+                in
+                ( { state | player = newPlayer }, Cmd.none )
+            else if strCharacter == "enemy" then
+                let
+                    newState =
+                        GameModel.mbUpdateEnemyInitiativeByMbEnemyId intval mbCharacterId state
+                in
+                ( newState, Cmd.none )
+            else
+                ( state, Cmd.none )
+
         NewRandomIntsAddToPool lints ->
             ( { state | pseudoRandomIntsPool = lints ++ state.pseudoRandomIntsPool }
             , Cmd.none
@@ -208,6 +233,11 @@ cmdGetRandomPositionedEnemy actualEnemy enemyId minX maxX minY maxY =
         Cmd.none
     else
         Random.generate (NewRandomPointToPlaceEnemy enemyId) (getRandIntPair minX maxX minY maxY)
+
+
+cmdGenerateRandomInitiativeValue : String -> Maybe GameModel.EnemyId -> Int -> Int -> Cmd Msg
+cmdGenerateRandomInitiativeValue strCharacter mbCharacterId minval maxval =
+    Random.generate (RandomInitiativeValue strCharacter mbCharacterId) (Random.int minval maxval)
 
 
 cmdFillRandomIntsPool : GameModel.State -> Cmd Msg
@@ -325,6 +355,24 @@ attack dude1 dude2 lprandInts =
     ( { dude1 | initiative = dude1.initiative + 100 }, { dude2 | health = result }, msg, newprandInts2 )
 
 
+resetEnemyMovesCurrentTurn : GameModel.State -> GameModel.State
+resetEnemyMovesCurrentTurn state =
+    let
+        newEnemies =
+            Dict.map (\enemyid enemy -> { enemy | nrMovesInCurrentTurn = 0 }) state.enemies
+    in
+    { state | enemies = newEnemies }
+
+
+increseNrOfEnemyMovesInCurrentTurn : GameModel.EnemyId -> GameModel.State -> GameModel.State
+increseNrOfEnemyMovesInCurrentTurn enemyid state =
+    let
+        newEnemies =
+            Dict.update enemyid (\mbenemy -> mbenemy |> Maybe.map (\en -> { en | nrMovesInCurrentTurn = en.nrMovesInCurrentTurn + 1 })) state.enemies
+    in
+    { state | enemies = newEnemies }
+
+
 cleanup : GameModel.State -> GameModel.State
 cleanup state =
     let
@@ -351,16 +399,18 @@ cleanup state =
 ai : GameModel.State -> GameModel.State
 ai state =
     let
-        mbEnemy =
-            Dict.filter (\enemyid enemy -> enemy.initiative <= state.player.initiative) state.enemies
-                |> Dict.values
+        mbEnemyIdEnemyPair =
+            Dict.filter (\enemyid enemy -> enemy.initiative <= state.player.initiative && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) state.enemies
+                |> Dict.toList
                 |> List.head
     in
-    case mbEnemy of
-        Just enemy ->
+    case mbEnemyIdEnemyPair of
+        Just ( enemyid, enemy ) ->
             let
                 state2 =
                     attackIfClose enemy state
+                        -- prevent possible infinite recursion
+                        |> increseNrOfEnemyMovesInCurrentTurn enemyid
             in
             ai state2
 
@@ -386,9 +436,6 @@ attackIfClose enemy state =
         [] ->
             let
                 ( x, y, newprandInts ) =
-                    -- temporary , have alter it
-                    --( 0, 0 )
-                    --let ([x, y], gen') = Generator.listOf (Generator.int32Range (-1, 1)) 2 state.generator
                     ( List.head state.pseudoRandomIntsPool |> Maybe.withDefault 0
                     , List.drop 1 state.pseudoRandomIntsPool
                         |> List.head

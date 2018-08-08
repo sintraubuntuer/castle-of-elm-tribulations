@@ -153,9 +153,6 @@ initialState =
         firstExplored
         [ "you enter the dungeon" ]
         []
-        -- pseudoRandomIntsPool
-        --|> GameUpdate.placeEntities
-        |> GameUpdate.reveal
 
 
 subscriptions : GameModel.State -> Sub GameUpdate.Msg
@@ -224,8 +221,12 @@ init =
         ([ GameUpdate.cmdGenFloatsForRandomCave w h
          , GameUpdate.cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
          , GameUpdate.cmdFillRandomIntsPool initState
+         , GameUpdate.cmdGenerateRandomInitiativeValue "player" Nothing 1 100
          ]
             ++ (Dict.map (\enid enemy -> GameUpdate.cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initState.enemies
+                    |> Dict.values
+               )
+            ++ (Dict.map (\enid enemy -> GameUpdate.cmdGenerateRandomInitiativeValue "enemy" (Just enid) 1 100) initState.enemies
                     |> Dict.values
                )
         )
