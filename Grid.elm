@@ -254,47 +254,69 @@ map f grid =
     { grid | grid = grid_ }
 
 
-neighborhood : Coordinate -> List Coordinate
-neighborhood { x, y } =
-    List.map (\( a, b ) -> Coordinate a b)
-        [ ( x - 1, y - 1 )
-        , ( x, y - 1 )
-        , ( x + 1, y - 1 )
-        , ( x - 1, y )
-        , ( x, y )
-        , ( x + 1, y )
-        , ( x - 1, y + 1 )
-        , ( x, y + 1 )
-        , ( x + 1, y + 1 )
-        ]
+neighborhoodCalc : Int -> Coordinate -> List Coordinate
+neighborhoodCalc d { x, y } =
+    let
+        linc =
+            --[ 1, 0, -1 ]
+            List.range -d d
+
+        possible_new_x =
+            List.map (\el -> el + x) linc
+
+        possible_new_y =
+            List.map (\el -> el + y) linc
+
+        possible_end_pos =
+            List.concatMap (\el -> List.map (\yel -> Coordinate el yel) possible_new_y) possible_new_x
+    in
+    possible_end_pos
 
 
-neighborhood2 : Coordinate -> List Coordinate
-neighborhood2 { x, y } =
-    List.map (\( c, b ) -> Coordinate c b)
-        [ ( x - 2, y - 2 )
-        , ( x - 1, y - 2 )
-        , ( x, y - 2 )
-        , ( x + 1, y - 2 )
-        , ( x + 2, y - 2 )
-        , ( x - 2, y - 1 )
-        , ( x - 1, y - 1 )
-        , ( x, y - 1 )
-        , ( x + 1, y - 1 )
-        , ( x + 2, y - 1 )
-        , ( x - 2, y )
-        , ( x - 1, y )
-        , ( x, y )
-        , ( x + 1, y )
-        , ( x + 2, y )
-        , ( x - 2, y + 1 )
-        , ( x - 1, y + 1 )
-        , ( x, y + 1 )
-        , ( x + 1, y + 1 )
-        , ( x + 2, y + 1 )
-        , ( x - 2, y + 2 )
-        , ( x - 1, y + 2 )
-        , ( x, y + 2 )
-        , ( x + 1, y + 2 )
-        , ( x + 2, y + 2 )
-        ]
+
+{-
+   neighborhood : Coordinate -> List Coordinate
+   neighborhood { x, y } =
+       List.map (\( a, b ) -> Coordinate a b)
+           [ ( x - 1, y - 1 )
+           , ( x, y - 1 )
+           , ( x + 1, y - 1 )
+           , ( x - 1, y )
+           , ( x, y )
+           , ( x + 1, y )
+           , ( x - 1, y + 1 )
+           , ( x, y + 1 )
+           , ( x + 1, y + 1 )
+           ]
+
+
+   neighborhood2 : Coordinate -> List Coordinate
+   neighborhood2 { x, y } =
+       List.map (\( c, b ) -> Coordinate c b)
+           [ ( x - 2, y - 2 )
+           , ( x - 1, y - 2 )
+           , ( x, y - 2 )
+           , ( x + 1, y - 2 )
+           , ( x + 2, y - 2 )
+           , ( x - 2, y - 1 )
+           , ( x - 1, y - 1 )
+           , ( x, y - 1 )
+           , ( x + 1, y - 1 )
+           , ( x + 2, y - 1 )
+           , ( x - 2, y )
+           , ( x - 1, y )
+           , ( x, y )
+           , ( x + 1, y )
+           , ( x + 2, y )
+           , ( x - 2, y + 1 )
+           , ( x - 1, y + 1 )
+           , ( x, y + 1 )
+           , ( x + 1, y + 1 )
+           , ( x + 2, y + 1 )
+           , ( x - 2, y + 2 )
+           , ( x - 1, y + 2 )
+           , ( x, y + 2 )
+           , ( x + 1, y + 2 )
+           , ( x + 2, y + 2 )
+           ]
+-}

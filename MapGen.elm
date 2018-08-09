@@ -9,60 +9,14 @@ import GameModel
 import Grid
 
 
-neighborhood : Grid.Coordinate -> List Grid.Coordinate
-neighborhood { x, y } =
-    List.map (\( a, b ) -> Grid.Coordinate a b)
-        [ ( x - 1, y - 1 )
-        , ( x, y - 1 )
-        , ( x + 1, y - 1 )
-        , ( x - 1, y )
-        , ( x, y )
-        , ( x + 1, y )
-        , ( x - 1, y + 1 )
-        , ( x, y + 1 )
-        , ( x + 1, y + 1 )
-        ]
-
-
-neighborhood2 : Grid.Coordinate -> List Grid.Coordinate
-neighborhood2 { x, y } =
-    List.map (\( a, b ) -> Grid.Coordinate a b)
-        [ ( x - 2, y - 2 )
-        , ( x - 1, y - 2 )
-        , ( x, y - 2 )
-        , ( x + 1, y - 2 )
-        , ( x + 2, y - 2 )
-        , ( x - 2, y - 1 )
-        , ( x - 1, y - 1 )
-        , ( x, y - 1 )
-        , ( x + 1, y - 1 )
-        , ( x + 2, y - 1 )
-        , ( x - 2, y )
-        , ( x - 1, y )
-        , ( x, y )
-        , ( x + 1, y )
-        , ( x + 2, y )
-        , ( x - 2, y + 1 )
-        , ( x - 1, y + 1 )
-        , ( x, y + 1 )
-        , ( x + 1, y + 1 )
-        , ( x + 2, y + 1 )
-        , ( x - 2, y + 2 )
-        , ( x - 1, y + 2 )
-        , ( x, y + 2 )
-        , ( x + 1, y + 2 )
-        , ( x + 2, y + 2 )
-        ]
-
-
 getNeighborsOrElse : a -> Grid.Grid a -> Grid.Coordinate -> List a
 getNeighborsOrElse x grid coord =
-    List.map (\c -> Grid.getWithDefault x c grid) <| neighborhood coord
+    List.map (\c -> Grid.getWithDefault x c grid) <| Grid.neighborhoodCalc 1 coord
 
 
 getNeighborsOrElse2 : a -> Grid.Grid a -> Grid.Coordinate -> List a
 getNeighborsOrElse2 x grid coord =
-    List.map (\c -> Grid.getWithDefault x c grid) <| neighborhood2 coord
+    List.map (\c -> Grid.getWithDefault x c grid) <| Grid.neighborhoodCalc 2 coord
 
 
 getNeighbors : Grid.Grid GameModel.Tile -> Grid.Coordinate -> List GameModel.Tile
@@ -100,12 +54,6 @@ randomTile rfloat =
                 GameModel.Floor
     in
     tile
-
-
-
---scanl : (a -> b -> b) -> b -> List a -> List b
---Reduce a list from the left, building up all of the intermediate results into a list.
---scanl (+) 0 [1,2,3,4] == [0,1,3,6,10]
 
 
 randomMap : ( Int, Int ) -> List Float -> Grid.Grid GameModel.Tile
@@ -176,48 +124,9 @@ randomCave ( w, h ) lfloats =
 
 
 
---bedrock
+{- }
 
-
-seed : Int
-seed =
-    2013
-
-
-
-{-
-   main =
-       lift display state
-
-
-   display state =
-       let
-           level =
-               fst state
-       in
-       flow down <|
-           button
-               :: map (\x -> GameView.background x `above` spacer 10 10)
-                   [ level |> iterate2 |> iterate2 |> iterate2 |> iterate2 |> iterate |> iterate |> iterate ]
-
--}
-{-
-
-
-   input =
-       Input.input ()
-
-
-   button =
-       Input.button input.handle () "clickar"
-
-
-   state : Signal ( Grid.Grid GameModel.Tile, GameModel.Random )
-   state =
-       foldp (\a state' -> randomMap dimensions (snd state')) (randomMap dimensions gen) input.signal
-
-
-   dimensions =
-       ( 40, 30 )
-
+   seed : Int
+   seed =
+       2013
 -}

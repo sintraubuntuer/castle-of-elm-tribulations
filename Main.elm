@@ -32,14 +32,6 @@ dimensions =
     ( 30, 20 )
 
 
-
-{-
-   gen : GameModel.Random
-   gen =
-       Generator.Standard.generator seed
--}
-
-
 initialLevel : Grid.Grid GameModel.Tile
 initialLevel =
     let
@@ -233,10 +225,6 @@ init =
     )
 
 
-
---cmdGetRandomPositionedPlayer 1 dimensions.fst 1 dimensions.snd )
-
-
 main : Program Never GameModel.State GameUpdate.Msg
 main =
     Html.program
@@ -245,21 +233,3 @@ main =
         , update = GameUpdate.update
         , subscriptions = subscriptions
         }
-
-
-
-{-
-   inputs : Signal GameModel.Input
-   inputs =
-       GameModel.handle <~ Keyboard.lastPressed
-
-
-   state : Signal GameModel.State
-   state =
-       foldp GameUpdate.update initialState inputs
-
-
-   main : Signal Element
-   main =
-       GameView.display <~ state
--}

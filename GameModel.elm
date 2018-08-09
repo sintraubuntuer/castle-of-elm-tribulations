@@ -85,15 +85,11 @@ type Input
     | Nop
 
 
-
---type Random = Generator.Generator Generator.Standard.Standard
-
-
 player : Element.Element -> String -> Player
-player elem name =
+player elem pname =
     { location = Grid.Coordinate 10 10
     , avatar = elem
-    , name = name
+    , name = pname
     , health = 10
     , energy = 10
     , hunger = 10
@@ -108,43 +104,27 @@ player elem name =
 
 
 enemy : Element.Element -> EnemyId -> String -> Enemy
-enemy elem enemyid name =
-    --let (initiative, gen') = Generator.int32Range (1, 100) gen
-    --in
-    let
-        initiative =
-            1
-
-        -- have too rewrite this so its random
-    in
-    Enemy (Grid.Coordinate 14 4) enemyid elem name 10 20 1 50 100 2 initiative 10 0 False
+enemy elem enemyid ename =
+    { location = Grid.Coordinate 14 4
+    , id = enemyid
+    , avatar = elem
+    , name = ename
+    , health = 10
+    , stealth = 20
+    , armor = 1
+    , protection = 50
+    , coordination = 100
+    , power = 2
+    , initiative = 1 -- this will be altered by generating a random int between 1 and 100
+    , maxNrEnemyMovesPerTurn = 10 -- to prevent possible infinite recursion in ai
+    , nrMovesInCurrentTurn = 0
+    , placed = False
+    }
 
 
 location : Int -> Int -> Location
 location =
     Grid.Coordinate
-
-
-
-{-
-   handle : KeyCode -> Input
-   handle key =
-       case key of
-           37 ->
-               Left
-
-           38 ->
-               Up
-
-           39 ->
-               Right
-
-           40 ->
-               Down
-
-           _ ->
-               Nop
--}
 
 
 validLocation : Location -> State -> Bool
@@ -174,51 +154,30 @@ pathable location state =
 
 
 {-
-      getRandomPathable : State -> ( Location, State )
-      getRandomPathable state =
-          let
-              ( x, gen' ) =
-                  Generator.int32Range ( 1, state.level.size.width ) state.generator
-
-              ( y, gen'' ) =
-                  Generator.int32Range ( 1, state.level.size.height ) gen'
-
-              locn =
-                  location x y
-
-              state' =
-                  { state | generator = gen'' }
-          in
-          case pathable locn state' of
-              True ->
-                  ( locn, state' )
-
-              False ->
-                  getRandomPathable state'
-
-
-
-
-   placeEnemy : Enemy -> State -> State
-   placeEnemy a state =
+   getRandomPathable : State -> ( Location, State )
+   getRandomPathable state =
        let
-           ( loc, state' ) =
-               getRandomPathable state
-       in
-       { state' | enemies = { a | location = loc, placed = True } :: tail state'.enemies }
+           ( x, gen' ) =
+               Generator.int32Range ( 1, state.level.size.width ) state.generator
 
--}
-{-
-   placePlayer : State -> State
-   placePlayer state =
-       let
-           ( loc, state' ) =
-               getRandomPathable state
+           ( y, gen'' ) =
+               Generator.int32Range ( 1, state.level.size.height ) gen'
 
-           player' =
-               state'.player
+           locn =
+               location x y
+
+           state' =
+               { state | generator = gen'' }
        in
-       { state' | player = { player' | location = loc, placed = True } }
+       case pathable locn state' of
+           True ->
+               ( locn, state' )
+
+           False ->
+               getRandomPathable state'
+
+
+
 -}
 
 
@@ -293,7 +252,7 @@ showTile tile =
 
 visible : State -> List Location
 visible state =
-    Grid.neighborhood2 state.player.location
+    Grid.neighborhoodCalc 2 state.player.location
 
 
 visibility : State -> Location -> Visibility

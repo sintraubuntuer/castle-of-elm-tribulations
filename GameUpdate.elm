@@ -10,38 +10,9 @@ import MapGen
 import Random
 
 
--- NT
-
-
 log : String -> GameModel.State -> GameModel.State
 log s state =
     { state | log = s :: state.log }
-
-
-
-{-
-   placeEntities : GameModel.State -> GameModel.State
-   placeEntities state =
-       let
-           pstate =
-               if state.player.placed then
-                   state
-               else
-                   GameModel.placePlayer state
-
-           unplaced =
-               List.filter (\enemy -> enemy.placed == False) pstate.enemies
-       in
-       case unplaced of
-           enemy :: es ->
-               placeEntities (GameModel.placeEnemy enemy pstate)
-
-           [ enemy ] ->
-               placeEntities (GameModel.placeEnemy enemy pstate)
-
-           [] ->
-               pstate
--}
 
 
 getTailWithDefaultEmptyList : List a -> List a
@@ -420,7 +391,7 @@ ai state =
 
 attackIfClose : GameModel.Enemy -> GameModel.State -> GameModel.State
 attackIfClose enemy state =
-    case List.filter (\location -> location == state.player.location) (Grid.neighborhood enemy.location) of
+    case List.filter (\location -> location == state.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
         location :: locs ->
             let
                 ( enemy_, player_, msg, newprandInts ) =
