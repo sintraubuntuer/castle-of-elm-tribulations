@@ -32,22 +32,23 @@ dimensions =
     ( 30, 20 )
 
 
+
+--( 10, 10 )
+
+
 initialLevel : Grid.Grid GameModel.Tile
 initialLevel =
     let
         toTile c =
             case c of
                 ' ' ->
-                    GameModel.Floor
+                    GameModel.Floor GameModel.defaultFloorInfo
 
                 '#' ->
-                    GameModel.Wall
+                    GameModel.Wall GameModel.defaultWallInfo
 
                 '+' ->
-                    GameModel.Door
-
-                '~' ->
-                    GameModel.Acid
+                    GameModel.Door GameModel.defaultDoorInfo
 
                 _ ->
                     GameModel.NoTileYet
@@ -145,6 +146,12 @@ initialState =
         firstExplored
         [ "you enter the dungeon" ]
         []
+        3
+        3
+        12
+        12
+        (Tuple.first dimensions)
+        (Tuple.second dimensions)
 
 
 subscriptions : GameModel.State -> Sub GameUpdate.Msg

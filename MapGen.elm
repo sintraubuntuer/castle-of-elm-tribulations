@@ -21,25 +21,41 @@ getNeighborsOrElse2 x grid coord =
 
 getNeighbors : Grid.Grid GameModel.Tile -> Grid.Coordinate -> List GameModel.Tile
 getNeighbors =
-    getNeighborsOrElse GameModel.Wall
+    getNeighborsOrElse (GameModel.Wall GameModel.defaultWallInfo)
 
 
 getNeighbors2 : Grid.Grid GameModel.Tile -> Grid.Coordinate -> List GameModel.Tile
 getNeighbors2 =
-    getNeighborsOrElse2 GameModel.Wall
+    getNeighborsOrElse2 (GameModel.Wall GameModel.defaultWallInfo)
 
 
 numberOfWalls : Grid.Grid GameModel.Tile -> Grid.Coordinate -> Int
 numberOfWalls grid coord =
     getNeighbors grid coord
-        |> List.filter (\t -> t == GameModel.Wall)
+        |> List.filter
+            (\t ->
+                case t of
+                    GameModel.Wall _ ->
+                        True
+
+                    _ ->
+                        False
+            )
         |> List.length
 
 
 numberOfWalls2 : Grid.Grid GameModel.Tile -> Grid.Coordinate -> Int
 numberOfWalls2 grid coord =
     getNeighbors2 grid coord
-        |> List.filter (\t -> t == GameModel.Wall)
+        |> List.filter
+            (\t ->
+                case t of
+                    GameModel.Wall _ ->
+                        True
+
+                    _ ->
+                        False
+            )
         |> List.length
 
 
@@ -49,9 +65,9 @@ randomTile rfloat =
         tile =
             --if rfloat < 0.4 then
             if rfloat < 0.4 then
-                GameModel.Wall
+                GameModel.Wall GameModel.defaultWallInfo
             else
-                GameModel.Floor
+                GameModel.Floor GameModel.defaultFloorInfo
     in
     tile
 
@@ -83,9 +99,9 @@ iterate grid =
                 (\coord ->
                     ( coord
                     , if numberOfWalls grid coord >= 5 then
-                        GameModel.Wall
+                        GameModel.Wall GameModel.defaultWallInfo
                       else
-                        GameModel.Floor
+                        GameModel.Floor GameModel.defaultFloorInfo
                     )
                 )
                 coords
@@ -101,11 +117,11 @@ iterate2 grid =
 
         rule coord =
             if numberOfWalls grid coord >= 5 then
-                GameModel.Wall
+                GameModel.Wall GameModel.defaultWallInfo
             else if numberOfWalls2 grid coord <= 2 then
-                GameModel.Wall
+                GameModel.Wall GameModel.defaultWallInfo
             else
-                GameModel.Floor
+                GameModel.Floor GameModel.defaultFloorInfo
 
         x =
             List.map (\coord -> ( coord, rule coord )) coords
@@ -120,7 +136,171 @@ randomCave ( w, h ) lfloats =
         bedrock =
             randomMap ( w, h ) lfloats
     in
-    bedrock |> iterate2 |> iterate2 |> iterate2 |> iterate2 |> iterate |> iterate |> iterate
+    bedrock
+        |> iterate2
+        |> iterate2
+        |> iterate2
+        |> iterate2
+        |> iterate
+        |> iterate
+        |> iterate
+
+
+type alias RoomRectangle =
+    { x : Int
+    , y : Int
+    , width : Int
+    , height : Int
+    }
+
+
+getRandomIntBetweenValues : Int -> Int -> List Int -> ( Int, List Int )
+getRandomIntBetweenValues minVal maxVal lrandomInts =
+    let
+        randInt1To100 =
+            List.head lrandomInts |> Maybe.withDefault 1
+
+        randInt =
+            minVal + round (toFloat (randInt1To100 - 1) / 100.0) * (maxVal - minVal + 1)
+    in
+    ( randInt, List.drop 1 lrandomInts )
+
+
+randomRoomGenerator : Int -> Int -> Int -> Int -> ( List RoomRectangle, List Int ) -> ( List RoomRectangle, List Int )
+randomRoomGenerator totalwidth totalheight roomMaxSize roomMinSize ( lroomrectangles, lrandomInts ) =
+    let
+        ( roomWidth, lrandIntsAfterWidth ) =
+            getRandomIntBetweenValues roomMinSize roomMaxSize lrandomInts
+
+        ( roomHeight, lrandIntsAfterWidthHeight ) =
+            getRandomIntBetweenValues roomMinSize roomMaxSize lrandIntsAfterWidth
+
+        ( room_topLeft_X, lrandIntsAfterX ) =
+            getRandomIntBetweenValues 0 (totalwidth - roomWidth - 1) lrandIntsAfterWidthHeight
+
+        ( room_topLeft_Y, lrandIntsAfterXandY ) =
+            getRandomIntBetweenValues 0 (totalheight - roomHeight - 1) lrandIntsAfterX
+
+        newRoom =
+            RoomRectangle room_topLeft_X room_topLeft_Y roomWidth roomHeight
+
+        roomCheckIntersectsListRoomFunc : RoomRectangle -> List RoomRectangle -> Bool
+        roomCheckIntersectsListRoomFunc room1rectangle lroomrectangles =
+            List.foldl
+                (\rrect boolacc ->
+                    if roomCheckIntersectsFunc room1rectangle rrect then
+                        True
+                    else
+                        boolacc
+                )
+                False
+                lroomrectangles
+
+        roomCheckIntersectsFunc : RoomRectangle -> RoomRectangle -> Bool
+        roomCheckIntersectsFunc room1rectangle room2rectangle =
+            let
+                rect1_LeftX =
+                    room1rectangle.x
+
+                rect1_RightX =
+                    room1rectangle.x + room1rectangle.width
+
+                rect2_LeftX =
+                    room2rectangle.x
+
+                rect2_RightX =
+                    room2rectangle.x + room2rectangle.width
+
+                rect1_TopY =
+                    room1rectangle.y
+
+                rect1_BottomY =
+                    room1rectangle.y + room1rectangle.height
+
+                rect2_TopY =
+                    room2rectangle.y
+
+                rect2_BottomY =
+                    room2rectangle.y + room2rectangle.height
+            in
+            if
+                (rect1_RightX < rect2_RightX || rect1_LeftX > rect2_RightX)
+                    || (rect1_TopY > rect2_BottomY)
+                    || (rect1_BottomY < rect2_TopY)
+            then
+                False
+            else
+                True
+    in
+    if roomCheckIntersectsListRoomFunc newRoom lroomrectangles then
+        ( lroomrectangles, lrandIntsAfterXandY )
+    else
+        ( newRoom :: lroomrectangles, lrandIntsAfterXandY )
+
+
+randomMapGeneratorWithRooms : Int -> Int -> Int -> Int -> Int -> List Int -> List RoomRectangle
+randomMapGeneratorWithRooms totalwidth totalheight maxRooms roomMaxSize roomMinSize lrandomInts =
+    let
+        lroomnrs =
+            List.range 1 maxRooms
+
+        lroomrectanglesRandInts =
+            ( []
+            , lrandomInts
+            )
+
+        new_lroomrectanglesRandInts =
+            List.foldl (\roomnr tupAcc -> randomRoomGenerator totalwidth totalheight roomMaxSize roomMinSize tupAcc) lroomrectanglesRandInts lroomnrs
+    in
+    new_lroomrectanglesRandInts
+        |> Tuple.first
+
+
+roomRectangleToGridFunc : RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+roomRectangleToGridFunc roomrect grid =
+    let
+        left_x =
+            roomrect.x
+
+        right_x =
+            roomrect.x + roomrect.width
+
+        top_y =
+            roomrect.y
+
+        bottom_y =
+            roomrect.y + roomrect.height
+
+        lx =
+            List.range left_x right_x
+
+        ly =
+            List.range top_y bottom_y
+
+        generateTile : Int -> Int -> GameModel.Tile
+        generateTile xval yval =
+            if xval == left_x || xval == right_x || yval == bottom_y || yval == top_y then
+                GameModel.Wall GameModel.defaultWallInfo
+            else
+                GameModel.Floor GameModel.defaultFloorInfo
+
+        --generateTileAndAddItToGrid : Int -> Int -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+        --generateTileAndAddItToGrid xval yval grid =
+        --  generateTile xval yval
+        --      |> (\tile -> Grid.set (Grid.Coordinate xval yval) tile grid)
+        ltiles =
+            List.concatMap (\xval -> List.map (\yval -> ( xval, yval, generateTile xval yval )) ly) lx
+
+        new_grid =
+            ltiles
+                |> List.foldl (\( xval, yval, tile ) gridacc -> Grid.set (Grid.Coordinate xval yval) tile gridacc) grid
+    in
+    new_grid
+
+
+listRoomRectangleToGridFunc : List RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+listRoomRectangleToGridFunc lroomrects grid =
+    List.foldl (\roomrect gridacc -> roomRectangleToGridFunc roomrect gridacc) grid lroomrects
 
 
 

@@ -193,6 +193,47 @@ getRowWithDefault default n grid =
         lrow
 
 
+getSubGrid : Int -> Int -> Int -> Int -> Grid a -> ( Grid a, String )
+getSubGrid minCol maxCol minRow maxRow grid =
+    let
+        grid_nr_rows =
+            List.length (grid |> toList)
+
+        minCol_ =
+            max 0 minCol
+
+        maxCol_ =
+            min maxCol (grid.size.width - 1)
+                |> max minCol_
+
+        minRow_ =
+            max 0 minRow
+
+        maxRow_ =
+            min maxRow (grid.size.height - 1)
+                |> max minRow_
+
+        x_range =
+            List.range minCol_ maxCol_
+
+        therows =
+            List.range minRow_ maxRow_
+                --|> List.map (\v -> getRow (grid_nr_rows - 1 - v) grid)
+                |> List.map (\v -> getRow v grid)
+
+        txtmsg =
+            ("getSubGrid has been called with minCol " ++ toString minCol ++ " , with maxCol " ++ toString maxCol ++ " , with minRow " ++ toString minRow ++ " , with maxRow " ++ toString maxRow)
+                ++ ("getSubGrid has been called with minCol_ " ++ toString minCol_ ++ " , with maxCol_ " ++ toString maxCol_ ++ " , with minRow_ " ++ toString minRow_ ++ " , with maxRow_ " ++ toString maxRow_)
+                ++ (" rows of the subgrid has " ++ toString (List.length therows))
+    in
+    ( List.map (\lrow -> List.drop minCol_ lrow) therows
+        --List.map (\lrow -> List.drop (grid.size.width - (maxCol_ + 1)) lrow) therows
+        |> List.map (\lrow -> List.take (maxCol_ - minCol_ + 1) lrow)
+        |> fromList
+    , txtmsg
+    )
+
+
 
 {-
    getColumn : Int -> Grid a -> Maybe (List a)

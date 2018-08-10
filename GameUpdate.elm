@@ -90,6 +90,7 @@ update msg state =
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
                                 { state | player = move ( x_, y_ ) state player }
+                                    |> checkAndAlterDisplayAnchorIfNecessary
                             else
                                 state
 
@@ -112,9 +113,9 @@ update msg state =
                 newPlayer =
                     { oldPlayer | location = newLocation, placed = True }
             in
-            case GameModel.pathable newLocation state of
+            case GameModel.isModelTileWalkable newLocation state of
                 True ->
-                    ( { state | player = newPlayer }
+                    ( { state | player = newPlayer, x_display_anchor = max 0 (newLocation.x - round (toFloat state.window_width / 2.0)), y_display_anchor = max 0 (newLocation.y - round (toFloat state.window_height / 2)) }
                         |> reveal
                     , Cmd.none
                     )
@@ -146,7 +147,7 @@ update msg state =
                     ( state, Cmd.none )
 
                 Just actualEnemy ->
-                    case GameModel.pathable newLocation state of
+                    case GameModel.isModelTileWalkable newLocation state of
                         True ->
                             ( { state | enemies = GameModel.placeExistingEnemy enemyId newLocation state.enemies }, Cmd.none )
 
@@ -188,6 +189,28 @@ update msg state =
             ( { state | pseudoRandomIntsPool = lints ++ state.pseudoRandomIntsPool }
             , Cmd.none
             )
+
+
+checkAndAlterDisplayAnchorIfNecessary : GameModel.State -> GameModel.State
+checkAndAlterDisplayAnchorIfNecessary state =
+    let
+        newXanchor =
+            if state.player.location.x <= state.x_display_anchor then
+                max 0 (state.x_display_anchor - (state.window_width - 2))
+            else if state.player.location.x >= (state.x_display_anchor + (state.window_width - 1)) then
+                min (state.x_display_anchor + (state.window_width - 2)) (state.total_width - 1)
+            else
+                state.x_display_anchor
+
+        newYanchor =
+            if state.player.location.y <= state.y_display_anchor then
+                max 0 (state.y_display_anchor - (state.window_height - 2))
+            else if state.player.location.y >= (state.y_display_anchor + (state.window_height - 1)) then
+                min (state.y_display_anchor + (state.window_height - 2)) (state.total_height - 1)
+            else
+                state.y_display_anchor
+    in
+    { state | x_display_anchor = newXanchor, y_display_anchor = newYanchor }
 
 
 cmdGetRandomPositionedPlayer : GameModel.Player -> Int -> Int -> Int -> Int -> Cmd Msg
@@ -256,7 +279,7 @@ move ( x, y ) state a =
         initiative =
             a.initiative + 100
     in
-    case GameModel.pathable location state of
+    case GameModel.isModelTileWalkable location state of
         False ->
             a
 
@@ -446,17 +469,45 @@ attackIfClose enemy state =
 reveal : GameModel.State -> GameModel.State
 reveal state =
     let
-        explored =
+        intermediateStateGrid =
             Grid.map
                 (\t ->
-                    if t == GameModel.Visible then
-                        GameModel.Explored
+                    if GameModel.getTileVisibility t == GameModel.Visible then
+                        GameModel.setTileVisibility GameModel.Explored t
                     else
                         t
                 )
-                state.explored
+                state.level
 
-        explored_ =
-            List.foldl (\l explored -> Grid.set l GameModel.Visible explored) explored (GameModel.visible state)
+        intermediateState =
+            { state | level = intermediateStateGrid }
+
+        newState =
+            List.foldl (\loc istate -> GameModel.setModelTileVisibility loc GameModel.Visible istate) intermediateState (GameModel.visible state)
     in
-    { state | explored = explored_ }
+    newState
+
+
+
+{- }
+   -- Right now this just reveals a box around the player
+
+
+   reveal : GameModel.State -> GameModel.State
+   reveal state =
+       let
+           exploredAcc =
+               Grid.map
+                   (\t ->
+                       if t == GameModel.Visible then
+                           GameModel.Explored
+                       else
+                           t
+                   )
+                   state.explored
+
+           explored_ =
+               List.foldl (\l explored -> Grid.set l GameModel.Visible explored) exploredAcc (GameModel.visible state)
+       in
+       { state | explored = explored_ }
+-}

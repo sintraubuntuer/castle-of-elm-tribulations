@@ -2,6 +2,7 @@ module GameView exposing (..)
 
 import Collage exposing (..)
 import Color exposing (..)
+import Debug
 import Dict exposing (Dict)
 import Element exposing (..)
 import GameModel
@@ -13,12 +14,14 @@ import Text
 
 xScale : Int
 xScale =
-    15
+    --15 * 3
+    64
 
 
 yScale : Int
 yScale =
-    20
+    --20 * 3
+    64
 
 
 noForm : Form
@@ -28,22 +31,28 @@ noForm =
 
 floor : Form
 floor =
-    rect (toFloat xScale) (toFloat yScale) |> filled black
+    --rect (toFloat xScale) (toFloat yScale) |> filled black
+    Element.image xScale yScale "img/floor/floor_01.png"
+        |> Collage.toForm
 
 
 floorOverlay : Form
 floorOverlay =
-    guy { avatar = "." |> Text.fromString |> Text.monospace |> Text.color white |> centered } GameModel.Visible
+    --guy { avatar = "." |> Text.fromString |> Text.monospace |> Text.color white |> centered } GameModel.Visible
+    noForm
 
 
 wall : Form
 wall =
-    rect (toFloat xScale) (toFloat yScale) |> filled grey
+    --rect (toFloat xScale) (toFloat yScale) |> filled grey
+    Element.image xScale yScale "img/walls/wall.png"
+        |> Collage.toForm
 
 
 wallOverlay : Form
 wallOverlay =
-    guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } GameModel.Visible
+    --guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } GameModel.Visible
+    noForm
 
 
 door : Form
@@ -89,38 +98,38 @@ halfFog =
 tile : GameModel.Tile -> Form
 tile t =
     case t of
-        GameModel.Floor ->
+        GameModel.Floor floorinfo ->
             floor
 
-        GameModel.Wall ->
+        GameModel.Wall wallinfo ->
             wall
 
-        GameModel.Door ->
+        GameModel.Door doorinfo ->
             door
 
-        GameModel.Acid ->
-            acid
-
         GameModel.NoTileYet ->
+            notileyet
+
+        _ ->
             notileyet
 
 
 tileOverlay : GameModel.Tile -> Form
 tileOverlay t =
     case t of
-        GameModel.Floor ->
+        GameModel.Floor floorinfo ->
             floorOverlay
 
-        GameModel.Wall ->
+        GameModel.Wall wallinfo ->
             wallOverlay
 
-        GameModel.Door ->
+        GameModel.Door doorinfo ->
             doorOverlay
 
-        GameModel.Acid ->
-            acidOverlay
-
         GameModel.NoTileYet ->
+            notileyetOverlay
+
+        _ ->
             notileyetOverlay
 
 
@@ -180,26 +189,45 @@ text =
 mainScreen : GameModel.State -> Element
 mainScreen state =
     let
+        ( subgrid, txtmsg ) =
+            state.level
+                |> Grid.getSubGrid state.x_display_anchor (state.x_display_anchor + state.window_width - 1) state.y_display_anchor (state.y_display_anchor + state.window_height - 1)
+
+        --subgridList =
+        --    subgrid
+        --        |> Grid.toList
+        ( wwidth, wheight ) =
+            --( state.window_width, state.window_height )
+            ( subgrid.size.width, subgrid.size.height )
+
         ( w, h ) =
-            ( state.level.size.width * xScale, state.level.size.height * yScale )
+            ( wwidth * xScale, wheight * yScale )
 
         xOffset : Int -> Float
         xOffset n =
-            (toFloat n - toFloat state.level.size.width / 2) * toFloat xScale
+            (toFloat n - toFloat state.x_display_anchor - toFloat wwidth / 2) * toFloat xScale
 
         yOffset : Int -> Float
         yOffset n =
-            (toFloat n - toFloat state.level.size.height / 2) * toFloat yScale
+            (toFloat n - toFloat state.y_display_anchor - toFloat wheight / 2) * toFloat yScale
+
+        xOffset_for_subgrid : Int -> Float
+        xOffset_for_subgrid n =
+            (toFloat n - toFloat wwidth / 2) * toFloat xScale
+
+        yOffset_for_subgrid : Int -> Float
+        yOffset_for_subgrid n =
+            (toFloat n - toFloat wheight / 2) * toFloat yScale
 
         location : { r | location : GameModel.Location } -> ( Float, Float )
         location r =
             ( xOffset r.location.x, 0 - yOffset (r.location.y + 1) )
 
         mkLayer : List (List a) -> (( Int, List a ) -> List Form) -> Element
-        mkLayer grid mapRow =
+        mkLayer agrid mapRow =
             let
                 rows =
-                    List.map2 (,) (List.reverse (List.range 0 (state.level.size.height - 1))) grid
+                    List.map2 (,) (List.reverse (List.range 0 (wheight - 1))) agrid
 
                 forms =
                     List.concatMap mapRow rows
@@ -210,10 +238,10 @@ mainScreen state =
         row mkTile ( n, tiles ) =
             let
                 tiles_ =
-                    List.map2 (,) (List.range 0 (state.level.size.width - 1)) tiles
+                    List.map2 (,) (List.range 0 (wwidth - 1)) tiles
 
                 makeTile ( n_, t ) =
-                    move ( xOffset n_, yOffset n ) <| mkTile t
+                    move ( xOffset_for_subgrid n_, yOffset_for_subgrid n ) <| mkTile t
             in
             List.map makeTile tiles_
 
@@ -223,69 +251,86 @@ mainScreen state =
         enemy_ =
             let
                 mkEnemy enid enemy =
-                    guy enemy (GameModel.visibility state enemy.location)
+                    --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
+                    guy enemy (GameModel.getGridTileVisibility enemy.location state.level)
                         |> move (location enemy)
             in
             group <| (Dict.map mkEnemy state.enemies |> Dict.values)
 
-        grid =
-            Grid.toList state.level
-
+        --grid =
+        --Grid.toList state.level
+        bg : Element
         bg =
-            background state.level
+            --background state.level state
+            --background subgrid state
+            layers [ mkLayer (Grid.toList subgrid) (row tile), mkLayer (Grid.toList subgrid) (row tileOverlay) ]
 
         pg =
             collage (w + xScale) (h + yScale) [ player_, enemy_ ]
 
+        visibilitySubGrid =
+            Grid.map (\t -> GameModel.getTileVisibility t) subgrid
+
         fogger =
-            mkLayer (Grid.toList state.explored) (row fogT)
+            mkLayer (Grid.toList visibilitySubGrid) (row fogT)
     in
     flow down
         [ layers [ bg, pg, fogger ]
+
+        --layers [ bg, pg ]
         , flow down <| List.map text (List.take 3 state.log)
         ]
 
 
-background : Grid.Grid GameModel.Tile -> Element
-background level =
-    let
-        grid =
-            Grid.toList level
 
-        ( w, h ) =
-            ( level.size.width * xScale, level.size.height * yScale )
+{-
+   background : Grid.Grid GameModel.Tile -> GameModel.State -> Element
+   background subgrid state =
+       let
+           grid =
+               subgrid
+                   |> Grid.toList
 
-        xOffset : Int -> Float
-        xOffset n =
-            (toFloat n - toFloat level.size.width / 2) * toFloat xScale
+           ( wwidth, wheight ) =
+               --( state.window_width, state.window_height )
+               ( subgrid.size.width, subgrid.size.height )
 
-        yOffset : Int -> Float
-        yOffset n =
-            (toFloat n - toFloat level.size.height / 2) * toFloat yScale
+           ( w, h ) =
+               ( wwidth * xScale, wheight * yScale )
 
-        mkLayer : List (List a) -> (( Int, List a ) -> List Form) -> Element
-        mkLayer grid mapRow =
-            let
-                rows =
-                    List.map2 (,) (List.reverse (List.range 0 (level.size.height - 1))) grid
+           xOffset : Int -> Float
+           xOffset n =
+               (toFloat n - toFloat wwidth / 2) * toFloat xScale
 
-                forms =
-                    List.concatMap mapRow rows
-            in
-            collage (w + xScale) (h + yScale) forms
+           yOffset : Int -> Float
+           yOffset n =
+               (toFloat n - toFloat wheight / 2) * toFloat yScale
 
-        row : (a -> Form) -> ( Int, List a ) -> List Form
-        row mkTile ( n, tiles ) =
-            let
-                tiles_ =
-                    List.map2 (,) (List.range 0 (level.size.width - 1)) tiles
+           mkLayer : List (List a) -> (( Int, List a ) -> List Form) -> Element
+           mkLayer grid mapRow =
+               let
+                   rows =
+                       List.map2 (,) (List.reverse (List.range 0 (wheight - 1))) grid
 
-                makeTile ( n_, t ) =
-                    move ( xOffset n_, yOffset n ) <| mkTile t
-            in
-            List.map makeTile tiles_
-    in
-    layers [ mkLayer grid (row tile), mkLayer grid (row tileOverlay) ]
+                   forms =
+                       List.concatMap mapRow rows
+               in
+               collage (w + xScale) (h + yScale) forms
+
+           row : (a -> Form) -> ( Int, List a ) -> List Form
+           row mkTile ( n, tiles ) =
+               let
+                   tiles_ =
+                       List.map2 (,) (List.range 0 (wwidth - 1)) tiles
+
+                   makeTile ( n_, t ) =
+                       move ( xOffset n_, yOffset n ) <| mkTile t
+               in
+               List.map makeTile tiles_
+       in
+       layers [ mkLayer grid (row tile), mkLayer grid (row tileOverlay) ]
+
+-}
 
 
 sidebar : GameModel.State -> Element
@@ -331,9 +376,23 @@ gridToHtmlList grid =
     List.map (\astr -> Html.h1 [] [ Html.text astr ]) lofstrs
 
 
-viewDebugGrid : Grid.Grid a -> List (Html msg)
-viewDebugGrid grid =
-    gridToHtmlList grid
+viewDebugGrid : Grid.Grid a -> GameModel.State -> List (Html msg)
+viewDebugGrid grid state =
+    let
+        _ =
+            Debug.log "viewDebugGrid has been called "
+
+        ( subgrid, txtmsg ) =
+            grid
+                |> Grid.getSubGrid state.x_display_anchor (state.x_display_anchor + state.window_width - 1) state.y_display_anchor (state.y_display_anchor + state.window_height - 1)
+    in
+    [ Html.div []
+        ([ Html.h1 [] [ Html.text ("viewDebugGrid has been called with : " ++ txtmsg) ] ]
+            ++ (subgrid
+                    |> gridToHtmlList
+               )
+        )
+    ]
 
 
 viewDebugPlayer : GameModel.State -> Html msg
@@ -379,7 +438,7 @@ view model =
         ([ display model
             |> Element.toHtml
          ]
-         --  ++ [ viewDebugPlayer model ]
-         --  ++ viewDebugEnemies model
-         --++ viewDebugGrid model.level
+            ++ [ viewDebugPlayer model ]
+            --  ++ viewDebugEnemies model
+            ++ viewDebugGrid model.level model
         )

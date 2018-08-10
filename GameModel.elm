@@ -21,6 +21,12 @@ type alias State =
     , explored : Grid.Grid Visibility
     , log : List String
     , pseudoRandomIntsPool : List Int
+    , x_display_anchor : Int
+    , y_display_anchor : Int
+    , window_width : Int
+    , window_height : Int
+    , total_width : Int
+    , total_height : Int
     }
 
 
@@ -63,12 +69,138 @@ type alias Location =
     Grid.Coordinate
 
 
+tupleIntsToLocation : ( Int, Int ) -> Location
+tupleIntsToLocation ( x, y ) =
+    Grid.Coordinate x y
+
+
+tupleFloatsToLocation : ( Float, Float ) -> Location
+tupleFloatsToLocation ( x, y ) =
+    Grid.Coordinate (round x) (round y)
+
+
+type alias Size =
+    Int
+
+
+type Item
+    = Chest Size
+    | Skull
+    | Key
+    | Money
+    | Box
+
+
+type alias FloorInfo =
+    { items : List Item
+    , isTransparent : Bool
+    , isWalkable : Bool
+    , isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+defaultFloorInfo : FloorInfo
+defaultFloorInfo =
+    { items = [], isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored }
+
+
+type alias WallInfo =
+    { isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+defaultWallInfo : WallInfo
+defaultWallInfo =
+    { isExplored = False, visibility = Unexplored }
+
+
+type alias DoorInfo =
+    { isOpen : Bool
+    , isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+defaultDoorInfo : DoorInfo
+defaultDoorInfo =
+    { isOpen = False, isExplored = False, visibility = Unexplored }
+
+
+type alias LeverInfo =
+    { isUp : Bool
+    , isTransparent : Bool
+    , isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+defaultLeverInfo : LeverInfo
+defaultLeverInfo =
+    { isUp = False, isTransparent = False, isExplored = False, visibility = Unexplored }
+
+
+type alias FlagInfo =
+    { condition : FlagCondition
+    , isTransparent : Bool
+    , isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+defaultFlagInfo : FlagInfo
+defaultFlagInfo =
+    { condition = Fine, isTransparent = False, isExplored = False, visibility = Unexplored }
+
+
+type FlagCondition
+    = Ruined
+    | Fine
+
+
+type alias ColumnInfo =
+    { isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+defaultColumnInfo : ColumnInfo
+defaultColumnInfo =
+    { isExplored = False, visibility = Unexplored }
+
+
+type alias WaterInfo =
+    { isTransparent : Bool
+    , isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+defaultWaterInfo : WaterInfo
+defaultWaterInfo =
+    { isTransparent = False, isExplored = False, visibility = Unexplored }
+
+
 type Tile
-    = Floor
-    | Wall
-    | Door
-    | Acid
+    = Floor FloorInfo
+    | Wall WallInfo
+    | WallOver WallOverInfo
+    | Door DoorInfo
+    | Lever LeverInfo
+    | Flag FlagInfo
+    | Column ColumnInfo
+    | Water WaterInfo
     | NoTileYet
+
+
+type WallJunction
+    = Flat
+    | Empty
+
+
+type alias WallOverInfo =
+    { r : WallJunction, l : WallJunction, u : WallJunction, d : WallJunction, isExplored : Bool, visibility : Visibility }
 
 
 type Visibility
@@ -132,24 +264,259 @@ validLocation location state =
     Grid.inGrid location state.level
 
 
-pathable : Location -> State -> Bool
-pathable location state =
-    let
-        level =
-            state.level
-
-        tile =
-            Grid.get location level
-    in
+isTileWalkable : Tile -> Bool
+isTileWalkable tile =
     case tile of
+        Floor floorinfo ->
+            if floorinfo.isWalkable then
+                True
+            else
+                False
+
+        Wall wInfo ->
+            False
+
+        WallOver wOverInfo ->
+            False
+
+        Door doorinfo ->
+            if doorinfo.isOpen then
+                True
+            else
+                False
+
+        Lever leverInfo ->
+            False
+
+        Flag flagInfo ->
+            False
+
+        Column columnInfo ->
+            False
+
+        Water waterInfo ->
+            False
+
+        NoTileYet ->
+            False
+
+
+isModelTileWalkable : Location -> State -> Bool
+isModelTileWalkable location state =
+    Grid.get location state.level
+        |> Maybe.map isTileWalkable
+        |> Maybe.withDefault False
+
+
+isTileTransparent : Tile -> Bool
+isTileTransparent tile =
+    case tile of
+        Floor floorinfo ->
+            floorinfo.isTransparent
+
+        Wall wInfo ->
+            False
+
+        WallOver wOverInfo ->
+            False
+
+        Door doorinfo ->
+            doorinfo.isOpen
+
+        Lever leverInfo ->
+            leverInfo.isTransparent
+
+        Flag flagInfo ->
+            flagInfo.isTransparent
+
+        Column columnInfo ->
+            False
+
+        Water waterInfo ->
+            waterInfo.isTransparent
+
+        NoTileYet ->
+            False
+
+
+isModelTileTransparent : Location -> State -> Bool
+isModelTileTransparent location state =
+    Grid.get location state.level
+        |> Maybe.map isTileTransparent
+        |> Maybe.withDefault False
+
+
+isTileExplored : Tile -> Bool
+isTileExplored tile =
+    case tile of
+        Floor floorinfo ->
+            floorinfo.isExplored
+
+        Wall wInfo ->
+            wInfo.isExplored
+
+        WallOver wOverInfo ->
+            wOverInfo.isExplored
+
+        Door doorinfo ->
+            doorinfo.isExplored
+
+        Lever leverInfo ->
+            leverInfo.isExplored
+
+        Flag flagInfo ->
+            flagInfo.isExplored
+
+        Column columnInfo ->
+            columnInfo.isExplored
+
+        Water waterInfo ->
+            waterInfo.isExplored
+
+        NoTileYet ->
+            False
+
+
+isModelTileExplored : Location -> State -> Bool
+isModelTileExplored location state =
+    Grid.get location state.level
+        |> Maybe.map isTileExplored
+        |> Maybe.withDefault False
+
+
+setTileAsExplored : Tile -> Tile
+setTileAsExplored tile =
+    case tile of
+        Floor floorinfo ->
+            Floor { floorinfo | isExplored = True }
+
+        Wall wallinfo ->
+            Wall { wallinfo | isExplored = True }
+
+        WallOver wOverInfo ->
+            WallOver { wOverInfo | isExplored = True }
+
+        Door doorinfo ->
+            Door { doorinfo | isExplored = True }
+
+        Lever leverinfo ->
+            Lever { leverinfo | isExplored = True }
+
+        Flag flagInfo ->
+            Flag { flagInfo | isExplored = True }
+
+        Column columnInfo ->
+            Column { columnInfo | isExplored = True }
+
+        Water waterinfo ->
+            Water { waterinfo | isExplored = True }
+
+        NoTileYet ->
+            NoTileYet
+
+
+setModelTileAsExplored : Location -> State -> State
+setModelTileAsExplored location state =
+    case Grid.get location state.level of
         Nothing ->
-            False
+            state
 
-        Just Floor ->
-            True
+        Just tile ->
+            let
+                newTile =
+                    setTileAsExplored tile
+            in
+            { state | level = Grid.set location newTile state.level }
 
-        Just _ ->
-            False
+
+getTileVisibility : Tile -> Visibility
+getTileVisibility tile =
+    case tile of
+        Floor floorinfo ->
+            floorinfo.visibility
+
+        Wall wInfo ->
+            wInfo.visibility
+
+        WallOver wOverInfo ->
+            wOverInfo.visibility
+
+        Door doorinfo ->
+            doorinfo.visibility
+
+        Lever leverInfo ->
+            leverInfo.visibility
+
+        Flag flagInfo ->
+            flagInfo.visibility
+
+        Column columnInfo ->
+            columnInfo.visibility
+
+        Water waterInfo ->
+            waterInfo.visibility
+
+        NoTileYet ->
+            Unexplored
+
+
+getGridTileVisibility : Location -> Grid.Grid Tile -> Visibility
+getGridTileVisibility location gridtiles =
+    Grid.get location gridtiles
+        |> Maybe.map getTileVisibility
+        |> Maybe.withDefault Unexplored
+
+
+getModelTileVisibility : Location -> State -> Visibility
+getModelTileVisibility location state =
+    Grid.get location state.level
+        |> Maybe.map getTileVisibility
+        |> Maybe.withDefault Unexplored
+
+
+setTileVisibility : Visibility -> Tile -> Tile
+setTileVisibility visibility_ tile =
+    case tile of
+        Floor floorinfo ->
+            Floor { floorinfo | visibility = visibility_ }
+
+        Wall wInfo ->
+            Wall { wInfo | visibility = visibility_ }
+
+        WallOver wOverInfo ->
+            WallOver { wOverInfo | visibility = visibility_ }
+
+        Door doorinfo ->
+            Door { doorinfo | visibility = visibility_ }
+
+        Lever leverInfo ->
+            Lever { leverInfo | visibility = visibility_ }
+
+        Flag flagInfo ->
+            Flag { flagInfo | visibility = visibility_ }
+
+        Column columnInfo ->
+            Column { columnInfo | visibility = visibility_ }
+
+        Water waterInfo ->
+            Water { waterInfo | visibility = visibility_ }
+
+        NoTileYet ->
+            NoTileYet
+
+
+setModelTileVisibility : Location -> Visibility -> State -> State
+setModelTileVisibility location visibility_ state =
+    case Grid.get location state.level of
+        Nothing ->
+            state
+
+        Just tile ->
+            let
+                newTile =
+                    setTileVisibility visibility_ tile
+            in
+            { state | level = Grid.set location newTile state.level }
 
 
 
@@ -232,29 +599,33 @@ showTile tile =
     let
         c =
             case tile of
-                Floor ->
+                Floor floorinfo ->
                     " "
 
-                Wall ->
+                Wall winfo ->
                     "#"
 
-                Door ->
-                    "+"
+                WallOver wj ->
+                    "#"
 
-                Acid ->
-                    "~"
+                Door doorinfo ->
+                    "+"
 
                 NoTileYet ->
                     "n"
+
+                _ ->
+                    "na"
     in
     Element.centered << Text.monospace << Text.fromString <| c
 
 
 visible : State -> List Location
 visible state =
-    Grid.neighborhoodCalc 2 state.player.location
+    Grid.neighborhoodCalc 4 state.player.location
 
 
 visibility : State -> Location -> Visibility
 visibility state location =
-    Grid.getWithDefault Unexplored location state.explored
+    --Grid.getWithDefault Unexplored location state.explored
+    getModelTileVisibility location state
