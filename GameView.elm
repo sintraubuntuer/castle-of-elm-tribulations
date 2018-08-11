@@ -439,6 +439,6 @@ view model =
             |> Element.toHtml
          ]
             ++ [ viewDebugPlayer model ]
-            --  ++ viewDebugEnemies model
-            ++ viewDebugGrid model.level model
+         --  ++ viewDebugEnemies model
+         --  ++ viewDebugGrid model.level model
         )

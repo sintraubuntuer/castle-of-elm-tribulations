@@ -29,6 +29,7 @@ type Msg
     | NewRandomFloatsForGenCave (List Float)
     | RandomInitiativeValue String (Maybe GameModel.EnemyId) Int
     | NewRandomIntsAddToPool (List Int)
+    | NewRandomIntsAddToPoolAndGenerateRandomMap (List Int)
 
 
 update : Msg -> GameModel.State -> ( GameModel.State, Cmd Msg )
@@ -190,6 +191,16 @@ update msg state =
             , Cmd.none
             )
 
+        NewRandomIntsAddToPoolAndGenerateRandomMap lints ->
+            let
+                ( newGrid, lrectangles, ltunnelrectangles, unused_prand_lints ) =
+                    MapGen.randomMapGeneratorWithRooms state.total_width state.total_height state.roomsInfo.maxNrOfRooms state.roomsInfo.maxRoomSize state.roomsInfo.minRoomSize lints state.level
+
+                newstate =
+                    { state | level = newGrid, pseudoRandomIntsPool = unused_prand_lints }
+            in
+            ( newstate, cmdFillRandomIntsPool newstate )
+
 
 checkAndAlterDisplayAnchorIfNecessary : GameModel.State -> GameModel.State
 checkAndAlterDisplayAnchorIfNecessary state =
@@ -238,12 +249,24 @@ cmdFillRandomIntsPool : GameModel.State -> Cmd Msg
 cmdFillRandomIntsPool state =
     let
         nrToAdd =
-            100 - List.length state.pseudoRandomIntsPool
+            500 - List.length state.pseudoRandomIntsPool
     in
     if nrToAdd > 0 then
         Random.generate NewRandomIntsAddToPool (Random.list nrToAdd (Random.int 1 100))
     else
         Cmd.none
+
+
+cmdFillRandomIntsPoolAndGenerateRandomMap : GameModel.State -> Cmd Msg
+cmdFillRandomIntsPoolAndGenerateRandomMap state =
+    let
+        nrToAdd =
+            500 - List.length state.pseudoRandomIntsPool
+    in
+    if nrToAdd > 0 then
+        Random.generate NewRandomIntsAddToPoolAndGenerateRandomMap (Random.list nrToAdd (Random.int 1 100))
+    else
+        Random.generate NewRandomIntsAddToPoolAndGenerateRandomMap (Random.list 1 (Random.int 1 100))
 
 
 randIntList : Random.Generator (List Int)

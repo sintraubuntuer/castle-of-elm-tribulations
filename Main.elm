@@ -29,7 +29,7 @@ seed =
 
 dimensions : ( Int, Int )
 dimensions =
-    ( 30, 20 )
+    ( 80, 60 )
 
 
 
@@ -132,6 +132,9 @@ initialState =
             -- MapGen.randomCave dimensions
             Grid.initialize { width = w, height = h } GameModel.NoTileYet
 
+        roomsInfo =
+            GameModel.RoomsInfo [] 20 13 8
+
         firstExplored =
             setAllAsUnexplored firstMap
     in
@@ -152,6 +155,7 @@ initialState =
         12
         (Tuple.first dimensions)
         (Tuple.second dimensions)
+        roomsInfo
 
 
 subscriptions : GameModel.State -> Sub GameUpdate.Msg
@@ -217,10 +221,11 @@ init =
     in
     ( initState
     , Cmd.batch
-        ([ GameUpdate.cmdGenFloatsForRandomCave w h
-         , GameUpdate.cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
-         , GameUpdate.cmdFillRandomIntsPool initState
+        ([ -- GameUpdate.cmdGenFloatsForRandomCave w h
+           --, GameUpdate.cmdFillRandomIntsPool initState
+           GameUpdate.cmdFillRandomIntsPoolAndGenerateRandomMap initState
          , GameUpdate.cmdGenerateRandomInitiativeValue "player" Nothing 1 100
+         , GameUpdate.cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
          ]
             ++ (Dict.map (\enid enemy -> GameUpdate.cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initState.enemies
                     |> Dict.values

@@ -27,7 +27,62 @@ type alias State =
     , window_height : Int
     , total_width : Int
     , total_height : Int
+    , roomsInfo : RoomsInfo
     }
+
+
+type alias RoomRectangle =
+    { top_left_x : Int
+    , top_left_y : Int
+    , width : Int
+    , height : Int
+    }
+
+
+type alias TunnelRectangle =
+    { top_left_x : Int
+    , top_left_y : Int
+    , width : Int
+    , height : Int
+    }
+
+
+getRoomCenterX : RoomRectangle -> Int
+getRoomCenterX roomrectangle =
+    roomrectangle.top_left_x + round (toFloat roomrectangle.width / 2.0)
+
+
+getRoomRightX : RoomRectangle -> Int
+getRoomRightX roomrectangle =
+    roomrectangle.top_left_x + roomrectangle.width - 1
+
+
+getRoomCenterY : RoomRectangle -> Int
+getRoomCenterY roomrectangle =
+    roomrectangle.top_left_y + round (toFloat roomrectangle.height / 2.0)
+
+
+getRoomBottomY : RoomRectangle -> Int
+getRoomBottomY roomrectangle =
+    roomrectangle.top_left_y + roomrectangle.height - 1
+
+
+getRoomTopY : RoomRectangle -> Int
+getRoomTopY roomrectangle =
+    roomrectangle.top_left_y
+
+
+type alias RoomsInfo =
+    { roomRectangles : List RoomRectangle
+    , maxNrOfRooms : Int
+    , maxRoomSize : Int
+    , minRoomSize : Int
+    }
+
+
+
+-- RoomsInfo [] 20 13 8
+-- 20 13 8
 
 
 type alias Player =
