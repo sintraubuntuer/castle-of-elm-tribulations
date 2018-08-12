@@ -65,6 +65,19 @@ doorOverlay =
     noForm
 
 
+lever : String -> Form
+lever onOffStr =
+    let
+        fileStr =
+            if onOffStr == "on" || onOffStr == "On" || onOffStr == "ON" then
+                "img/levers/lever_color_on.png"
+            else
+                "img/levers/lever_color_off.png"
+    in
+    Element.image xScale yScale fileStr
+        |> Collage.toForm
+
+
 acid : Form
 acid =
     rect (toFloat xScale) (toFloat yScale) |> filled darkGreen
@@ -109,6 +122,12 @@ tile t =
 
         GameModel.NoTileYet ->
             notileyet
+
+        GameModel.Lever leverinfo ->
+            if leverinfo.isUp then
+                lever "on"
+            else
+                lever "off"
 
         _ ->
             notileyet

@@ -264,13 +264,19 @@ randomMapGeneratorWithRooms totalwidth totalheight maxRooms roomMaxSize roomMinS
 
         newnewgrid =
             --fillTunnelSidesWithWalls newGrid ltunnelrectangles
-            createWallBoundary newGrid
+            --createWallBoundary newGrid
+            newGrid
+                |> installLeverNearCornerRoom1 lroomrectangles
+                --|> fillTunnelSidesWithWalls ltunnelrectangles Nothing
+                --|> fillTunnelSidesWithWalls lroomrectangles (Just "horizontal")
+                --|> fillTunnelSidesWithWalls lroomrectangles (Just "vertical")
+                |> createWallBoundaries (lroomrectangles ++ ltunnelrectangles)
     in
     ( newnewgrid, lroomrectangles, ltunnelrectangles, lunusedrandints )
 
 
-fillTunnelSidesWithWalls : Grid.Grid GameModel.Tile -> List GameModel.TunnelRectangle -> Grid.Grid GameModel.Tile
-fillTunnelSidesWithWalls grid ltunnelrectangles =
+fillTunnelSidesWithWalls : List GameModel.TunnelRectangle -> Maybe String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+fillTunnelSidesWithWalls ltunnelrectangles mbHorizontalOrVerticalStr grid =
     let
         checkAndFillNeighbours : List Grid.Coordinate -> String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
         checkAndFillNeighbours ltunnelcellcoords strHorizontalOrVertical grid =
@@ -313,7 +319,90 @@ fillTunnelSidesWithWalls grid ltunnelrectangles =
             else
                 "vertical"
     in
-    List.foldl (\tunnel gridacc -> checkAndFillNeighbours (getTunnelCellCoords tunnel) (getHorizontalOrVertical tunnel) gridacc) grid ltunnelrectangles
+    case mbHorizontalOrVerticalStr of
+        Nothing ->
+            List.foldl (\tunnel gridacc -> checkAndFillNeighbours (getTunnelCellCoords tunnel) (getHorizontalOrVertical tunnel) gridacc) grid ltunnelrectangles
+
+        Just horizontalOrVerticalStr ->
+            List.foldl (\tunnel gridacc -> checkAndFillNeighbours (getTunnelCellCoords tunnel) horizontalOrVerticalStr gridacc) grid ltunnelrectangles
+
+
+installLeverNearCornerRoom1 : List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+installLeverNearCornerRoom1 lroomrectangles grid =
+    let
+        mbXYpos =
+            case lroomrectangles |> List.head of
+                Nothing ->
+                    Nothing
+
+                Just rrect ->
+                    Just ( rrect.top_left_x + rrect.width - 1, rrect.top_left_y + rrect.height - 1 )
+    in
+    case mbXYpos of
+        Nothing ->
+            grid
+
+        Just ( x, y ) ->
+            Grid.set (Grid.Coordinate x y) (GameModel.Lever GameModel.defaultLeverInfo) grid
+
+
+determineRectangularRegionBoundaries : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> String -> List Grid.Coordinate
+determineRectangularRegionBoundaries rrect topBotLeftRightStr =
+    if topBotLeftRightStr == "top" then
+        List.range rrect.top_left_x (rrect.top_left_x + rrect.width - 1)
+            |> List.map (\x -> Grid.Coordinate x rrect.top_left_y)
+    else if topBotLeftRightStr == "top-1" then
+        List.range rrect.top_left_x (rrect.top_left_x + rrect.width - 1)
+            |> List.map (\x -> Grid.Coordinate x (rrect.top_left_y - 1))
+    else if topBotLeftRightStr == "bottom" then
+        List.range rrect.top_left_x (rrect.top_left_x + rrect.width - 1)
+            |> List.map (\x -> Grid.Coordinate x (rrect.top_left_y + rrect.height - 1))
+    else if topBotLeftRightStr == "bottom+1" then
+        List.range rrect.top_left_x (rrect.top_left_x + rrect.width - 1)
+            |> List.map (\x -> Grid.Coordinate x (rrect.top_left_y + rrect.height - 1 + 1))
+    else if topBotLeftRightStr == "left" then
+        List.range rrect.top_left_y (rrect.top_left_y + rrect.height - 1)
+            |> List.map (\y -> Grid.Coordinate rrect.top_left_x y)
+    else if topBotLeftRightStr == "left-1" then
+        List.range rrect.top_left_y (rrect.top_left_y + rrect.height - 1)
+            |> List.map (\y -> Grid.Coordinate (rrect.top_left_x - 1) y)
+    else if topBotLeftRightStr == "right" then
+        List.range rrect.top_left_y (rrect.top_left_y + rrect.height - 1)
+            |> List.map (\y -> Grid.Coordinate (rrect.top_left_x + rrect.width - 1) y)
+    else if topBotLeftRightStr == "right+1" then
+        List.range rrect.top_left_y (rrect.top_left_y + rrect.height - 1)
+            |> List.map (\y -> Grid.Coordinate (rrect.top_left_x + rrect.width - 1 + 1) y)
+    else
+        []
+
+
+determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect topBotLeftRightStr grid =
+    let
+        lcoords =
+            determineRectangularRegionBoundaries rrect topBotLeftRightStr
+    in
+    List.foldl
+        (\cellcoords gridacc ->
+            if Grid.get cellcoords gridacc == Just GameModel.NoTileYet then
+                Grid.set cellcoords (GameModel.Wall GameModel.defaultWallInfo) gridacc
+            else
+                gridacc
+        )
+        grid
+        lcoords
+
+
+createWallBoundaries : List { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+createWallBoundaries lrrect grid =
+    let
+        fillBoundariesIfNecessary rrect grid_ =
+            determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "top-1" grid_
+                |> determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "bottom+1"
+                |> determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "left-1"
+                |> determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "right+1"
+    in
+    List.foldl (\rrect gridacc -> fillBoundariesIfNecessary rrect gridacc) grid lrrect
 
 
 createWallBoundary : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
