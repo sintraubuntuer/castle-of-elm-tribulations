@@ -57,6 +57,11 @@ getRoomRightX roomrectangle =
     roomrectangle.top_left_x + roomrectangle.width - 1
 
 
+getRoomLeftX : RoomRectangle -> Int
+getRoomLeftX roomrectangle =
+    roomrectangle.top_left_x
+
+
 getRoomCenterY : RoomRectangle -> Int
 getRoomCenterY roomrectangle =
     roomrectangle.top_left_y + round (toFloat roomrectangle.height / 2.0)
@@ -317,6 +322,48 @@ location =
 validLocation : Location -> State -> Bool
 validLocation location state =
     Grid.inGrid location state.level
+
+
+isFloor : Tile -> Bool
+isFloor tile =
+    case tile of
+        Floor _ ->
+            True
+
+        _ ->
+            False
+
+
+isWall : Tile -> Bool
+isWall tile =
+    case tile of
+        Wall _ ->
+            True
+
+        _ ->
+            False
+
+
+isNoTileYet : Tile -> Bool
+isNoTileYet tile =
+    case tile of
+        NoTileYet ->
+            True
+
+        _ ->
+            False
+
+
+
+--  = Floor FloorInfo
+--  | Wall WallInfo
+--  | WallOver WallOverInfo
+--  | Door DoorInfo
+--  | Lever LeverInfo
+--  | Flag FlagInfo
+--  | Column ColumnInfo
+--  | Water WaterInfo
+--  | NoTileYet
 
 
 isTileWalkable : Tile -> Bool
@@ -677,7 +724,7 @@ showTile tile =
 
 visible : State -> List Location
 visible state =
-    Grid.neighborhoodCalc 4 state.player.location
+    Grid.neighborhoodCalc 10 state.player.location
 
 
 visibility : State -> Location -> Visibility

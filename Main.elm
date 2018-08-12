@@ -133,7 +133,7 @@ initialState =
             Grid.initialize { width = w, height = h } GameModel.NoTileYet
 
         roomsInfo =
-            GameModel.RoomsInfo [] 20 13 8
+            GameModel.RoomsInfo [] 20 12 7
 
         firstExplored =
             setAllAsUnexplored firstMap
@@ -151,8 +151,8 @@ initialState =
         []
         3
         3
-        12
-        12
+        15
+        15
         (Tuple.first dimensions)
         (Tuple.second dimensions)
         roomsInfo

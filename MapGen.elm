@@ -263,7 +263,8 @@ randomMapGeneratorWithRooms totalwidth totalheight maxRooms roomMaxSize roomMinS
                 |> createHorizontalAndVerticalTunnels unused_lrandomints lroomrectangles
 
         newnewgrid =
-            fillTunnelSidesWithWalls newGrid ltunnelrectangles
+            --fillTunnelSidesWithWalls newGrid ltunnelrectangles
+            createWallBoundary newGrid
     in
     ( newnewgrid, lroomrectangles, ltunnelrectangles, lunusedrandints )
 
@@ -315,7 +316,65 @@ fillTunnelSidesWithWalls grid ltunnelrectangles =
     List.foldl (\tunnel gridacc -> checkAndFillNeighbours (getTunnelCellCoords tunnel) (getHorizontalOrVertical tunnel) gridacc) grid ltunnelrectangles
 
 
-cellBelongsToMoreThanARectRegion : Grid.Coordinate -> List GameModel.RoomRectangle -> Bool
+createWallBoundary : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+createWallBoundary grid =
+    let
+        fillBoundary : Grid.Coordinate -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+        fillBoundary coord grid_ =
+            let
+                current_tile =
+                    Grid.get coord grid_
+                        |> Maybe.withDefault GameModel.NoTileYet
+
+                left_neighbour_tile =
+                    Grid.get (Grid.Coordinate (coord.x - 1) coord.y) grid_
+                        |> Maybe.withDefault GameModel.NoTileYet
+
+                right_neighbour_tile =
+                    Grid.get (Grid.Coordinate (coord.x + 1) coord.y) grid_
+                        |> Maybe.withDefault GameModel.NoTileYet
+
+                top_neighbour_tile =
+                    Grid.get (Grid.Coordinate coord.x (coord.y - 1)) grid_
+                        |> Maybe.withDefault GameModel.NoTileYet
+
+                bottom_neighbour_tile =
+                    Grid.get (Grid.Coordinate coord.x (coord.y + 1)) grid_
+                        |> Maybe.withDefault GameModel.NoTileYet
+            in
+            if GameModel.isNoTileYet current_tile then
+                if
+                    (GameModel.isNoTileYet left_neighbour_tile && GameModel.isFloor right_neighbour_tile)
+                        || (GameModel.isNoTileYet right_neighbour_tile && GameModel.isFloor left_neighbour_tile)
+                        || (GameModel.isNoTileYet top_neighbour_tile && GameModel.isFloor bottom_neighbour_tile)
+                        || (GameModel.isNoTileYet bottom_neighbour_tile && GameModel.isFloor top_neighbour_tile)
+                        || (GameModel.isFloor top_neighbour_tile && GameModel.isFloor bottom_neighbour_tile)
+                        || (GameModel.isFloor left_neighbour_tile && GameModel.isFloor right_neighbour_tile)
+                        || (GameModel.isWall top_neighbour_tile && GameModel.isFloor bottom_neighbour_tile)
+                        || (GameModel.isFloor top_neighbour_tile && GameModel.isWall bottom_neighbour_tile)
+                then
+                    Grid.set coord (GameModel.Wall GameModel.defaultWallInfo) grid_
+                else
+                    grid_
+            else
+                grid_
+
+        x_range =
+            List.range 0 (grid.size.width - 1)
+
+        y_range =
+            List.range 0 (grid.size.height - 1)
+
+        lcoords =
+            List.concatMap (\x -> List.map (\y -> Grid.Coordinate x y) y_range) x_range
+
+        final_grid =
+            List.foldl (\coord gridacc -> fillBoundary coord gridacc) grid lcoords
+    in
+    final_grid
+
+
+cellBelongsToMoreThanARectRegion : Grid.Coordinate -> List { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Bool
 cellBelongsToMoreThanARectRegion coord lrects =
     -- used to test if a cell belonging to a tunnel also is part of another tunnel or room
     let
@@ -331,7 +390,7 @@ cellBelongsToMoreThanARectRegion coord lrects =
         False
 
 
-cellBelongsToARectRegion : Grid.Coordinate -> List GameModel.RoomRectangle -> Bool
+cellBelongsToARectRegion : Grid.Coordinate -> List { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Bool
 cellBelongsToARectRegion coord lrects =
     let
         coordBelongsTorectRegion coord rrect =
@@ -365,7 +424,8 @@ createHorizontalAndVerticalTunnels lrandomints lroomrectangles grid =
                     List.head lrints |> Maybe.withDefault 1
 
                 ( mbnewTunnel1, mbnewTunnel2 ) =
-                    if newRandom < 50 then
+                    if newRandom < 150 then
+                        --createMbHorizontalAndMbVerticalTunnels roomrect1 roomrect2
                         ( mbCreateHorizontalTunnel roomrect1 roomrect2
                         , mbCreateVerticalTunnel roomrect2 roomrect1
                         )
@@ -397,6 +457,71 @@ addMbElemToList mba la =
 
         Just a ->
             a :: la
+
+
+createMbHorizontalAndMbVerticalTunnels : GameModel.RoomRectangle -> GameModel.RoomRectangle -> ( Maybe GameModel.TunnelRectangle, Maybe GameModel.TunnelRectangle )
+createMbHorizontalAndMbVerticalTunnels roomrect1 roomrect2 =
+    let
+        horizontal_y =
+            GameModel.getRoomCenterY roomrect1
+
+        ( horizontal_start_x, horizontal_end_x, horizontal_tunnel_length_ ) =
+            if GameModel.getRoomRightX roomrect1 <= GameModel.getRoomLeftX roomrect2 then
+                ( GameModel.getRoomRightX roomrect1, GameModel.getRoomLeftX roomrect2, GameModel.getRoomLeftX roomrect2 - GameModel.getRoomRightX roomrect1 )
+            else if GameModel.getRoomRightX roomrect1 > GameModel.getRoomLeftX roomrect2 && GameModel.getRoomRightX roomrect1 <= GameModel.getRoomCenterX roomrect2 then
+                ( GameModel.getRoomRightX roomrect1, GameModel.getRoomCenterX roomrect2, GameModel.getRoomCenterX roomrect2 - GameModel.getRoomRightX roomrect1 )
+            else if GameModel.getRoomRightX roomrect1 > GameModel.getRoomCenterX roomrect2 && GameModel.getRoomLeftX roomrect1 <= GameModel.getRoomCenterX roomrect2 then
+                ( GameModel.getRoomCenterX roomrect2, GameModel.getRoomCenterX roomrect2, 0 )
+                -- onlyvertical
+            else if GameModel.getRoomLeftX roomrect1 > GameModel.getRoomCenterX roomrect2 && GameModel.getRoomLeftX roomrect1 < GameModel.getRoomRightX roomrect2 then
+                ( GameModel.getRoomCenterX roomrect2, GameModel.getRoomLeftX roomrect1, GameModel.getRoomLeftX roomrect1 - GameModel.getRoomCenterX roomrect2 )
+            else if GameModel.getRoomLeftX roomrect1 >= GameModel.getRoomRightX roomrect2 then
+                ( GameModel.getRoomRightX roomrect2, GameModel.getRoomLeftX roomrect1, GameModel.getRoomLeftX roomrect1 - GameModel.getRoomRightX roomrect2 )
+            else
+                ( 0, 0, 0 )
+
+        horizontal_tunnel_length =
+            horizontal_end_x - horizontal_start_x + 1
+
+        vertical_x =
+            horizontal_end_x
+
+        ( vertical_start_y, vertical_end_y ) =
+            if horizontal_tunnel_length <= 1 then
+                if GameModel.getRoomBottomY roomrect1 <= GameModel.getRoomTopY roomrect2 then
+                    ( GameModel.getRoomBottomY roomrect1, GameModel.getRoomTopY roomrect2 )
+                else if GameModel.getRoomBottomY roomrect1 > GameModel.getRoomTopY roomrect2 && GameModel.getRoomTopY roomrect1 <= GameModel.getRoomBottomY roomrect2 then
+                    ( 0, 0 )
+                else if GameModel.getRoomTopY roomrect1 > GameModel.getRoomBottomY roomrect2 then
+                    ( GameModel.getRoomBottomY roomrect2, GameModel.getRoomTopY roomrect1 )
+                else
+                    ( 0, 0 )
+            else if horizontal_tunnel_length > 1 then
+                if GameModel.getRoomCenterX roomrect1 < GameModel.getRoomTopY roomrect2 then
+                    ( GameModel.getRoomCenterX roomrect1, GameModel.getRoomTopY roomrect2 )
+                else if GameModel.getRoomCenterX roomrect1 > GameModel.getRoomBottomY roomrect2 then
+                    ( GameModel.getRoomBottomY roomrect2, GameModel.getRoomCenterX roomrect1 )
+                else
+                    ( 0, 0 )
+            else
+                ( 0, 0 )
+
+        vertical_tunnel_height =
+            vertical_end_y - vertical_start_y + 1
+
+        mbHorizontalTunnel =
+            if horizontal_end_x > horizontal_start_x then
+                Just (GameModel.TunnelRectangle horizontal_start_x horizontal_y horizontal_tunnel_length 1)
+            else
+                Nothing
+
+        mbVerticalTunnel =
+            if vertical_end_y > vertical_start_y then
+                Just (GameModel.TunnelRectangle vertical_x vertical_start_y 1 vertical_tunnel_height)
+            else
+                Nothing
+    in
+    ( mbHorizontalTunnel, mbVerticalTunnel )
 
 
 mbCreateHorizontalTunnel : GameModel.RoomRectangle -> GameModel.RoomRectangle -> Maybe GameModel.TunnelRectangle
@@ -474,10 +599,6 @@ dungeonRectangleToGridFunc roomrect useWalls grid =
             else
                 GameModel.Floor GameModel.defaultFloorInfo
 
-        --generateTileAndAddItToGrid : Int -> Int -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
-        --generateTileAndAddItToGrid xval yval grid =
-        --  generateTile xval yval
-        --      |> (\tile -> Grid.set (Grid.Coordinate xval yval) tile grid)
         ltiles =
             List.concatMap (\xval -> List.map (\yval -> ( xval, yval, generateTile xval yval )) ly) lx
 
@@ -495,60 +616,4 @@ listDungeonRectangleToGridFunc lroomrects useWalls grid =
 
 listRoomRectangleToGridFunc : List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
 listRoomRectangleToGridFunc lroomrects grid =
-    listDungeonRectangleToGridFunc lroomrects True grid
-
-
-
-{-
-   roomRectangleToGridFunc : GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
-   roomRectangleToGridFunc roomrect grid =
-       let
-           left_x =
-               roomrect.top_left_x
-
-           right_x =
-               roomrect.top_left_x + roomrect.width
-
-           top_y =
-               roomrect.top_left_y
-
-           bottom_y =
-               roomrect.top_left_y + roomrect.height
-
-           lx =
-               List.range left_x right_x
-
-           ly =
-               List.range top_y bottom_y
-
-           generateTile : Int -> Int -> GameModel.Tile
-           generateTile xval yval =
-               if xval == left_x || xval == right_x || yval == bottom_y || yval == top_y then
-                   GameModel.Wall GameModel.defaultWallInfo
-               else
-                   GameModel.Floor GameModel.defaultFloorInfo
-
-           --generateTileAndAddItToGrid : Int -> Int -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
-           --generateTileAndAddItToGrid xval yval grid =
-           --  generateTile xval yval
-           --      |> (\tile -> Grid.set (Grid.Coordinate xval yval) tile grid)
-           ltiles =
-               List.concatMap (\xval -> List.map (\yval -> ( xval, yval, generateTile xval yval )) ly) lx
-
-           new_grid =
-               ltiles
-                   |> List.foldl (\( xval, yval, tile ) gridacc -> Grid.set (Grid.Coordinate xval yval) tile gridacc) grid
-       in
-       new_grid
-
-
-   listRoomRectangleToGridFunc : List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
-   listRoomRectangleToGridFunc lroomrects grid =
-       List.foldl (\roomrect gridacc -> roomRectangleToGridFunc roomrect gridacc) grid lroomrects
-
-
-
-      seed : Int
-      seed =
-          2013
--}
+    listDungeonRectangleToGridFunc lroomrects False grid
