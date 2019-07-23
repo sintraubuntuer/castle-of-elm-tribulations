@@ -1,23 +1,40 @@
-module GameModel exposing (..)
+module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
 
 --import Generator
 --import Generator.Standard
 --import Keyboard
+--import Element
 
+import Collage.Text as Text
 import Dict exposing (Dict)
-import Element
 import Grid
-import Text
 
 
 type alias EnemyId =
     Int
 
 
+type alias LeverId =
+    Int
+
+
+type Tile
+    = Floor FloorInfo
+    | Wall WallInfo
+    | WallOver WallOverInfo
+    | Door DoorInfo
+    | Lever LeverInfo
+    | Flag FlagInfo
+    | Column ColumnInfo
+    | Water WaterInfo
+    | NoTileYet
+
+
 type alias State =
     { player : Player
     , enemies : Dict EnemyId Enemy
     , level : Grid.Grid Tile
+    , levers : Dict LeverId LeverInfo
     , explored : Grid.Grid Visibility
     , log : List String
     , pseudoRandomIntsPool : List Int
@@ -27,6 +44,7 @@ type alias State =
     , window_height : Int
     , total_width : Int
     , total_height : Int
+    , wallPercentage : Maybe Float
     , roomsInfo : RoomsInfo
     }
 
@@ -92,7 +110,7 @@ type alias RoomsInfo =
 
 type alias Player =
     { location : Location
-    , avatar : Element.Element
+    , textAvatar : String --Element.Element
     , name : String
     , health : Int
     , energy : Int
@@ -110,7 +128,7 @@ type alias Player =
 type alias Enemy =
     { location : Location
     , id : EnemyId
-    , avatar : Element.Element
+    , textAvatar : String --Element.Element
     , name : String
     , health : Int
     , stealth : Int
@@ -149,31 +167,44 @@ type Item
     | Key
     | Money
     | Box
+    | Ash
 
 
 type alias FloorInfo =
-    { items : List Item
+    { item : Maybe Item
     , isTransparent : Bool
     , isWalkable : Bool
     , isExplored : Bool
     , visibility : Visibility
+    , color : String
     }
 
 
 defaultFloorInfo : FloorInfo
 defaultFloorInfo =
-    { items = [], isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored }
+    { item = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "default" }
+
+
+defaultOrangeFloorInfo : FloorInfo
+defaultOrangeFloorInfo =
+    { item = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "orange" }
 
 
 type alias WallInfo =
     { isExplored : Bool
     , visibility : Visibility
+    , orientation : String
     }
 
 
 defaultWallInfo : WallInfo
 defaultWallInfo =
-    { isExplored = False, visibility = Unexplored }
+    { isExplored = False, visibility = Unexplored, orientation = "horizontal" }
+
+
+defaultWallUpInfo : WallInfo
+defaultWallUpInfo =
+    { isExplored = False, visibility = Unexplored, orientation = "up" }
 
 
 type alias DoorInfo =
@@ -242,18 +273,6 @@ defaultWaterInfo =
     { isTransparent = False, isExplored = False, visibility = Unexplored }
 
 
-type Tile
-    = Floor FloorInfo
-    | Wall WallInfo
-    | WallOver WallOverInfo
-    | Door DoorInfo
-    | Lever LeverInfo
-    | Flag FlagInfo
-    | Column ColumnInfo
-    | Water WaterInfo
-    | NoTileYet
-
-
 type WallJunction
     = Flat
     | Empty
@@ -277,10 +296,10 @@ type Input
     | Nop
 
 
-player : Element.Element -> String -> Player
+player : String -> String -> Player
 player elem pname =
     { location = Grid.Coordinate 10 10
-    , avatar = elem
+    , textAvatar = elem
     , name = pname
     , health = 10
     , energy = 10
@@ -295,11 +314,11 @@ player elem pname =
     }
 
 
-enemy : Element.Element -> EnemyId -> String -> Enemy
+enemy : String -> EnemyId -> String -> Enemy
 enemy elem enemyid ename =
     { location = Grid.Coordinate 14 4
     , id = enemyid
-    , avatar = elem
+    , textAvatar = elem
     , name = ename
     , health = 10
     , stealth = 20
@@ -320,8 +339,8 @@ location =
 
 
 validLocation : Location -> State -> Bool
-validLocation location state =
-    Grid.inGrid location state.level
+validLocation location_ state =
+    Grid.inGrid location_ state.level
 
 
 isFloor : Tile -> Bool
@@ -372,6 +391,7 @@ isTileWalkable tile =
         Floor floorinfo ->
             if floorinfo.isWalkable then
                 True
+
             else
                 False
 
@@ -384,6 +404,7 @@ isTileWalkable tile =
         Door doorinfo ->
             if doorinfo.isOpen then
                 True
+
             else
                 False
 
@@ -404,8 +425,8 @@ isTileWalkable tile =
 
 
 isModelTileWalkable : Location -> State -> Bool
-isModelTileWalkable location state =
-    Grid.get location state.level
+isModelTileWalkable location_ state =
+    Grid.get location_ state.level
         |> Maybe.map isTileWalkable
         |> Maybe.withDefault False
 
@@ -442,8 +463,8 @@ isTileTransparent tile =
 
 
 isModelTileTransparent : Location -> State -> Bool
-isModelTileTransparent location state =
-    Grid.get location state.level
+isModelTileTransparent location_ state =
+    Grid.get location_ state.level
         |> Maybe.map isTileTransparent
         |> Maybe.withDefault False
 
@@ -480,8 +501,8 @@ isTileExplored tile =
 
 
 isModelTileExplored : Location -> State -> Bool
-isModelTileExplored location state =
-    Grid.get location state.level
+isModelTileExplored location_ state =
+    Grid.get location_ state.level
         |> Maybe.map isTileExplored
         |> Maybe.withDefault False
 
@@ -518,8 +539,8 @@ setTileAsExplored tile =
 
 
 setModelTileAsExplored : Location -> State -> State
-setModelTileAsExplored location state =
-    case Grid.get location state.level of
+setModelTileAsExplored location_ state =
+    case Grid.get location_ state.level of
         Nothing ->
             state
 
@@ -528,7 +549,7 @@ setModelTileAsExplored location state =
                 newTile =
                     setTileAsExplored tile
             in
-            { state | level = Grid.set location newTile state.level }
+            { state | level = Grid.set location_ newTile state.level }
 
 
 getTileVisibility : Tile -> Visibility
@@ -563,15 +584,15 @@ getTileVisibility tile =
 
 
 getGridTileVisibility : Location -> Grid.Grid Tile -> Visibility
-getGridTileVisibility location gridtiles =
-    Grid.get location gridtiles
+getGridTileVisibility location_ gridtiles =
+    Grid.get location_ gridtiles
         |> Maybe.map getTileVisibility
         |> Maybe.withDefault Unexplored
 
 
 getModelTileVisibility : Location -> State -> Visibility
-getModelTileVisibility location state =
-    Grid.get location state.level
+getModelTileVisibility location_ state =
+    Grid.get location_ state.level
         |> Maybe.map getTileVisibility
         |> Maybe.withDefault Unexplored
 
@@ -608,8 +629,8 @@ setTileVisibility visibility_ tile =
 
 
 setModelTileVisibility : Location -> Visibility -> State -> State
-setModelTileVisibility location visibility_ state =
-    case Grid.get location state.level of
+setModelTileVisibility location_ visibility_ state =
+    case Grid.get location_ state.level of
         Nothing ->
             state
 
@@ -618,7 +639,7 @@ setModelTileVisibility location visibility_ state =
                 newTile =
                     setTileVisibility visibility_ tile
             in
-            { state | level = Grid.set location newTile state.level }
+            { state | level = Grid.set location_ newTile state.level }
 
 
 
@@ -659,7 +680,7 @@ mbUpdateEnemyInitiativeByMbEnemyId intval mbEnemyid state =
         Just enemyid ->
             let
                 newEnemies =
-                    Dict.update enemyid (\mbEnemy -> mbEnemy |> Maybe.map (\enemy -> { enemy | initiative = intval })) state.enemies
+                    Dict.update enemyid (\mbEnemy -> mbEnemy |> Maybe.map (\enemyRec -> { enemyRec | initiative = intval })) state.enemies
             in
             { state | enemies = newEnemies }
 
@@ -680,7 +701,7 @@ placeExistingEnemy enid loc dictacc =
         Nothing ->
             dictacc
 
-        Just enemy ->
+        Just enemy_ ->
             Dict.update enid (\mbenemy -> mbUpdateEnemyLocation loc mbenemy) dictacc
 
 
@@ -696,7 +717,7 @@ randomlyPlaceExistingEnemies lpairIntIds state =
     { state | enemies = newDictEnemies }
 
 
-showTile : Tile -> Element.Element
+showTile : Tile -> Text.Text
 showTile tile =
     let
         c =
@@ -719,15 +740,21 @@ showTile tile =
                 _ ->
                     "na"
     in
-    Element.centered << Text.monospace << Text.fromString <| c
+    c
+        |> Text.fromString
+
+
+
+--|> Text.monospace
+--Element.centered << Text.monospace << Text.fromString <| c
 
 
 visible : State -> List Location
 visible state =
-    Grid.neighborhoodCalc 10 state.player.location
+    Grid.neighborhoodCalc 8 state.player.location
 
 
 visibility : State -> Location -> Visibility
-visibility state location =
+visibility state location_ =
     --Grid.getWithDefault Unexplored location state.explored
-    getModelTileVisibility location state
+    getModelTileVisibility location_ state

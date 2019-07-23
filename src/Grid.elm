@@ -1,4 +1,4 @@
-module Grid exposing (..)
+module Grid exposing (Coordinate, Grid, Size, fromList, get, getGridBoundsToPlaceEnemy, getGridBoundsToPlacePlayer, getRow, getRowOrEmptyList, getRowWithDefault, getSubGrid, getTheLength, getWithDefault, inGrid, initialize, map, neighborhoodCalc, set, toCoordinates, toList)
 
 import Array
 import List
@@ -93,12 +93,16 @@ set : Coordinate -> a -> Grid a -> Grid a
 set { x, y } a grid =
     if x < 0 then
         grid
+
     else if y < 0 then
         grid
+
     else if x >= grid.size.width then
         grid
+
     else if y >= grid.size.height then
         grid
+
     else
         let
             row =
@@ -164,8 +168,10 @@ getRow : Int -> Grid a -> List a
 getRow n grid =
     if n < 0 then
         []
+
     else if n >= grid.size.height then
         []
+
     else
         getRowOrEmptyList n grid
 
@@ -189,6 +195,7 @@ getRowWithDefault default n grid =
     in
     if List.length lrow == 0 then
         default
+
     else
         lrow
 
@@ -222,9 +229,9 @@ getSubGrid minCol maxCol minRow maxRow grid =
                 |> List.map (\v -> getRow v grid)
 
         txtmsg =
-            ("getSubGrid has been called with minCol " ++ toString minCol ++ " , with maxCol " ++ toString maxCol ++ " , with minRow " ++ toString minRow ++ " , with maxRow " ++ toString maxRow)
-                ++ ("getSubGrid has been called with minCol_ " ++ toString minCol_ ++ " , with maxCol_ " ++ toString maxCol_ ++ " , with minRow_ " ++ toString minRow_ ++ " , with maxRow_ " ++ toString maxRow_)
-                ++ (" rows of the subgrid has " ++ toString (List.length therows))
+            ("getSubGrid has been called with minCol " ++ String.fromInt minCol ++ " , with maxCol " ++ String.fromInt maxCol ++ " , with minRow " ++ String.fromInt minRow ++ " , with maxRow " ++ String.fromInt maxRow)
+                ++ ("getSubGrid has been called with minCol_ " ++ String.fromInt minCol_ ++ " , with maxCol_ " ++ String.fromInt maxCol_ ++ " , with minRow_ " ++ String.fromInt minRow_ ++ " , with maxRow_ " ++ String.fromInt maxRow_)
+                ++ (" rows of the subgrid has " ++ String.fromInt (List.length therows))
     in
     ( List.map (\lrow -> List.drop minCol_ lrow) therows
         --List.map (\lrow -> List.drop (grid.size.width - (maxCol_ + 1)) lrow) therows
@@ -276,12 +283,16 @@ inGrid { x, y } grid =
     in
     if x < 0 then
         False
+
     else if x >= width then
         False
+
     else if y < 0 then
         False
+
     else if y >= height then
         False
+
     else
         True
 
@@ -292,7 +303,7 @@ map f grid =
         grid_ =
             Array.map (\row -> Array.map f row) grid.grid
     in
-    { grid | grid = grid_ }
+    Grid grid_ grid.size
 
 
 neighborhoodCalc : Int -> Coordinate -> List Coordinate

@@ -1,4 +1,4 @@
-module GameUpdate exposing (..)
+module GameUpdate exposing (Msg(..), ai, attack, attackIfClose, checkAndAlterDisplayAnchorIfNecessary, cleanup, cmdFillRandomIntsPool, cmdFillRandomIntsPoolAndGenerateRandomMap, cmdGenFloatsForRandomCave, cmdGenerateRandomInitiativeValue, cmdGetRandomPositionedEnemy, cmdGetRandomPositionedPlayer, getRandIntPair, getTailWithDefaultEmptyList, increseNrOfEnemyMovesInCurrentTurn, log, move, randIntList, randIntPairsList, resetEnemyMovesCurrentTurn, reveal, turnNeighbourWallCellstoAshes, update)
 
 --import Generator
 --import Collage
@@ -66,6 +66,22 @@ update msg state =
                 ( x2, y2 ) =
                     ( x + x_, y + y_ )
 
+                newState =
+                    --GameModel.location x2 y2
+                    case Grid.get (GameModel.location x2 y2) state.level of
+                        Just (GameModel.Lever leverinfo) ->
+                            if leverinfo.isUp then
+                                state
+                                --|> Debug.log " you just interacted with an up lever "
+
+                            else
+                                { state | level = Grid.set (GameModel.location x2 y2) (GameModel.Lever { leverinfo | isUp = True }) state.level }
+                                    |> turnNeighbourWallCellstoAshes (GameModel.location x2 y2)
+
+                        --  |> Debug.log " you just interacted with a down lever "
+                        _ ->
+                            state
+
                 mbEnemy =
                     case Dict.filter (\enemyid enemy -> enemy.location == GameModel.location x2 y2) state.enemies |> Dict.values of
                         [] ->
@@ -74,31 +90,33 @@ update msg state =
                         enemy :: es ->
                             Just enemy
 
-                newState =
+                newState2 =
                     case mbEnemy of
                         Just enemy ->
                             let
-                                ( player_, enemy_, msg, newprandInts ) =
-                                    attack player enemy state.pseudoRandomIntsPool
+                                --( player_, enemy_, msg_, newprandInts ) =
+                                attackOutput =
+                                    attack player enemy newState.pseudoRandomIntsPool
                             in
-                            log msg
-                                { state
-                                    | player = player_
-                                    , enemies = Dict.insert enemy.id enemy_ state.enemies --enemy_ :: getTailWithDefaultEmptyList state.enemies
-                                    , pseudoRandomIntsPool = newprandInts
+                            log attackOutput.textMsg
+                                { newState
+                                    | player = attackOutput.dudeA
+                                    , enemies = Dict.insert enemy.id attackOutput.dudeB newState.enemies --enemy_ :: getTailWithDefaultEmptyList state.enemies
+                                    , pseudoRandomIntsPool = attackOutput.randInts
                                 }
 
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
-                                { state | player = move ( x_, y_ ) state player }
+                                { newState | player = move ( x_, y_ ) newState player }
                                     |> checkAndAlterDisplayAnchorIfNecessary
-                            else
-                                state
 
-                newState2 =
-                    newState |> cleanup |> resetEnemyMovesCurrentTurn |> ai |> reveal
+                            else
+                                newState
+
+                newState3 =
+                    newState2 |> cleanup |> resetEnemyMovesCurrentTurn |> ai |> reveal
             in
-            ( newState2, cmdFillRandomIntsPool newState2 )
+            ( newState3, cmdFillRandomIntsPool newState2 )
 
         NewRandomPointToPlacePlayer tupPosition ->
             let
@@ -177,12 +195,14 @@ update msg state =
                         { oldPlayer | initiative = intval }
                 in
                 ( { state | player = newPlayer }, Cmd.none )
+
             else if strCharacter == "enemy" then
                 let
                     newState =
                         GameModel.mbUpdateEnemyInitiativeByMbEnemyId intval mbCharacterId state
                 in
                 ( newState, Cmd.none )
+
             else
                 ( state, Cmd.none )
 
@@ -193,13 +213,95 @@ update msg state =
 
         NewRandomIntsAddToPoolAndGenerateRandomMap lints ->
             let
-                ( newGrid, lrectangles, ltunnelrectangles, unused_prand_lints ) =
+                --( newGrid, lrectangles, ltunnelrectangles, unused_prand_lints ) =
+                genOutputRecord =
+                    --{ tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
                     MapGen.randomMapGeneratorWithRooms state.total_width state.total_height state.roomsInfo.maxNrOfRooms state.roomsInfo.maxRoomSize state.roomsInfo.minRoomSize lints state.level
 
+                gridAsList =
+                    Grid.toList genOutputRecord.tileGrid |> List.concatMap identity
+
+                wallPercentage =
+                    getWallPercentage gridAsList
+
                 newstate =
-                    { state | level = newGrid, pseudoRandomIntsPool = unused_prand_lints }
+                    { state
+                        | level = genOutputRecord.tileGrid
+                        , pseudoRandomIntsPool = genOutputRecord.unusedRandoms
+                        , wallPercentage = Just wallPercentage
+                    }
             in
             ( newstate, cmdFillRandomIntsPool newstate )
+
+
+turnNeighbourWallCellstoAshes : Grid.Coordinate -> GameModel.State -> GameModel.State
+turnNeighbourWallCellstoAshes { x, y } state =
+    let
+        upCell =
+            GameModel.location x (y - 1)
+
+        downCell =
+            GameModel.location x (y + 1)
+
+        leftCell =
+            GameModel.location (x - 1) y
+
+        rightCell =
+            GameModel.location (x + 1) y
+
+        convertCellsFunc cellCoords thestate =
+            case Grid.get cellCoords thestate.level of
+                Just (GameModel.Wall wallinfo) ->
+                    let
+                        floorinfo =
+                            GameModel.defaultFloorInfo
+                    in
+                    { thestate | level = Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just GameModel.Ash }) thestate.level }
+                        |> turnNeighbourWallCellstoAshes cellCoords
+
+                _ ->
+                    thestate
+    in
+    convertCellsFunc upCell state
+        |> convertCellsFunc downCell
+        |> convertCellsFunc leftCell
+        |> convertCellsFunc rightCell
+        |> updateWallPercentageValue
+
+
+updateWallPercentageValue : GameModel.State -> GameModel.State
+updateWallPercentageValue state =
+    let
+        thegrid =
+            state.level
+
+        gridAsList =
+            Grid.toList thegrid |> List.concatMap identity
+
+        wallPercentage =
+            getWallPercentage gridAsList
+    in
+    { state | wallPercentage = Just wallPercentage }
+
+
+getWallPercentage : List GameModel.Tile -> Float
+getWallPercentage gridAsList =
+    let
+        getCountTuple : GameModel.Tile -> ( Int, Int ) -> ( Int, Int )
+        getCountTuple elem ( acc1, acc2 ) =
+            case elem of
+                GameModel.Wall _ ->
+                    ( acc1 + 1, acc2 )
+
+                GameModel.Floor _ ->
+                    ( acc1, acc2 + 1 )
+
+                _ ->
+                    ( acc1, acc2 )
+    in
+    gridAsList
+        |> List.foldl (\el ( ac1, ac2 ) -> getCountTuple el ( ac1, ac2 )) ( 0, 0 )
+        |> (\tup -> (Tuple.first tup |> toFloat) / (Tuple.second tup |> toFloat))
 
 
 checkAndAlterDisplayAnchorIfNecessary : GameModel.State -> GameModel.State
@@ -208,16 +310,22 @@ checkAndAlterDisplayAnchorIfNecessary state =
         newXanchor =
             if state.player.location.x <= state.x_display_anchor then
                 max 0 (state.x_display_anchor - (state.window_width - 2))
+
             else if state.player.location.x >= (state.x_display_anchor + (state.window_width - 1)) then
-                min (state.x_display_anchor + (state.window_width - 2)) (state.total_width - 1)
+                --min (state.x_display_anchor + (state.window_width - 2)) (state.total_width - 1)
+                min (state.x_display_anchor + (state.window_width - 2)) (state.total_width - state.window_width + 2)
+
             else
                 state.x_display_anchor
 
         newYanchor =
             if state.player.location.y <= state.y_display_anchor then
                 max 0 (state.y_display_anchor - (state.window_height - 2))
+
             else if state.player.location.y >= (state.y_display_anchor + (state.window_height - 1)) then
-                min (state.y_display_anchor + (state.window_height - 2)) (state.total_height - 1)
+                --min (state.y_display_anchor + (state.window_height - 2)) (state.total_height - 1)
+                min (state.y_display_anchor + (state.window_height - 2)) (state.total_height - state.window_height + 4)
+
             else
                 state.y_display_anchor
     in
@@ -228,6 +336,7 @@ cmdGetRandomPositionedPlayer : GameModel.Player -> Int -> Int -> Int -> Int -> C
 cmdGetRandomPositionedPlayer player minX maxX minY maxY =
     if player.placed then
         Cmd.none
+
     else
         Random.generate NewRandomPointToPlacePlayer (getRandIntPair minX maxX minY maxY)
 
@@ -236,6 +345,7 @@ cmdGetRandomPositionedEnemy : GameModel.Enemy -> GameModel.EnemyId -> Int -> Int
 cmdGetRandomPositionedEnemy actualEnemy enemyId minX maxX minY maxY =
     if actualEnemy.placed then
         Cmd.none
+
     else
         Random.generate (NewRandomPointToPlaceEnemy enemyId) (getRandIntPair minX maxX minY maxY)
 
@@ -253,6 +363,7 @@ cmdFillRandomIntsPool state =
     in
     if nrToAdd > 0 then
         Random.generate NewRandomIntsAddToPool (Random.list nrToAdd (Random.int 1 100))
+
     else
         Cmd.none
 
@@ -265,6 +376,7 @@ cmdFillRandomIntsPoolAndGenerateRandomMap state =
     in
     if nrToAdd > 0 then
         Random.generate NewRandomIntsAddToPoolAndGenerateRandomMap (Random.list nrToAdd (Random.int 1 100))
+
     else
         Random.generate NewRandomIntsAddToPoolAndGenerateRandomMap (Random.list 1 (Random.int 1 100))
 
@@ -317,7 +429,7 @@ attack :
     { a | coordination : Int, power : Int, initiative : Int, name : String }
     -> { b | stealth : Int, protection : Int, armor : Int, health : Int, name : String }
     -> List Int
-    -> ( { a | coordination : Int, power : Int, initiative : Int, name : String }, { b | stealth : Int, protection : Int, armor : Int, health : Int, name : String }, String, List Int )
+    -> { dudeA : { a | coordination : Int, power : Int, initiative : Int, name : String }, dudeB : { b | stealth : Int, protection : Int, armor : Int, health : Int, name : String }, textMsg : String, randInts : List Int }
 attack dude1 dude2 lprandInts =
     let
         ( roll1, newprandInts ) =
@@ -335,28 +447,35 @@ attack dude1 dude2 lprandInts =
         hit =
             if roll1 > dude1.coordination - dude2.stealth then
                 False
+
             else
                 True
 
         guard =
             if dude1.coordination - dude2.stealth > 100 then
-                dude2.protection - (dude1.coordination - rem dude2.stealth 100)
+                --  dude2.protection - (dude1.coordination - rem dude2.stealth 100)
+                dude2.protection - (dude1.coordination - Basics.remainderBy 100 dude2.stealth)
+
             else
                 dude2.protection
 
         block =
             if hit == True && roll2 < guard then
                 True
+
             else
                 False
 
         dmg =
             if hit && not block then
                 dude1.power
+
             else if hit && block then
                 max 0 (dude1.power - dude2.armor)
+
             else if not hit then
                 0
+
             else
                 0
 
@@ -366,10 +485,11 @@ attack dude1 dude2 lprandInts =
         msg =
             if not hit then
                 dude1.name ++ " miss"
+
             else
-                dude1.name ++ " hit " ++ dude2.name ++ " for " ++ toString dmg ++ " dmg"
+                dude1.name ++ " hit " ++ dude2.name ++ " for " ++ String.fromInt dmg ++ " dmg"
     in
-    ( { dude1 | initiative = dude1.initiative + 100 }, { dude2 | health = result }, msg, newprandInts2 )
+    { dudeA = { dude1 | initiative = dude1.initiative + 100 }, dudeB = { dude2 | health = result }, textMsg = msg, randInts = newprandInts2 }
 
 
 resetEnemyMovesCurrentTurn : GameModel.State -> GameModel.State
@@ -402,6 +522,7 @@ cleanup state =
         msg =
             if Dict.size dead == 0 then
                 Nothing
+
             else
                 Just (Dict.foldl (\id nstr acc -> acc ++ nstr) "" <| Dict.map (\enemyId enemy -> enemy.name ++ " died. ") dead)
     in
@@ -440,14 +561,15 @@ attackIfClose enemy state =
     case List.filter (\location -> location == state.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
         location :: locs ->
             let
-                ( enemy_, player_, msg, newprandInts ) =
+                --( enemy_, player_, msg, newprandInts ) =
+                attackOutput =
                     attack enemy state.player state.pseudoRandomIntsPool
             in
-            log msg
+            log attackOutput.textMsg
                 { state
-                    | player = player_
-                    , enemies = Dict.insert enemy.id enemy_ state.enemies -- enemy_ :: getTailWithDefaultEmptyList state.enemies
-                    , pseudoRandomIntsPool = newprandInts
+                    | player = attackOutput.dudeB
+                    , enemies = Dict.insert enemy.id attackOutput.dudeA state.enemies -- enemy_ :: getTailWithDefaultEmptyList state.enemies
+                    , pseudoRandomIntsPool = attackOutput.randInts
                 }
 
         [] ->
@@ -463,16 +585,20 @@ attackIfClose enemy state =
                 xscaled =
                     if x <= 33 then
                         -1
+
                     else if x > 33 && x <= 66 then
                         0
+
                     else
                         1
 
                 yscaled =
                     if y <= 33 then
                         -1
+
                     else if y > 33 && y <= 66 then
                         0
+
                     else
                         1
 
@@ -497,6 +623,7 @@ reveal state =
                 (\t ->
                     if GameModel.getTileVisibility t == GameModel.Visible then
                         GameModel.setTileVisibility GameModel.Explored t
+
                     else
                         t
                 )

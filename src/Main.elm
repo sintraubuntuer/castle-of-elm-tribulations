@@ -1,20 +1,27 @@
-module Main exposing (..)
+module Main exposing (Flags, dimensions, fromCode, init, initialEnemy, initialExplored, initialLevel, initialPlayer, initialState, main, seed, setAllAsUnexplored, subscriptions, title)
 
 --import Generator
 --import Generator.Standard
 --import MapGen
+--import Keyboard
+--import Element exposing (..)
+--import Color exposing (..)
 
-import Color exposing (..)
+import Browser
+import Browser.Events
+    exposing
+        ( onKeyDown
+        )
+import Collage.Text as Text
 import Dict exposing (Dict)
-import Element exposing (..)
 import GameModel
 import GameUpdate
 import GameView
 import Grid
 import Html exposing (Html)
-import Keyboard
+import Html.Events exposing (keyCode)
+import Json.Decode as Decode exposing (Value)
 import String
-import Text
 
 
 title : String
@@ -33,6 +40,7 @@ dimensions =
 
 
 
+--( 110, 70 )
 --( 10, 10 )
 
 
@@ -89,10 +97,11 @@ initialPlayer =
     let
         elem =
             "@"
-                |> Text.fromString
-                |> Text.monospace
-                |> Text.color white
-                |> centered
+
+        --|> Text.fromString
+        --|> Text.monospace
+        --|> Text.color white
+        --|> centered
     in
     GameModel.player elem "You"
 
@@ -101,13 +110,14 @@ initialEnemy : GameModel.EnemyId -> GameModel.Enemy
 initialEnemy enemyid =
     let
         elem =
-            ("e" ++ toString enemyid)
-                |> Text.fromString
-                |> Text.monospace
-                |> Text.color white
-                |> centered
+            "e" ++ String.fromInt enemyid
+
+        --|> Text.fromString
+        --|> Text.monospace
+        --|> Text.color white
+        --|> centered
     in
-    GameModel.enemy elem enemyid ("enemy" ++ toString enemyid)
+    GameModel.enemy elem enemyid ("enemy" ++ String.fromInt enemyid)
 
 
 initialState : GameModel.State
@@ -121,6 +131,9 @@ initialState =
 
         enemy2 =
             initialEnemy 2
+
+        levers =
+            Dict.empty
 
         w =
             Tuple.first dimensions
@@ -146,6 +159,7 @@ initialState =
             ]
         )
         firstMap
+        levers
         firstExplored
         [ "you enter the dungeon" ]
         []
@@ -155,6 +169,7 @@ initialState =
         15
         (Tuple.first dimensions)
         (Tuple.second dimensions)
+        Nothing
         roomsInfo
 
 
@@ -162,7 +177,8 @@ subscriptions : GameModel.State -> Sub GameUpdate.Msg
 subscriptions model =
     --Keyboard.presses (\code ->  (Char.fromCode code))
     Sub.batch
-        [ Keyboard.downs (\kcode -> GameUpdate.KeyDown (fromCode kcode))
+        [ -- Keyboard.downs (\kcode -> GameUpdate.KeyDown (fromCode kcode))
+          onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
 
         --, Keyboard.ups (\kcode -> KeyUpMsg (fromCode kcode))
         --Keyboard.presses (\kcode -> KeyPress (fromCode kcode))
@@ -201,8 +217,12 @@ fromCode keyCode =
             GameModel.Nop
 
 
-init : ( GameModel.State, Cmd GameUpdate.Msg )
-init =
+type alias Flags =
+    {}
+
+
+init : Flags -> ( GameModel.State, Cmd GameUpdate.Msg )
+init flags =
     let
         initState =
             initialState
@@ -237,9 +257,9 @@ init =
     )
 
 
-main : Program Never GameModel.State GameUpdate.Msg
+main : Program Flags GameModel.State GameUpdate.Msg
 main =
-    Html.program
+    Browser.element
         { init = init
         , view = GameView.view
         , update = GameUpdate.update
