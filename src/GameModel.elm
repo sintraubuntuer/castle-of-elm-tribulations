@@ -1,4 +1,4 @@
-module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
+module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
 
 --import Generator
 --import Generator.Standard
@@ -361,6 +361,86 @@ isWall tile =
 
         _ ->
             False
+
+
+isMbTileWall : Maybe Tile -> Bool
+isMbTileWall mbtile =
+    case mbtile of
+        Just (Wall _) ->
+            True
+
+        _ ->
+            False
+
+
+isHorizontalWall : Tile -> Bool
+isHorizontalWall tile =
+    case tile of
+        Wall infoRec ->
+            infoRec.orientation == "horizontal"
+
+        _ ->
+            False
+
+
+isMbTileHorizontalWall : Maybe Tile -> Bool
+isMbTileHorizontalWall mbTile =
+    case mbTile of
+        Just (Wall infoRec) ->
+            infoRec.orientation == "horizontal"
+
+        _ ->
+            False
+
+
+isMbTileHorizontalToTheLeft : Maybe Tile -> Bool
+isMbTileHorizontalToTheLeft mbTile =
+    case mbTile of
+        Just (Wall infoRec) ->
+            infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_right_corner" || infoRec.orientation == "top_right_corner"
+
+        _ ->
+            False
+
+
+isMbTileHorizontalToTheRight : Maybe Tile -> Bool
+isMbTileHorizontalToTheRight mbTile =
+    case mbTile of
+        Just (Wall infoRec) ->
+            infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_left_corner" || infoRec.orientation == "top_left_corner"
+
+        _ ->
+            False
+
+
+isVerticalWall : Tile -> Bool
+isVerticalWall tile =
+    case tile of
+        Wall infoRec ->
+            infoRec.orientation == "up"
+
+        _ ->
+            False
+
+
+isMbTileVerticalWall : Maybe Tile -> Bool
+isMbTileVerticalWall mbTile =
+    case mbTile of
+        Just (Wall infoRec) ->
+            infoRec.orientation == "up"
+
+        _ ->
+            False
+
+
+setWallTileOrientation : String -> Tile -> Tile
+setWallTileOrientation orientationStr tile =
+    case tile of
+        Wall winfo ->
+            Wall { winfo | orientation = orientationStr }
+
+        _ ->
+            tile
 
 
 isNoTileYet : Tile -> Bool

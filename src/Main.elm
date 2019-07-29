@@ -1,5 +1,22 @@
-module Main exposing (Flags, dimensions, fromCode, init, initialEnemy, initialExplored, initialLevel, initialPlayer, initialState, main, seed, setAllAsUnexplored, subscriptions, title)
+module Main exposing (main)
 
+{- }
+   ( Flags
+   , dimensions
+   , fromCode
+   , init
+   , initialEnemy
+   , initialExplored
+   , initialLevel
+   , initialPlayer
+   , initialStateFunc
+   , main
+   , seed
+   , setAllAsUnexplored
+   , subscriptions
+   , title
+   )
+-}
 --import Generator
 --import Generator.Standard
 --import MapGen
@@ -14,6 +31,8 @@ import Browser.Events
         )
 import Collage.Text as Text
 import Dict exposing (Dict)
+import GameDefinitions.Game1Definitions
+import GameDefinitions.Game2Definitions
 import GameModel
 import GameUpdate
 import GameView
@@ -83,96 +102,6 @@ initialExplored =
     List.map (\row -> List.map (\_ -> GameModel.Unexplored) row) grid |> Grid.fromList
 
 
-setAllAsUnexplored : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Visibility
-setAllAsUnexplored level =
-    let
-        grid =
-            Grid.toList level
-    in
-    List.map (\row -> List.map (\_ -> GameModel.Unexplored) row) grid |> Grid.fromList
-
-
-initialPlayer : GameModel.Player
-initialPlayer =
-    let
-        elem =
-            "@"
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
-    in
-    GameModel.player elem "You"
-
-
-initialEnemy : GameModel.EnemyId -> GameModel.Enemy
-initialEnemy enemyid =
-    let
-        elem =
-            "e" ++ String.fromInt enemyid
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
-    in
-    GameModel.enemy elem enemyid ("enemy" ++ String.fromInt enemyid)
-
-
-initialState : GameModel.State
-initialState =
-    let
-        player =
-            initialPlayer
-
-        enemy =
-            initialEnemy 1
-
-        enemy2 =
-            initialEnemy 2
-
-        levers =
-            Dict.empty
-
-        w =
-            Tuple.first dimensions
-
-        h =
-            Tuple.second dimensions
-
-        firstMap =
-            -- MapGen.randomCave dimensions
-            Grid.initialize { width = w, height = h } GameModel.NoTileYet
-
-        roomsInfo =
-            GameModel.RoomsInfo [] 20 12 7
-
-        firstExplored =
-            setAllAsUnexplored firstMap
-    in
-    GameModel.State
-        player
-        (Dict.fromList
-            [ ( 1, enemy )
-            , ( 2, enemy2 )
-            ]
-        )
-        firstMap
-        levers
-        firstExplored
-        [ "you enter the dungeon" ]
-        []
-        3
-        3
-        15
-        15
-        (Tuple.first dimensions)
-        (Tuple.second dimensions)
-        Nothing
-        roomsInfo
-
-
 subscriptions : GameModel.State -> Sub GameUpdate.Msg
 subscriptions model =
     --Keyboard.presses (\code ->  (Char.fromCode code))
@@ -225,7 +154,8 @@ init : Flags -> ( GameModel.State, Cmd GameUpdate.Msg )
 init flags =
     let
         initState =
-            initialState
+            --GameDefinitions.Game1Definitions.initialStateFunc
+            GameDefinitions.Game2Definitions.initialStateFunc
 
         dims =
             initState.level.size
@@ -238,12 +168,20 @@ init flags =
 
         gBounds =
             Grid.getGridBoundsToPlacePlayer initState.level
+
+        createRandomMap : Bool
+        createRandomMap =
+            False
     in
     ( initState
     , Cmd.batch
         ([ -- GameUpdate.cmdGenFloatsForRandomCave w h
            --, GameUpdate.cmdFillRandomIntsPool initState
-           GameUpdate.cmdFillRandomIntsPoolAndGenerateRandomMap initState
+           if createRandomMap then
+            GameUpdate.cmdFillRandomIntsPoolAndGenerateRandomMap initState
+
+           else
+            GameUpdate.cmdFillRandomIntsPool initState
          , GameUpdate.cmdGenerateRandomInitiativeValue "player" Nothing 1 100
          , GameUpdate.cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
          ]

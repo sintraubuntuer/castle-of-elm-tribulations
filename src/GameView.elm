@@ -117,10 +117,50 @@ wall orientationStr =
     --rect (toFloat xScale) (toFloat yScale) |> filled grey
     let
         fileStr =
-            if String.toLower orientationStr == "up" then
-                -- || orientationStr == "Up" || orientationStr == "UP" then
-                --"img/walls/wall_up.png"
+            if String.toLower orientationStr == "four_way" then
+                "img/walls/empty-empty-empty-empty.png"
+
+            else if String.toLower orientationStr == "three_way_at_bottom" then
+                "img/walls/empty-empty-empty-flat.png"
+
+            else if String.toLower orientationStr == "three_way_at_right" then
+                "img/walls/empty-empty-flat-empty.png"
+
+            else if String.toLower orientationStr == "three_way_at_top" then
+                "img/walls/empty-flat-empty-empty.png"
+
+            else if String.toLower orientationStr == "three_way_at_left" then
+                "img/walls/flat-empty-empty-empty.png"
+
+            else if String.toLower orientationStr == "corner_top_right" then
+                "img/walls/empty-flat-flat-empty.png"
+
+            else if String.toLower orientationStr == "corner_top_left" then
+                "img/walls/flat-flat-empty-empty.png"
+
+            else if String.toLower orientationStr == "corner_bottom_right" then
+                "img/walls/empty-empty-flat-flat.png"
+
+            else if String.toLower orientationStr == "corner_bottom_left" then
+                "img/walls/flat-empty-empty-flat.png"
+
+            else if String.toLower orientationStr == "up" then
                 "img/walls/flat-empty-flat-empty.png"
+
+            else if String.toLower orientationStr == "horizontal" then
+                "img/walls/empty-flat-empty-flat.png"
+
+            else if String.toLower orientationStr == "cul_de_sac_at_bottom" then
+                "img/walls/flat-empty-flat-flat.png"
+
+            else if String.toLower orientationStr == "cul_de_sac_at_top" then
+                "img/walls/flat-flat-flat-empty.png"
+
+            else if String.toLower orientationStr == "cul_de_sac_at_left" then
+                "img/walls/flat-flat-empty-flat.png"
+
+            else if String.toLower orientationStr == "cul_de_sac_at_right" then
+                "img/walls/empty-flat-flat-flat.png"
 
             else
                 --"img/walls/wall.png"
@@ -208,8 +248,50 @@ tile t =
             floor_ floorinfo
 
         GameModel.Wall wallinfo ->
-            if wallinfo.orientation == "up" then
+            if wallinfo.orientation == "four_way" then
+                wall "four_way"
+
+            else if wallinfo.orientation == "three_way_at_bottom" then
+                wall "three_way_at_bottom"
+
+            else if wallinfo.orientation == "three_way_at_right" then
+                wall "three_way_at_right"
+
+            else if wallinfo.orientation == "three_way_at_top" then
+                wall "three_way_at_top"
+
+            else if wallinfo.orientation == "three_way_at_left" then
+                wall "three_way_at_left"
+
+            else if wallinfo.orientation == "corner_top_right" then
+                wall "corner_top_right"
+
+            else if wallinfo.orientation == "corner_top_left" then
+                wall "corner_top_left"
+
+            else if wallinfo.orientation == "corner_bottom_right" then
+                wall "corner_bottom_right"
+
+            else if wallinfo.orientation == "corner_bottom_left" then
+                wall "corner_bottom_left"
+
+            else if wallinfo.orientation == "up" then
                 wall "up"
+
+            else if wallinfo.orientation == "horizontal" then
+                wall "horizontal"
+
+            else if wallinfo.orientation == "cul_de_sac_at_bottom" then
+                wall "cul_de_sac_at_bottom"
+
+            else if wallinfo.orientation == "cul_de_sac_at_top" then
+                wall "cul_de_sac_at_top"
+
+            else if wallinfo.orientation == "cul_de_sac_at_left" then
+                wall "cul_de_sac_at_left"
+
+            else if wallinfo.orientation == "cul_de_sac_at_right" then
+                wall "cul_de_sac_at_right"
 
             else
                 wall "horizontal"
@@ -391,12 +473,15 @@ mainScreen state =
 
         enemy_ =
             let
+                relevantEnemiesDict =
+                    Dict.filter (\enId enem -> (enem.location.x >= state.x_display_anchor && enem.location.x - state.x_display_anchor < state.window_width) && (enem.location.y >= state.y_display_anchor && enem.location.y - state.y_display_anchor < state.window_height)) state.enemies
+
                 mkEnemy enid anenemy =
                     --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
                     guy anenemy (GameModel.getGridTileVisibility anenemy.location state.level)
                         |> shift (location anenemy)
             in
-            group <| (Dict.map mkEnemy state.enemies |> Dict.values)
+            group <| (Dict.map mkEnemy relevantEnemiesDict |> Dict.values)
 
         --grid =
         --Grid.toList state.level
@@ -424,6 +509,14 @@ mainScreen state =
                 --  , enemy_ |> shift ( 0, 0 )
                 ]
 
+        eg =
+            Collage.group
+                [ enemy_ ]
+
+        emptyg =
+            Collage.group
+                []
+
         visibilitySubGrid =
             Grid.map (\t -> GameModel.getTileVisibility t) subgrid
 
@@ -435,6 +528,7 @@ mainScreen state =
         ([ --layers [ bg, pg, fogger ]
            fogger
          , pg |> shift ( 0, 0 )
+         , eg
          , bg
 
          --, fogger
@@ -444,6 +538,11 @@ mainScreen state =
          --  ++ List.map (Text.fromString >> Collage.rendered) (List.take 3 state.log)
         )
         |> name "mainScreen"
+
+
+inViewRange : GameModel.Enemy -> Bool
+inViewRange enemy_ =
+    False
 
 
 
