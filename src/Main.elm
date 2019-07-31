@@ -62,14 +62,8 @@ initialLevel =
 
 subscriptions : GameModel.State -> Sub GameUpdate.Msg
 subscriptions model =
-    --Keyboard.presses (\code ->  (Char.fromCode code))
     Sub.batch
-        [ -- Keyboard.downs (\kcode -> GameUpdate.KeyDown (fromCode kcode))
-          onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
-
-        --, Keyboard.ups (\kcode -> KeyUpMsg (fromCode kcode))
-        --Keyboard.presses (\kcode -> KeyPress (fromCode kcode))
-        --, Time.every (msPerFrame model * Time.millisecond) StepNoKey
+        [ onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
         ]
 
 

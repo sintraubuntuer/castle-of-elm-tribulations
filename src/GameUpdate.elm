@@ -54,8 +54,11 @@ update msg state =
                         1 ->
                             GameDefinitions.Game1Definitions.initialStateFunc
 
-                        _ ->
+                        2 ->
                             GameDefinitions.Game2Definitions.initialStateFunc
+
+                        _ ->
+                            ( state, False )
 
                 gBounds =
                     Grid.getGridBoundsToPlacePlayer initState.level
@@ -64,7 +67,7 @@ update msg state =
             , Cmd.batch
                 ([ if createRandomMap then
                     cmdFillRandomIntsPoolAndGenerateRandomMap initState
-                        |> Debug.log "trying to create a random map"
+                    --|> Debug.log "trying to create a random map"
 
                    else
                     cmdFillRandomIntsPool initState
@@ -161,7 +164,9 @@ update msg state =
 
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
-                                { newState | player = move ( x_, y_ ) newState player }
+                                { newState | player = move ( x_, y_ ) newState newState.player }
+                                    |> checkIfPlayerStandingOnStairsAndMoveToNewFloor
+                                    --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
 
                             else
@@ -170,40 +175,14 @@ update msg state =
                 newState3 =
                     newState2 |> cleanup |> resetEnemyMovesCurrentTurn |> ai |> reveal
             in
-            ( newState3, cmdFillRandomIntsPool newState2 )
+            ( newState3, cmdFillRandomIntsPool newState3 )
 
         ChangeFloorTo floorId locTuple ->
             let
-                currentFloorInfo =
-                    GameModel.getCurrentFloorInfoToStore state
-
-                newStore =
-                    Dict.update state.currentFloorId (\_ -> Just currentFloorInfo) state.floorDict
-
-                newCurrentFloor =
-                    Dict.get floorId state.floorDict
-
                 newState =
-                    case newCurrentFloor of
-                        Just cFloor ->
-                            { state
-                                | level = cFloor.level
-                                , explored = cFloor.explored
-                                , window_width = cFloor.window_width
-                                , window_height = cFloor.window_height
-                                , total_width = cFloor.total_width
-                                , total_height = cFloor.total_height
-                                , floorDict = newStore
-                                , currentFloorId = floorId
-                            }
-
-                        Nothing ->
-                            { state | floorDict = newStore }
-
-                _ =
-                    Debug.log "current FloorId is now : " newState.currentFloorId
+                    changeFloorTo state floorId locTuple
             in
-            newState |> update (NewRandomPointToPlacePlayer locTuple)
+            ( newState, Cmd.none )
 
         NewRandomPointToPlacePlayer tupPosition ->
             let
@@ -215,13 +194,13 @@ update msg state =
 
                 gridBounds =
                     Grid.getGridBoundsToPlacePlayer state.level
-                        |> Debug.log "grid bounds are : "
 
+                --|> Debug.log "grid bounds are : "
                 newPlayer =
                     { oldPlayer | location = newLocation, placed = True }
 
-                _ =
-                    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation state)
+                --_ =
+                --    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation state)
             in
             case GameModel.isModelTileWalkable newLocation state of
                 True ->
@@ -336,6 +315,131 @@ update msg state =
                     }
             in
             ( newstate, cmdFillRandomIntsPool newstate )
+
+
+isPlayerStandingOnStairs : GameModel.State -> Bool
+isPlayerStandingOnStairs state =
+    --False
+    let
+        mbTile =
+            Grid.get state.player.location state.level
+    in
+    case mbTile of
+        Just (GameModel.Stairs sinfo) ->
+            True
+
+        _ ->
+            False
+
+
+checkIfPlayerStandingOnStairsAndMoveToNewFloor : GameModel.State -> GameModel.State
+checkIfPlayerStandingOnStairsAndMoveToNewFloor state =
+    let
+        mbTile =
+            Grid.get state.player.location state.level
+    in
+    case mbTile of
+        Just (GameModel.Stairs sinfo) ->
+            let
+                mbDestinationCoordsTuple =
+                    searchFloorForStairsId sinfo.toFloorId sinfo.toStairsId state
+            in
+            case mbDestinationCoordsTuple of
+                Just ( newX, newY ) ->
+                    let
+                        _ =
+                            Debug.log "going to call changeFloorTo with coords " ( newX, newY )
+                    in
+                    changeFloorTo state sinfo.toFloorId ( newX + Tuple.first sinfo.shift, newY + Tuple.second sinfo.shift )
+
+                Nothing ->
+                    state
+
+        _ ->
+            state
+
+
+searchFloorForStairsId : Int -> Int -> GameModel.State -> Maybe ( Int, Int )
+searchFloorForStairsId floorId stairsId state =
+    let
+        mbFloorGrid =
+            Dict.get floorId state.floorDict
+
+        getlcoords fgrid =
+            Grid.toCoordinates fgrid
+
+        checkCoords coords_ fgrid =
+            case Grid.get coords_ fgrid of
+                Just (GameModel.Stairs sinfo) ->
+                    sinfo.stairsId == stairsId
+
+                _ ->
+                    False
+
+        _ =
+            Debug.log ("searching for stairsId " ++ String.fromInt stairsId ++ " in floor ") floorId
+    in
+    case mbFloorGrid of
+        Just floorGrid ->
+            List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
+                |> List.head
+                |> Maybe.map (\rec -> ( rec.x, rec.y ))
+                |> Debug.log "coords of stairs are : "
+
+        Nothing ->
+            Nothing
+
+
+changeFloorTo : GameModel.State -> Int -> ( Int, Int ) -> GameModel.State
+changeFloorTo state floorId locTuple =
+    let
+        _ =
+            Debug.log ("changeFloorTo was called with floorId " ++ String.fromInt floorId ++ " and coords ") locTuple
+
+        currentFloorInfo =
+            GameModel.getCurrentFloorInfoToStore state
+
+        newStore =
+            Dict.update state.currentFloorId (\_ -> Just currentFloorInfo) state.floorDict
+
+        newCurrentFloor =
+            Dict.get floorId state.floorDict
+
+        newState =
+            case newCurrentFloor of
+                Just cFloor ->
+                    { state
+                        | level = cFloor.level
+                        , explored = cFloor.explored
+                        , window_width = cFloor.window_width
+                        , window_height = cFloor.window_height
+                        , total_width = cFloor.total_width
+                        , total_height = cFloor.total_height
+                        , floorDict = newStore
+                        , currentFloorId = floorId
+                    }
+
+                Nothing ->
+                    { state | floorDict = newStore }
+
+        _ =
+            Debug.log "newState currentFloorId is " newState.currentFloorId
+
+        delta_x =
+            Tuple.first locTuple - newState.player.location.x
+
+        delta_y =
+            Tuple.second locTuple - newState.player.location.y
+
+        player_ =
+            move ( delta_x, delta_y ) newState newState.player
+    in
+    { newState
+        | player = player_
+        , x_display_anchor = max 0 (Tuple.first locTuple - round (toFloat newState.window_width / 2.0))
+        , y_display_anchor = max 0 (Tuple.second locTuple - round (toFloat newState.window_height / 2))
+    }
+        |> reveal
 
 
 turnNeighbourWallCellstoAshes : Grid.Coordinate -> GameModel.State -> GameModel.State

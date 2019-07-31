@@ -46,7 +46,6 @@ initialEnemy enemyid =
 dimensions : ( Int, Int )
 dimensions =
     ( get_total_width 11, get_total_height 7 )
-        |> Debug.log "Dimensions are : "
 
 
 
@@ -152,17 +151,18 @@ gridFirstFloor =
 gridCaverns : Grid.Grid GameModel.Tile
 gridCaverns =
     gridInitializer 7 11
-        |> addCustomRoomsAndTunnels
+        |> addCavernsCustomRoomsAndTunnels
 
 
-addCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
-addCustomRoomsAndTunnels grid =
+addCavernsCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addCavernsCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc cavernsInitialRoomRectangles
-        |> MapGen.listTunnelRectangleToGridFunc cavernsInitialHorizontalTunnelRectangles
+        |> MapGen.listTunnelRectangleToGridFunc (cavernsInitialHorizontalTunnelRectangles ++ cavernsHorizontalStairsTunnel)
         |> MapGen.listTunnelRectangleToGridFunc cavernsInitialVerticalTunnelRectangles
-        |> MapGen.createWallBoundaries (cavernsInitialHorizontalTunnelRectangles ++ cavernsInitialRoomRectangles ++ cavernsInitialVerticalTunnelRectangles)
+        |> MapGen.createWallBoundaries (cavernsInitialHorizontalTunnelRectangles ++ cavernsHorizontalStairsTunnel ++ cavernsInitialRoomRectangles ++ cavernsInitialVerticalTunnelRectangles)
         --|> make sure if cell width x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
+        |> addCavernsStairs
         |> MapGen.transformFloorToWallOnDisplayBoundaries
         |> MapGen.correctSomeWallCorners
 
@@ -171,65 +171,70 @@ addBasementCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameMod
 addBasementCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (basementInitialRoomRectangles ++ basementCustomRoomRectangles)
-        |> MapGen.listTunnelRectangleToGridFunc basementInitialHorizontalTunnelRectangles
+        |> MapGen.listTunnelRectangleToGridFunc (basementInitialHorizontalTunnelRectangles ++ basementHorizontalStairsTunnel)
         |> MapGen.listTunnelRectangleToGridFunc (basementInitialVerticalTunnelRectangles ++ basementCustomVerticalTunnelRectangles)
-        |> MapGen.createWallBoundaries (basementInitialRoomRectangles ++ basementCustomRoomRectangles ++ basementInitialHorizontalTunnelRectangles ++ basementInitialVerticalTunnelRectangles ++ basementCustomVerticalTunnelRectangles)
+        |> MapGen.createWallBoundaries (basementInitialRoomRectangles ++ basementCustomRoomRectangles ++ basementInitialHorizontalTunnelRectangles ++ basementHorizontalStairsTunnel ++ basementInitialVerticalTunnelRectangles ++ basementCustomVerticalTunnelRectangles)
         --|> make sure if cell with x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
+        |> addBasementStairs
         |> MapGen.transformFloorToWallOnDisplayBoundaries
         |> MapGen.correctSomeWallCorners
 
 
+cavernsHorizontalStairsTunnel : List TunnelRectangle
+cavernsHorizontalStairsTunnel =
+    [ getHorizontalTunnel 4 8 TunnelToTheLeft (Just (vertical_wall_width + vertical_space_between_rooms)) Nothing
+    ]
 
-{-
-   cavernsInitialRoomRectangles =
-       [ RoomRectangle 51 3 5 5
-       , RoomRectangle 59 4 5 3
-       , RoomRectangle 67 3 5 5
-       , RoomRectangle 75 4 5 3
-       , RoomRectangle 83 3 5 5
-       , RoomRectangle 3 11 5 5
-       , RoomRectangle 11 11 5 5
-       , RoomRectangle 19 11 5 5
-       , RoomRectangle 27 11 5 5
-       , RoomRectangle 35 11 5 5
-       , RoomRectangle 52 11 3 5
-       , RoomRectangle 68 11 3 5
-       , RoomRectangle 12 19 3 5
-       , RoomRectangle 19 19 5 5
-       , RoomRectangle 35 19 5 5
-       , RoomRectangle 43 20 5 3
-       , RoomRectangle 51 19 5 5
-       , RoomRectangle 59 20 5 3
-       , RoomRectangle 67 19 5 5
-       , RoomRectangle 12 27 3 5
-       , RoomRectangle 19 27 5 5
-       , RoomRectangle 27 27 5 5
-       , RoomRectangle 35 27 5 5
-       , RoomRectangle 43 27 5 5
-       , RoomRectangle 52 27 3 5
-       , RoomRectangle 59 27 5 5
-       , RoomRectangle 67 27 5 5
-       , RoomRectangle 75 28 5 3
-       , RoomRectangle 83 27 5 5
-       , RoomRectangle 11 35 5 5
-       , RoomRectangle 19 36 5 3
-       , RoomRectangle 27 36 5 3
-       , RoomRectangle 35 35 5 5
-       , RoomRectangle 43 35 5 5
-       , RoomRectangle 68 35 3 5
-       , RoomRectangle 12 43 3 5
-       , RoomRectangle 35 43 5 5
-       , RoomRectangle 43 43 5 5
-       , RoomRectangle 51 43 5 5
-       , RoomRectangle 59 44 5 3
-       , RoomRectangle 67 43 5 5
-       , RoomRectangle 75 43 5 5
-       , RoomRectangle 11 51 5 5
-       , RoomRectangle 43 51 5 5
-       , RoomRectangle 51 51 5 5
-       , RoomRectangle 67 51 5 5
-       ]
--}
+
+basementHorizontalStairsTunnel : List TunnelRectangle
+basementHorizontalStairsTunnel =
+    [ getHorizontalTunnel 6 6 TunnelToTheRight (Just (vertical_wall_width + vertical_space_between_rooms)) Nothing
+    ]
+
+
+addCavernsStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addCavernsStairs grid =
+    let
+        lstairs =
+            [ ( 4, 8 )
+            ]
+    in
+    List.foldl (\( r_nr, c_nr ) gridacc -> getStairsOnRoom r_nr c_nr 1 1 2 ( -1, 0 ) StairsToTheLeft gridacc) grid lstairs
+
+
+addBasementStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addBasementStairs grid =
+    let
+        lstairs =
+            [ ( 6, 6 )
+            ]
+    in
+    List.foldl (\( r_nr, c_nr ) gridacc -> getStairsOnRoom r_nr c_nr 2 0 1 ( 1, 0 ) StairsToTheRight gridacc) grid lstairs
+
+
+type StairsOrientation
+    = StairsToTheLeft
+    | StairsToTheRight
+
+
+getStairsOnRoom : Int -> Int -> Int -> Int -> Int -> ( Int, Int ) -> StairsOrientation -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+getStairsOnRoom row_nr col_nr stairsId toFloorId toStairsId shiftTuple orientation grid =
+    let
+        tunnel_width =
+            vertical_wall_width + vertical_space_between_rooms
+
+        ( top_left_x, top_left_y ) =
+            case orientation of
+                StairsToTheLeft ->
+                    ( square_room_top_left_x row_nr col_nr - tunnel_width, square_room_top_left_y row_nr col_nr + square_room_height // 2 )
+
+                StairsToTheRight ->
+                    ( square_room_top_left_x row_nr col_nr + square_room_side + tunnel_width - 1, square_room_top_left_y row_nr col_nr + square_room_height // 2 )
+
+        tileStairs =
+            GameModel.Stairs (GameModel.StairsInfo stairsId toFloorId toStairsId shiftTuple False GameModel.Unexplored)
+    in
+    Grid.set (Grid.Coordinate top_left_x top_left_y) tileStairs grid
 
 
 cavernsInitialRoomRectangles : List RoomRectangle
@@ -297,83 +302,47 @@ cavernsInitialRoomRectangles =
 
 cavernsInitialHorizontalTunnelRectangles : List TunnelRectangle
 cavernsInitialHorizontalTunnelRectangles =
-    [ getHorizontalTunnel 1 7
-    , getHorizontalTunnel 1 8
-    , getHorizontalTunnel 1 9
-    , getHorizontalTunnel 1 10
+    [ getCommonHorizontalTunnel 1 7
+    , getCommonHorizontalTunnel 1 8
+    , getCommonHorizontalTunnel 1 9
+    , getCommonHorizontalTunnel 1 10
 
     --
-    , getHorizontalTunnel 2 1
-    , getHorizontalTunnel 2 2
-    , getHorizontalTunnel 2 3
-    , getHorizontalTunnel 2 4
+    , getCommonHorizontalTunnel 2 1
+    , getCommonHorizontalTunnel 2 2
+    , getCommonHorizontalTunnel 2 3
+    , getCommonHorizontalTunnel 2 4
 
     --
-    , getHorizontalTunnel 3 5
-    , getHorizontalTunnel 3 6
-    , getHorizontalTunnel 3 7
-    , getHorizontalTunnel 3 8
+    , getCommonHorizontalTunnel 3 5
+    , getCommonHorizontalTunnel 3 6
+    , getCommonHorizontalTunnel 3 7
+    , getCommonHorizontalTunnel 3 8
 
     --
-    , getHorizontalTunnel 4 3
-    , getHorizontalTunnel 4 4
-    , getHorizontalTunnel 4 5
-    , getHorizontalTunnel 4 8
-    , getHorizontalTunnel 4 9
-    , getHorizontalTunnel 4 10
+    , getCommonHorizontalTunnel 4 3
+    , getCommonHorizontalTunnel 4 4
+    , getCommonHorizontalTunnel 4 5
+    , getCommonHorizontalTunnel 4 8
+    , getCommonHorizontalTunnel 4 9
+    , getCommonHorizontalTunnel 4 10
 
     --
-    , getHorizontalTunnel 5 2
-    , getHorizontalTunnel 5 3
-    , getHorizontalTunnel 5 4
-    , getHorizontalTunnel 5 5
+    , getCommonHorizontalTunnel 5 2
+    , getCommonHorizontalTunnel 5 3
+    , getCommonHorizontalTunnel 5 4
+    , getCommonHorizontalTunnel 5 5
 
     --
-    , getHorizontalTunnel 6 5
-    , getHorizontalTunnel 6 6
-    , getHorizontalTunnel 6 7
-    , getHorizontalTunnel 6 8
-    , getHorizontalTunnel 6 9
+    , getCommonHorizontalTunnel 6 5
+    , getCommonHorizontalTunnel 6 6
+    , getCommonHorizontalTunnel 6 7
+    , getCommonHorizontalTunnel 6 8
+    , getCommonHorizontalTunnel 6 9
 
     --
-    , getHorizontalTunnel 7 6
+    , getCommonHorizontalTunnel 7 6
     ]
-
-
-
-{-
-   cavernsInitialHorizontalTunnelRectangles : List TunnelRectangle
-   cavernsInitialHorizontalTunnelRectangles =
-       [ TunnelRectangle 56 5 3 1
-       , TunnelRectangle 64 5 3 1
-       , TunnelRectangle 72 5 3 1
-       , TunnelRectangle 80 5 3 1
-       , TunnelRectangle 8 13 3 1
-       , TunnelRectangle 16 13 3 1
-       , TunnelRectangle 24 13 3 1
-       , TunnelRectangle 32 13 3 1
-       , TunnelRectangle 40 21 3 1
-       , TunnelRectangle 48 21 3 1
-       , TunnelRectangle 56 21 3 1
-       , TunnelRectangle 64 21 3 1
-       , TunnelRectangle 24 29 3 1
-       , TunnelRectangle 32 29 3 1
-       , TunnelRectangle 40 29 3 1
-       , TunnelRectangle 64 29 3 1
-       , TunnelRectangle 72 29 3 1
-       , TunnelRectangle 80 29 3 1
-       , TunnelRectangle 16 37 3 1
-       , TunnelRectangle 24 37 3 1
-       , TunnelRectangle 32 37 3 1
-       , TunnelRectangle 40 37 3 1
-       , TunnelRectangle 40 45 3 1
-       , TunnelRectangle 48 45 3 1
-       , TunnelRectangle 56 45 3 1
-       , TunnelRectangle 64 45 3 1
-       , TunnelRectangle 72 45 3 1
-       , TunnelRectangle 48 53 3 1
-       ]
--}
 
 
 cavernsInitialVerticalTunnelRectangles : List TunnelRectangle
@@ -414,46 +383,49 @@ cavernsInitialVerticalTunnelRectangles =
 
 
 
-{-
-   cavernsInitialVerticalTunnelRectangles : List TunnelRectangle
-   cavernsInitialVerticalTunnelRectangles =
-       [ TunnelRectangle 13 16 1 3
-       , TunnelRectangle 13 24 1 3
-       , TunnelRectangle 13 32 1 3
-       , TunnelRectangle 13 40 1 3
-       , TunnelRectangle 13 48 1 3
-       , TunnelRectangle 21 16 1 3
-       , TunnelRectangle 21 24 1 3
-       , TunnelRectangle 37 16 1 3
-       , TunnelRectangle 37 40 1 3
-       , TunnelRectangle 45 32 1 3
-       , TunnelRectangle 45 40 1 3
-       , TunnelRectangle 45 48 1 3
-       , TunnelRectangle 53 8 1 3
-       , TunnelRectangle 53 16 1 3
-       , TunnelRectangle 53 24 1 3
-       , TunnelRectangle 53 48 1 3
-       , TunnelRectangle 69 8 1 3
-       , TunnelRectangle 69 16 1 3
-       , TunnelRectangle 69 24 1 3
-       , TunnelRectangle 69 32 1 3
-       , TunnelRectangle 69 40 1 3
-       , TunnelRectangle 69 48 1 3
-       ]
+{- }
+   getHorizontalTunnel : Int -> Int -> TunnelRectangle
+   getHorizontalTunnel row_nr col_nr orientation =
+       let
+           ( top_left_x, top_left_y ) =
+               ( square_room_top_left_x row_nr col_nr + square_room_width, square_room_top_left_y row_nr col_nr + square_room_height // 2 )
+
+           tunnel_height =
+               1
+
+           tunnel_width =
+               2 * vertical_wall_width + vertical_space_between_rooms
+       in
+       TunnelRectangle top_left_x top_left_y tunnel_width tunnel_height
 -}
 
 
-getHorizontalTunnel : Int -> Int -> TunnelRectangle
-getHorizontalTunnel row_nr col_nr =
+type TunnelOrientation
+    = TunnelToTheRight
+    | TunnelToTheLeft
+
+
+getCommonHorizontalTunnel : Int -> Int -> TunnelRectangle
+getCommonHorizontalTunnel row_nr col_nr =
+    getHorizontalTunnel row_nr col_nr TunnelToTheRight Nothing Nothing
+
+
+getHorizontalTunnel : Int -> Int -> TunnelOrientation -> Maybe Int -> Maybe Int -> TunnelRectangle
+getHorizontalTunnel row_nr col_nr orientation mbWidth mbHeight =
     let
+        tunnel_width =
+            mbWidth |> Maybe.withDefault (2 * vertical_wall_width + vertical_space_between_rooms)
+
         ( top_left_x, top_left_y ) =
-            ( square_room_top_left_x row_nr col_nr + square_room_width, square_room_top_left_y row_nr col_nr + square_room_height // 2 )
+            case orientation of
+                TunnelToTheLeft ->
+                    ( square_room_top_left_x row_nr col_nr - tunnel_width, square_room_top_left_y row_nr col_nr + square_room_height // 2 )
+
+                TunnelToTheRight ->
+                    ( square_room_top_left_x row_nr col_nr + square_room_width, square_room_top_left_y row_nr col_nr + square_room_height // 2 )
 
         tunnel_height =
-            1
-
-        tunnel_width =
-            2 * vertical_wall_width + vertical_space_between_rooms
+            mbHeight |> Maybe.withDefault 1
     in
     TunnelRectangle top_left_x top_left_y tunnel_width tunnel_height
 
@@ -561,12 +533,14 @@ border_left_width =
     1
 
 
+border_bottom_height : Int
 border_bottom_height =
     1
 
 
+border_right_width : Int
 border_right_width =
-    1
+    4
 
 
 square_room_top_left_y : Int -> Int -> Int
@@ -675,27 +649,27 @@ basementInitialRoomRectangles =
 
 basementInitialHorizontalTunnelRectangles : List TunnelRectangle
 basementInitialHorizontalTunnelRectangles =
-    [ getHorizontalTunnel 2 1
-    , getHorizontalTunnel 2 2
-    , getHorizontalTunnel 2 3
-    , getHorizontalTunnel 2 4
+    [ getCommonHorizontalTunnel 2 1
+    , getCommonHorizontalTunnel 2 2
+    , getCommonHorizontalTunnel 2 3
+    , getCommonHorizontalTunnel 2 4
 
     --
-    , getHorizontalTunnel 3 2
-    , getHorizontalTunnel 3 3
-    , getHorizontalTunnel 3 4
+    , getCommonHorizontalTunnel 3 2
+    , getCommonHorizontalTunnel 3 3
+    , getCommonHorizontalTunnel 3 4
 
     --
-    , getHorizontalTunnel 5 2
-    , getHorizontalTunnel 5 3
-    , getHorizontalTunnel 5 4
+    , getCommonHorizontalTunnel 5 2
+    , getCommonHorizontalTunnel 5 3
+    , getCommonHorizontalTunnel 5 4
 
     --
-    , getHorizontalTunnel 6 1
-    , getHorizontalTunnel 6 2
-    , getHorizontalTunnel 6 3
-    , getHorizontalTunnel 6 4
-    , getHorizontalTunnel 6 5
+    , getCommonHorizontalTunnel 6 1
+    , getCommonHorizontalTunnel 6 2
+    , getCommonHorizontalTunnel 6 3
+    , getCommonHorizontalTunnel 6 4
+    , getCommonHorizontalTunnel 6 5
     ]
 
 

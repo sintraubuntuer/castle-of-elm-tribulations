@@ -1,4 +1,4 @@
-module GameSimulation exposing (..)
+module GameSimulation exposing (getRandomIntBetweenValues, getWallTilePositionsFromGrid, mbTurnNeighbourWallCellstoAshes, randomlySelectPositionFromListAndSimulateWallToAshes, simulationToGetLeverPositions, turnNeighbourWallCellstoAshes)
 
 import GameModel
 import Grid
@@ -137,9 +137,8 @@ simulationToGetLeverPositions maxNrIterations ( grid, lleverCoords, lrandints ) 
                 ( newgrid, mbcoords, newrandints ) =
                     randomlySelectPositionFromListAndSimulateWallToAshes newWallTileCoords lrandints_ grid_
 
-                _ =
-                    Debug.log "mbcoords of cell to install lever : " mbcoords
-
+                --_ =
+                --    Debug.log "mbcoords of cell to install lever : " mbcoords
                 newllevercoords =
                     case mbcoords of
                         Nothing ->
@@ -153,5 +152,6 @@ simulationToGetLeverPositions maxNrIterations ( grid, lleverCoords, lrandints ) 
     if (getWallTilePositionsFromGrid grid |> List.length) > nrWallTilesThreshold && maxNrIterations > 0 then
         iterateSim ( grid, lleverCoords, lrandints )
             |> simulationToGetLeverPositions (maxNrIterations - 1)
+
     else
         ( grid, lleverCoords, lrandints )

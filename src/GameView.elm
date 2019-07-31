@@ -114,6 +114,15 @@ floorOverlay elemStr =
         noForm
 
 
+stairs : Collage msg
+stairs =
+    let
+        fileStr =
+            "img/floor/floor_stairs_up.png"
+    in
+    Collage.image ( toFloat xScale, toFloat yScale ) fileStr
+
+
 wall : String -> Collage msg
 wall orientationStr =
     --rect (toFloat xScale) (toFloat yScale) |> filled grey
@@ -248,6 +257,9 @@ tile t =
         GameModel.Floor floorinfo ->
             --floor floorinfo
             floor_ floorinfo
+
+        GameModel.Stairs sinfo ->
+            stairs
 
         GameModel.Wall wallinfo ->
             if wallinfo.orientation == "four_way" then
@@ -677,9 +689,8 @@ gridToHtmlList grid =
 viewDebugGrid : Grid.Grid a -> GameModel.State -> List (Html msg)
 viewDebugGrid grid state =
     let
-        _ =
-            Debug.log "viewDebugGrid has been called "
-
+        --_ =
+        --    Debug.log "viewDebugGrid has been called "
         ( subgrid, txtmsg ) =
             grid
                 |> Grid.getSubGrid state.x_display_anchor (state.x_display_anchor + state.window_width - 1) state.y_display_anchor (state.y_display_anchor + state.window_height - 1)
@@ -736,7 +747,6 @@ view model =
         True ->
             Html.div []
                 ([ display model
-                    --|> Element.toHtml
                     |> svg
                  ]
                  --++ [ viewDebugPlayer model ]
@@ -751,7 +761,15 @@ view model =
 viewStartMenuChoices : GameModel.State -> Html GameUpdate.Msg
 viewStartMenuChoices model =
     Html.div []
-        [ Html.div [] [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ] ]
+        [ Html.div []
+            [ Html.h3 []
+                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
+                ]
+            ]
         , Html.br [] []
-        , Html.div [] [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 2) ] [ Html.text "Start Game 2 - Atic Atac Style  Dungeon " ] ]
+        , Html.div []
+            [ Html.h3 []
+                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 2) ] [ Html.text "Start Game 2 - Atic Atac Style  Dungeon " ]
+                ]
+            ]
         ]

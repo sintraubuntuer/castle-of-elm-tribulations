@@ -1,4 +1,4 @@
-module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, FloorStore, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getCurrentFloorInfoToStore, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
+module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, FloorStore, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, StairsInfo, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getCurrentFloorInfoToStore, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
 
 --import Generator
 --import Generator.Standard
@@ -20,6 +20,7 @@ type alias LeverId =
 
 type Tile
     = Floor FloorInfo
+    | Stairs StairsInfo
     | Wall WallInfo
     | WallOver WallOverInfo
     | Door DoorInfo
@@ -34,8 +35,6 @@ type alias State =
     { player : Player
     , enemies : Dict EnemyId Enemy
     , level : Grid.Grid Tile
-
-    --, levers : Dict LeverId LeverInfo
     , explored : Grid.Grid Visibility
     , log : List String
     , pseudoRandomIntsPool : List Int
@@ -202,6 +201,16 @@ type alias FloorInfo =
     , isExplored : Bool
     , visibility : Visibility
     , color : String
+    }
+
+
+type alias StairsInfo =
+    { stairsId : Int
+    , toFloorId : Int
+    , toStairsId : Int
+    , shift : ( Int, Int ) --after the player has been moved to the destination stairs what's the shift applied relative to the stairs position
+    , isExplored : Bool
+    , visibility : Visibility
     }
 
 
@@ -390,6 +399,16 @@ isWall tile =
             False
 
 
+isStairs : Tile -> Bool
+isStairs tile =
+    case tile of
+        Stairs _ ->
+            True
+
+        _ ->
+            False
+
+
 isMbTileWall : Maybe Tile -> Bool
 isMbTileWall mbtile =
     case mbtile of
@@ -502,6 +521,9 @@ isTileWalkable tile =
             else
                 False
 
+        Stairs sinfo ->
+            True
+
         Wall wInfo ->
             False
 
@@ -544,6 +566,9 @@ isTileTransparent tile =
         Floor floorinfo ->
             floorinfo.isTransparent
 
+        Stairs sinfo ->
+            False
+
         Wall wInfo ->
             False
 
@@ -582,6 +607,9 @@ isTileExplored tile =
         Floor floorinfo ->
             floorinfo.isExplored
 
+        Stairs sinfo ->
+            sinfo.isExplored
+
         Wall wInfo ->
             wInfo.isExplored
 
@@ -619,6 +647,9 @@ setTileAsExplored tile =
     case tile of
         Floor floorinfo ->
             Floor { floorinfo | isExplored = True }
+
+        Stairs sinfo ->
+            Stairs { sinfo | isExplored = True }
 
         Wall wallinfo ->
             Wall { wallinfo | isExplored = True }
@@ -665,6 +696,9 @@ getTileVisibility tile =
         Floor floorinfo ->
             floorinfo.visibility
 
+        Stairs sinfo ->
+            sinfo.visibility
+
         Wall wInfo ->
             wInfo.visibility
 
@@ -709,6 +743,9 @@ setTileVisibility visibility_ tile =
     case tile of
         Floor floorinfo ->
             Floor { floorinfo | visibility = visibility_ }
+
+        Stairs sinfo ->
+            Stairs { sinfo | visibility = visibility_ }
 
         Wall wInfo ->
             Wall { wInfo | visibility = visibility_ }
@@ -831,6 +868,9 @@ showTile tile =
             case tile of
                 Floor floorinfo ->
                     " "
+
+                Stairs sinfo ->
+                    "/"
 
                 Wall winfo ->
                     "#"

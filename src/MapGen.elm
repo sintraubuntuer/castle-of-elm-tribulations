@@ -325,8 +325,8 @@ randomMapGeneratorWithRooms totalwidth totalheight maxRooms roomMaxSize roomMinS
         gridAfterInstallLevers =
             newnewgrid |> installLeversInCoords lLeverCoords2
 
-        _ =
-            Debug.log "list of lever coords position : " (lLeverCoords ++ lLeverCoords2)
+        --_ =
+        --    Debug.log "list of lever coords position : " (lLeverCoords ++ lLeverCoords2)
     in
     { tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
 
@@ -592,10 +592,6 @@ transformFloorToWallOnDisplayBoundaries grid =
             --get { x, y } grid
             case Grid.get coord grid_ of
                 Just (GameModel.Floor _) ->
-                    let
-                        _ =
-                            Debug.log "altering boundary grid cell  from Floor To Wall : " coord
-                    in
                     if lrtd == "l" || lrtd == "r" then
                         Grid.set coord (GameModel.Wall GameModel.defaultWallUpInfo) grid_
 
