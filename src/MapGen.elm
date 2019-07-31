@@ -710,13 +710,14 @@ mbCreateHorizontalTunnel roomrect1 roomrect2 =
         horizontal_tunnel_height =
             2
 
-        vertical_tunnel_height =
+        --1
+        v_height =
             --just temporary , have to pass this as an argument to the function
             2
 
         ( start_x, tunnel_length ) =
             if GameModel.getRoomRightX roomrect1 < GameModel.getRoomCenterX roomrect2 then
-                ( GameModel.getRoomRightX roomrect1 + 1, GameModel.getRoomCenterX roomrect2 - GameModel.getRoomRightX roomrect1 + (vertical_tunnel_height - 1) )
+                ( GameModel.getRoomRightX roomrect1 + 1, GameModel.getRoomCenterX roomrect2 - GameModel.getRoomRightX roomrect1 + (v_height - 1) )
 
             else if roomrect1.top_left_x > GameModel.getRoomCenterX roomrect2 then
                 ( GameModel.getRoomCenterX roomrect2, roomrect1.top_left_x - GameModel.getRoomCenterX roomrect2 )
@@ -748,6 +749,8 @@ mbCreateVerticalTunnel roomrect1 roomrect2 =
 
         vertical_tunnel_width =
             2
+
+        --1
     in
     if tunnel_height > 0 then
         GameModel.TunnelRectangle (GameModel.getRoomCenterX roomrect1) start_y vertical_tunnel_width tunnel_height

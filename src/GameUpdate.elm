@@ -4,6 +4,8 @@ module GameUpdate exposing (Msg(..), ai, attack, attackIfClose, checkAndAlterDis
 --import Collage
 
 import Dict exposing (Dict)
+import GameDefinitions.Game1Definitions
+import GameDefinitions.Game2Definitions
 import GameModel
 import Grid
 import MapGen
@@ -21,9 +23,16 @@ getTailWithDefaultEmptyList la =
         |> Maybe.withDefault []
 
 
+type alias FloorId =
+    Int
+
+
 type Msg
     = Noop
+    | StartGameNr Int
     | KeyDown GameModel.Input
+    | TryShiftPlayerPosition ( Int, Int )
+    | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
     | NewRandomPointToPlaceEnemy GameModel.EnemyId ( Int, Int )
     | NewRandomFloatsForGenCave (List Float)
@@ -38,7 +47,63 @@ update msg state =
         Noop ->
             ( state, Cmd.none )
 
+        StartGameNr nr ->
+            let
+                ( initState, createRandomMap ) =
+                    case nr of
+                        1 ->
+                            GameDefinitions.Game1Definitions.initialStateFunc
+
+                        _ ->
+                            GameDefinitions.Game2Definitions.initialStateFunc
+
+                gBounds =
+                    Grid.getGridBoundsToPlacePlayer initState.level
+            in
+            ( initState
+            , Cmd.batch
+                ([ if createRandomMap then
+                    cmdFillRandomIntsPoolAndGenerateRandomMap initState
+                        |> Debug.log "trying to create a random map"
+
+                   else
+                    cmdFillRandomIntsPool initState
+                 , cmdGenerateRandomInitiativeValue "player" Nothing 1 100
+                 , cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
+                 ]
+                    ++ (Dict.map (\enid enemy -> cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initState.enemies
+                            |> Dict.values
+                       )
+                    ++ (Dict.map (\enid enemy -> cmdGenerateRandomInitiativeValue "enemy" (Just enid) 1 100) initState.enemies
+                            |> Dict.values
+                       )
+                )
+            )
+
         KeyDown input ->
+            case input of
+                GameModel.Up ->
+                    update (TryShiftPlayerPosition ( 0, 0 - 1 )) state
+
+                GameModel.Down ->
+                    update (TryShiftPlayerPosition ( 0, 0 + 1 )) state
+
+                GameModel.Left ->
+                    update (TryShiftPlayerPosition ( 0 - 1, 0 )) state
+
+                GameModel.Right ->
+                    update (TryShiftPlayerPosition ( 0 + 1, 0 )) state
+
+                GameModel.FloorUp ->
+                    update (ChangeFloorTo 1 ( state.player.location.x, state.player.location.y )) state
+
+                GameModel.FloorDown ->
+                    update (ChangeFloorTo 0 ( state.player.location.x, state.player.location.y )) state
+
+                GameModel.Nop ->
+                    ( state, Cmd.none )
+
+        TryShiftPlayerPosition shiftTuple ->
             let
                 player =
                     state.player
@@ -46,22 +111,11 @@ update msg state =
                 { x, y } =
                     player.location
 
-                ( x_, y_ ) =
-                    case input of
-                        GameModel.Up ->
-                            ( 0, 0 - 1 )
+                x_ =
+                    Tuple.first shiftTuple
 
-                        GameModel.Down ->
-                            ( 0, 0 + 1 )
-
-                        GameModel.Left ->
-                            ( 0 - 1, 0 )
-
-                        GameModel.Right ->
-                            ( 0 + 1, 0 )
-
-                        GameModel.Nop ->
-                            ( 0, 0 )
+                y_ =
+                    Tuple.second shiftTuple
 
                 ( x2, y2 ) =
                     ( x + x_, y + y_ )
@@ -118,6 +172,39 @@ update msg state =
             in
             ( newState3, cmdFillRandomIntsPool newState2 )
 
+        ChangeFloorTo floorId locTuple ->
+            let
+                currentFloorInfo =
+                    GameModel.getCurrentFloorInfoToStore state
+
+                newStore =
+                    Dict.update state.currentFloorId (\_ -> Just currentFloorInfo) state.floorDict
+
+                newCurrentFloor =
+                    Dict.get floorId state.floorDict
+
+                newState =
+                    case newCurrentFloor of
+                        Just cFloor ->
+                            { state
+                                | level = cFloor.level
+                                , explored = cFloor.explored
+                                , window_width = cFloor.window_width
+                                , window_height = cFloor.window_height
+                                , total_width = cFloor.total_width
+                                , total_height = cFloor.total_height
+                                , floorDict = newStore
+                                , currentFloorId = floorId
+                            }
+
+                        Nothing ->
+                            { state | floorDict = newStore }
+
+                _ =
+                    Debug.log "current FloorId is now : " newState.currentFloorId
+            in
+            newState |> update (NewRandomPointToPlacePlayer locTuple)
+
         NewRandomPointToPlacePlayer tupPosition ->
             let
                 oldPlayer =
@@ -128,19 +215,27 @@ update msg state =
 
                 gridBounds =
                     Grid.getGridBoundsToPlacePlayer state.level
+                        |> Debug.log "grid bounds are : "
 
                 newPlayer =
                     { oldPlayer | location = newLocation, placed = True }
+
+                _ =
+                    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation state)
             in
             case GameModel.isModelTileWalkable newLocation state of
                 True ->
-                    ( { state | player = newPlayer, x_display_anchor = max 0 (newLocation.x - round (toFloat state.window_width / 2.0)), y_display_anchor = max 0 (newLocation.y - round (toFloat state.window_height / 2)) }
+                    ( { state
+                        | player = newPlayer
+                        , x_display_anchor = max 0 (newLocation.x - round (toFloat state.window_width / 2.0))
+                        , y_display_anchor = max 0 (newLocation.y - round (toFloat state.window_height / 2))
+                      }
                         |> reveal
                     , Cmd.none
                     )
 
                 False ->
-                    ( state, cmdGetRandomPositionedPlayer oldPlayer gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
+                    ( state, cmdGetRandomPositionedPlayer { oldPlayer | placed = False } gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
         NewRandomPointToPlaceEnemy enemyId tupPosition ->
             let
@@ -213,10 +308,19 @@ update msg state =
 
         NewRandomIntsAddToPoolAndGenerateRandomMap lints ->
             let
+                maxNrOfRooms =
+                    state.roomsInfo |> Maybe.map .maxNrOfRooms |> Maybe.withDefault 0
+
+                maxRoomSize =
+                    state.roomsInfo |> Maybe.map .maxRoomSize |> Maybe.withDefault 0
+
+                minRoomSize =
+                    state.roomsInfo |> Maybe.map .minRoomSize |> Maybe.withDefault 0
+
                 --( newGrid, lrectangles, ltunnelrectangles, unused_prand_lints ) =
                 genOutputRecord =
                     --{ tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
-                    MapGen.randomMapGeneratorWithRooms state.total_width state.total_height state.roomsInfo.maxNrOfRooms state.roomsInfo.maxRoomSize state.roomsInfo.minRoomSize lints state.level
+                    MapGen.randomMapGeneratorWithRooms state.total_width state.total_height maxNrOfRooms maxRoomSize minRoomSize lints state.level
 
                 gridAsList =
                     Grid.toList genOutputRecord.tileGrid |> List.concatMap identity
@@ -307,24 +411,30 @@ getWallPercentage gridAsList =
 checkAndAlterDisplayAnchorIfNecessary : GameModel.State -> GameModel.State
 checkAndAlterDisplayAnchorIfNecessary state =
     let
+        p_x_dist =
+            5
+
         newXanchor =
             if state.player.location.x <= state.x_display_anchor then
-                max 0 (state.x_display_anchor - (state.window_width - 2))
+                max 0 (state.x_display_anchor - (state.window_width - p_x_dist))
 
             else if state.player.location.x >= (state.x_display_anchor + (state.window_width - 1)) then
                 --min (state.x_display_anchor + (state.window_width - 2)) (state.total_width - 1)
-                min (state.x_display_anchor + (state.window_width - 2)) (state.total_width - state.window_width + 2)
+                min (state.x_display_anchor + (state.window_width - p_x_dist)) (state.total_width - (state.window_width - p_x_dist))
 
             else
                 state.x_display_anchor
 
+        p_y_dist =
+            5
+
         newYanchor =
             if state.player.location.y <= state.y_display_anchor then
-                max 0 (state.y_display_anchor - (state.window_height - 2))
+                max 0 (state.y_display_anchor - (state.window_height - p_y_dist))
 
             else if state.player.location.y >= (state.y_display_anchor + (state.window_height - 1)) then
                 --min (state.y_display_anchor + (state.window_height - 2)) (state.total_height - 1)
-                min (state.y_display_anchor + (state.window_height - 2)) (state.total_height - state.window_height + 4)
+                min (state.y_display_anchor + (state.window_height - p_y_dist)) (state.total_height - (state.window_height - p_y_dist))
 
             else
                 state.y_display_anchor

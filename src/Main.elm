@@ -1,29 +1,5 @@
 module Main exposing (main)
 
-{- }
-   ( Flags
-   , dimensions
-   , fromCode
-   , init
-   , initialEnemy
-   , initialExplored
-   , initialLevel
-   , initialPlayer
-   , initialStateFunc
-   , main
-   , seed
-   , setAllAsUnexplored
-   , subscriptions
-   , title
-   )
--}
---import Generator
---import Generator.Standard
---import MapGen
---import Keyboard
---import Element exposing (..)
---import Color exposing (..)
-
 import Browser
 import Browser.Events
     exposing
@@ -31,6 +7,7 @@ import Browser.Events
         )
 import Collage.Text as Text
 import Dict exposing (Dict)
+import GameDefinitions.Common
 import GameDefinitions.Game1Definitions
 import GameDefinitions.Game2Definitions
 import GameModel
@@ -51,16 +28,6 @@ title =
 seed : Int
 seed =
     2015
-
-
-dimensions : ( Int, Int )
-dimensions =
-    ( 80, 60 )
-
-
-
---( 110, 70 )
---( 10, 10 )
 
 
 initialLevel : Grid.Grid GameModel.Tile
@@ -91,15 +58,6 @@ initialLevel =
             ]
     in
     Grid.fromList <| List.map (\x -> List.map toTile <| String.toList x) s
-
-
-initialExplored : Grid.Grid GameModel.Visibility
-initialExplored =
-    let
-        grid =
-            Grid.toList initialLevel
-    in
-    List.map (\row -> List.map (\_ -> GameModel.Unexplored) row) grid |> Grid.fromList
 
 
 subscriptions : GameModel.State -> Sub GameUpdate.Msg
@@ -142,6 +100,12 @@ fromCode keyCode =
         65 ->
             GameModel.Down
 
+        49 ->
+            GameModel.FloorDown
+
+        50 ->
+            GameModel.FloorUp
+
         _ ->
             GameModel.Nop
 
@@ -153,46 +117,13 @@ type alias Flags =
 init : Flags -> ( GameModel.State, Cmd GameUpdate.Msg )
 init flags =
     let
-        initState =
-            --GameDefinitions.Game1Definitions.initialStateFunc
-            GameDefinitions.Game2Definitions.initialStateFunc
-
-        dims =
-            initState.level.size
-
-        w =
-            dims.width
-
-        h =
-            dims.height
+        ( initState, createRandomMap ) =
+            GameDefinitions.Common.initialStateFunc
 
         gBounds =
             Grid.getGridBoundsToPlacePlayer initState.level
-
-        createRandomMap : Bool
-        createRandomMap =
-            False
     in
-    ( initState
-    , Cmd.batch
-        ([ -- GameUpdate.cmdGenFloatsForRandomCave w h
-           --, GameUpdate.cmdFillRandomIntsPool initState
-           if createRandomMap then
-            GameUpdate.cmdFillRandomIntsPoolAndGenerateRandomMap initState
-
-           else
-            GameUpdate.cmdFillRandomIntsPool initState
-         , GameUpdate.cmdGenerateRandomInitiativeValue "player" Nothing 1 100
-         , GameUpdate.cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
-         ]
-            ++ (Dict.map (\enid enemy -> GameUpdate.cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initState.enemies
-                    |> Dict.values
-               )
-            ++ (Dict.map (\enid enemy -> GameUpdate.cmdGenerateRandomInitiativeValue "enemy" (Just enid) 1 100) initState.enemies
-                    |> Dict.values
-               )
-        )
-    )
+    ( initState, Cmd.none )
 
 
 main : Program Flags GameModel.State GameUpdate.Msg

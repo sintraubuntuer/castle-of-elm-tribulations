@@ -45,6 +45,8 @@ import GameModel
 import GameUpdate
 import Grid
 import Html exposing (Html)
+import Html.Attributes
+import Html.Events
 
 
 xScale : Int
@@ -730,12 +732,26 @@ viewDebugEnemies state =
 
 view : GameModel.State -> Html GameUpdate.Msg
 view model =
+    case model.started of
+        True ->
+            Html.div []
+                ([ display model
+                    --|> Element.toHtml
+                    |> svg
+                 ]
+                 --++ [ viewDebugPlayer model ]
+                 --  ++ viewDebugEnemies model
+                 --  ++ viewDebugGrid model.level model
+                )
+
+        False ->
+            viewStartMenuChoices model
+
+
+viewStartMenuChoices : GameModel.State -> Html GameUpdate.Msg
+viewStartMenuChoices model =
     Html.div []
-        ([ display model
-            --|> Element.toHtml
-            |> svg
-         ]
-         --++ [ viewDebugPlayer model ]
-         --  ++ viewDebugEnemies model
-         --  ++ viewDebugGrid model.level model
-        )
+        [ Html.div [] [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ] ]
+        , Html.br [] []
+        , Html.div [] [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 2) ] [ Html.text "Start Game 2 - Atic Atac Style  Dungeon " ] ]
+        ]

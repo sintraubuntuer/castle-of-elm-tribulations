@@ -1,4 +1,4 @@
-module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
+module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, FloorStore, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getCurrentFloorInfoToStore, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
 
 --import Generator
 --import Generator.Standard
@@ -34,7 +34,8 @@ type alias State =
     { player : Player
     , enemies : Dict EnemyId Enemy
     , level : Grid.Grid Tile
-    , levers : Dict LeverId LeverInfo
+
+    --, levers : Dict LeverId LeverInfo
     , explored : Grid.Grid Visibility
     , log : List String
     , pseudoRandomIntsPool : List Int
@@ -45,7 +46,31 @@ type alias State =
     , total_width : Int
     , total_height : Int
     , wallPercentage : Maybe Float
-    , roomsInfo : RoomsInfo
+    , roomsInfo : Maybe RoomsInfo
+    , floorDict : Dict Int FloorStore
+    , currentFloorId : Int
+    , started : Bool
+    }
+
+
+type alias FloorStore =
+    { level : Grid.Grid Tile
+    , explored : Grid.Grid Visibility
+    , window_width : Int
+    , window_height : Int
+    , total_width : Int
+    , total_height : Int
+    }
+
+
+getCurrentFloorInfoToStore : State -> FloorStore
+getCurrentFloorInfoToStore state =
+    { level = state.level
+    , explored = state.explored
+    , window_width = state.window_width
+    , window_height = state.window_height
+    , total_width = state.total_width
+    , total_height = state.total_height
     }
 
 
@@ -293,6 +318,8 @@ type Input
     | Down
     | Left
     | Right
+    | FloorUp
+    | FloorDown
     | Nop
 
 

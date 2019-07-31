@@ -1,4 +1,4 @@
-module GameDefinitions.Game1Definitions exposing (initialStateFunc)
+module GameDefinitions.Common exposing (dimensions, gridInitializer, initialEnemy, initialPlayer, initialStateFunc, setAllAsUnexplored)
 
 import Dict exposing (Dict)
 import GameModel
@@ -44,7 +44,7 @@ initialEnemy enemyid =
 
 dimensions : ( Int, Int )
 dimensions =
-    ( 80, 60 )
+    ( 10, 10 )
 
 
 initialStateFunc : ( GameModel.State, Bool )
@@ -70,16 +70,10 @@ initialStateFunc =
 
         firstMap =
             -- MapGen.randomCave dimensions
-            Grid.initialize { width = w, height = h } GameModel.NoTileYet
-
-        roomsInfo =
-            Just <| GameModel.RoomsInfo [] 20 12 7
-
-        firstExplored =
-            setAllAsUnexplored firstMap
+            gridInitializer w h
 
         createRandomMap =
-            True
+            False
     in
     -- GameModel.State
     ( { player = player
@@ -89,22 +83,25 @@ initialStateFunc =
                 , ( 2, enemy2 )
                 ]
       , level = firstMap -- Grid.Grid Tile
-
-      --, levers = levers --Dict LeverId LeverInfo
-      , explored = firstExplored -- Grid.Grid Visibility
+      , explored = setAllAsUnexplored firstMap -- Grid.Grid Visibility
       , log = [ "you enter the dungeon" ] --List String
       , pseudoRandomIntsPool = [] -- List Int
       , x_display_anchor = 3 -- Int
       , y_display_anchor = 3 --Int
-      , window_width = 15
-      , window_height = 12
+      , window_width = 10
+      , window_height = 10
       , total_width = Tuple.first dimensions
       , total_height = Tuple.second dimensions
       , wallPercentage = Nothing -- Maybe Float
-      , roomsInfo = roomsInfo --  RoomsInfo
+      , roomsInfo = Nothing --  RoomsInfo
       , floorDict = Dict.empty
       , currentFloorId = 1
-      , started = True
+      , started = False
       }
     , createRandomMap
     )
+
+
+gridInitializer : Int -> Int -> Grid.Grid GameModel.Tile
+gridInitializer width_ height_ =
+    Grid.initialize { width = width_, height = height_ } GameModel.NoTileYet
