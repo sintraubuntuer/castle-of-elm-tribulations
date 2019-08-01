@@ -98,10 +98,10 @@ update msg state =
                     update (TryShiftPlayerPosition ( 0 + 1, 0 )) state
 
                 GameModel.FloorUp ->
-                    update (ChangeFloorTo 1 ( state.player.location.x, state.player.location.y )) state
+                    update (ChangeFloorTo (state.currentFloorId + 1) ( state.player.location.x, state.player.location.y )) state
 
                 GameModel.FloorDown ->
-                    update (ChangeFloorTo 0 ( state.player.location.x, state.player.location.y )) state
+                    update (ChangeFloorTo (state.currentFloorId - 1) ( state.player.location.x, state.player.location.y )) state
 
                 GameModel.Nop ->
                     ( state, Cmd.none )
