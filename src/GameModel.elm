@@ -1,4 +1,4 @@
-module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorInfo, FloorStore, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomsInfo, Size, StairsInfo, State, Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getCurrentFloorInfoToStore, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
+module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorDrawing(..), FloorInfo, FloorStore, HoleInfo, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomType(..), RoomsInfo, Size, StairsInfo, State, TeleporterInfo, TeleporterType(..), Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getCurrentFloorInfoToStore, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
 
 --import Generator
 --import Generator.Standard
@@ -21,6 +21,7 @@ type alias LeverId =
 type Tile
     = Floor FloorInfo
     | Stairs StairsInfo
+    | Hole HoleInfo
     | Wall WallInfo
     | WallOver WallOverInfo
     | Door DoorInfo
@@ -127,6 +128,44 @@ type alias RoomsInfo =
     }
 
 
+type alias HoleInfo =
+    { holeId : Int
+    , floorId : Int
+    , x : Int
+    , y : Int
+    , target_id : Int
+    , isExplored : Bool
+    , visibility : Visibility
+    }
+
+
+type RoomType
+    = SquareRoom
+    | HorizontalRoom
+    | VerticalRoom
+
+
+type TeleporterType
+    = Barrel
+    | BookCase
+    | Clock
+
+
+type alias TeleporterInfo =
+    { teleporter_id : Int
+    , floor_id : Int
+    , teleporterType : TeleporterType
+    , room_row_nr : Int
+    , room_col_nr : Int
+    , room_type : RoomType
+    , position_in_room : String --(in WallUp , L R or D )
+    , target_id : Int
+    , shift : ( Int, Int )
+    , isExplored : Bool
+    , visibility : Visibility
+    }
+
+
 
 -- RoomsInfo [] 20 13 8
 -- 20 13 8
@@ -194,8 +233,13 @@ type Item
     | Ash
 
 
+type FloorDrawing
+    = LandingTargetDrawing Int
+
+
 type alias FloorInfo =
     { item : Maybe Item
+    , floorDrawing : Maybe FloorDrawing
     , isTransparent : Bool
     , isWalkable : Bool
     , isExplored : Bool
@@ -216,29 +260,30 @@ type alias StairsInfo =
 
 defaultFloorInfo : FloorInfo
 defaultFloorInfo =
-    { item = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "default" }
+    { item = Nothing, floorDrawing = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "default" }
 
 
 defaultOrangeFloorInfo : FloorInfo
 defaultOrangeFloorInfo =
-    { item = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "orange" }
+    { item = Nothing, floorDrawing = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "orange" }
 
 
 type alias WallInfo =
     { isExplored : Bool
     , visibility : Visibility
     , orientation : String
+    , mbTeleporterObject : Maybe TeleporterInfo
     }
 
 
 defaultWallInfo : WallInfo
 defaultWallInfo =
-    { isExplored = False, visibility = Unexplored, orientation = "horizontal" }
+    { isExplored = False, visibility = Unexplored, orientation = "horizontal", mbTeleporterObject = Nothing }
 
 
 defaultWallUpInfo : WallInfo
 defaultWallUpInfo =
-    { isExplored = False, visibility = Unexplored, orientation = "up" }
+    { isExplored = False, visibility = Unexplored, orientation = "up", mbTeleporterObject = Nothing }
 
 
 type alias DoorInfo =
@@ -409,6 +454,16 @@ isStairs tile =
             False
 
 
+isHole : Tile -> Bool
+isHole tile =
+    case tile of
+        Hole _ ->
+            True
+
+        _ ->
+            False
+
+
 isMbTileWall : Maybe Tile -> Bool
 isMbTileWall mbtile =
     case mbtile of
@@ -515,27 +570,27 @@ isTileWalkable : Tile -> Bool
 isTileWalkable tile =
     case tile of
         Floor floorinfo ->
-            if floorinfo.isWalkable then
-                True
-
-            else
-                False
+            floorinfo.isWalkable
 
         Stairs sinfo ->
             True
 
+        Hole hinfo ->
+            True
+
         Wall wInfo ->
-            False
+            case wInfo.mbTeleporterObject of
+                Just tel ->
+                    True
+
+                Nothing ->
+                    False
 
         WallOver wOverInfo ->
             False
 
         Door doorinfo ->
-            if doorinfo.isOpen then
-                True
-
-            else
-                False
+            doorinfo.isOpen
 
         Lever leverInfo ->
             False
@@ -568,6 +623,9 @@ isTileTransparent tile =
 
         Stairs sinfo ->
             False
+
+        Hole hinfo ->
+            True
 
         Wall wInfo ->
             False
@@ -610,6 +668,9 @@ isTileExplored tile =
         Stairs sinfo ->
             sinfo.isExplored
 
+        Hole hinfo ->
+            hinfo.isExplored
+
         Wall wInfo ->
             wInfo.isExplored
 
@@ -650,6 +711,9 @@ setTileAsExplored tile =
 
         Stairs sinfo ->
             Stairs { sinfo | isExplored = True }
+
+        Hole hinfo ->
+            Hole { hinfo | isExplored = True }
 
         Wall wallinfo ->
             Wall { wallinfo | isExplored = True }
@@ -699,6 +763,9 @@ getTileVisibility tile =
         Stairs sinfo ->
             sinfo.visibility
 
+        Hole hinfo ->
+            hinfo.visibility
+
         Wall wInfo ->
             wInfo.visibility
 
@@ -746,6 +813,9 @@ setTileVisibility visibility_ tile =
 
         Stairs sinfo ->
             Stairs { sinfo | visibility = visibility_ }
+
+        Hole hinfo ->
+            Hole { hinfo | visibility = visibility_ }
 
         Wall wInfo ->
             Wall { wInfo | visibility = visibility_ }
@@ -871,6 +941,9 @@ showTile tile =
 
                 Stairs sinfo ->
                     "/"
+
+                Hole hinfo ->
+                    "h"
 
                 Wall winfo ->
                     "#"

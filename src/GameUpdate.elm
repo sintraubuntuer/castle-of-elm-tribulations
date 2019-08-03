@@ -49,7 +49,7 @@ update msg state =
 
         StartGameNr nr ->
             let
-                ( initState, createRandomMap ) =
+                ( initState, createRandomMap, randomlyPositionPlayer ) =
                     case nr of
                         1 ->
                             GameDefinitions.Game1Definitions.initialStateFunc
@@ -58,12 +58,12 @@ update msg state =
                             GameDefinitions.Game2Definitions.initialStateFunc
 
                         _ ->
-                            ( state, False )
+                            ( state, False, False )
 
                 gBounds =
                     Grid.getGridBoundsToPlacePlayer initState.level
             in
-            ( initState
+            ( initState |> position_display_anchor_in_order_to_center_player
             , Cmd.batch
                 ([ if createRandomMap then
                     cmdFillRandomIntsPoolAndGenerateRandomMap initState
@@ -72,7 +72,11 @@ update msg state =
                    else
                     cmdFillRandomIntsPool initState
                  , cmdGenerateRandomInitiativeValue "player" Nothing 1 100
-                 , cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
+                 , if randomlyPositionPlayer then
+                    cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
+
+                   else
+                    Cmd.none
                  ]
                     ++ (Dict.map (\enid enemy -> cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initState.enemies
                             |> Dict.values
@@ -165,7 +169,7 @@ update msg state =
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
                                 { newState | player = move ( x_, y_ ) newState newState.player }
-                                    |> checkIfPlayerStandingOnStairsAndMoveToNewFloor
+                                    |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
 
@@ -332,8 +336,8 @@ isPlayerStandingOnStairs state =
             False
 
 
-checkIfPlayerStandingOnStairsAndMoveToNewFloor : GameModel.State -> GameModel.State
-checkIfPlayerStandingOnStairsAndMoveToNewFloor state =
+checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor : GameModel.State -> GameModel.State
+checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor state =
     let
         mbTile =
             Grid.get state.player.location state.level
@@ -355,8 +359,136 @@ checkIfPlayerStandingOnStairsAndMoveToNewFloor state =
                 Nothing ->
                     state
 
+        Just (GameModel.Hole hinfo) ->
+            let
+                lfloorIds =
+                    state.floorDict |> Dict.filter (\floorId v -> floorId < state.currentFloorId) |> Dict.keys
+
+                mbDestinationFloorAndCoordsTuple =
+                    List.map (\floorId -> searchFloorForTargetId floorId hinfo.target_id state) lfloorIds
+                        |> List.filterMap (\x -> x)
+                        |> List.head
+            in
+            case mbDestinationFloorAndCoordsTuple of
+                Just ( floorId, newX, newY ) ->
+                    let
+                        _ =
+                            Debug.log "Went through a hole , going to call changeFloorTo with coords " ( newX, newY )
+                    in
+                    changeFloorTo state floorId ( newX, newY )
+
+                Nothing ->
+                    state
+
+        Just (GameModel.Wall wallinfo) ->
+            case wallinfo.mbTeleporterObject of
+                Nothing ->
+                    state
+
+                Just teleporter ->
+                    let
+                        sameFloorId =
+                            state.currentFloorId
+
+                        lOtherFloorIds =
+                            state.floorDict |> Dict.filter (\floorId v -> floorId /= state.currentFloorId) |> Dict.keys
+
+                        mbDestinationFloorAndCoordsTuple =
+                            case searchFloorForTeleporterId sameFloorId teleporter.target_id state of
+                                Just ( floorid, xcoord, ycoord ) ->
+                                    Just ( floorid, xcoord + Tuple.first teleporter.shift, ycoord + Tuple.second teleporter.shift )
+
+                                Nothing ->
+                                    List.map (\floorId -> searchFloorForTeleporterId floorId teleporter.target_id state) lOtherFloorIds
+                                        |> List.filterMap (\x -> x)
+                                        |> List.head
+                                        |> Maybe.map (\( floorid, xcoord, ycoord ) -> ( floorid, xcoord + Tuple.first teleporter.shift, ycoord + Tuple.second teleporter.shift ))
+                    in
+                    case mbDestinationFloorAndCoordsTuple of
+                        Just ( floorId, newX, newY ) ->
+                            let
+                                _ =
+                                    Debug.log "Went through a teleporter , going to call changeFloorTo with floorId and coords " ( floorId, newX, newY )
+                            in
+                            changeFloorTo state floorId ( newX, newY )
+
+                        Nothing ->
+                            state
+
         _ ->
             state
+
+
+searchFloorForTeleporterId : Int -> Int -> GameModel.State -> Maybe ( Int, Int, Int )
+searchFloorForTeleporterId fid target_id_ state =
+    let
+        mbFloorGrid =
+            Dict.get fid state.floorDict
+
+        getlcoords fgrid =
+            Grid.toCoordinates fgrid
+
+        checkCoords coords_ fgrid =
+            case Grid.get coords_ fgrid of
+                Just (GameModel.Wall wallinfo) ->
+                    case wallinfo.mbTeleporterObject of
+                        Just ateleporter ->
+                            ateleporter.teleporter_id == target_id_
+
+                        Nothing ->
+                            False
+
+                _ ->
+                    False
+
+        _ =
+            Debug.log ("searching for teleporter with targetId " ++ String.fromInt target_id_ ++ " in floor ") fid
+    in
+    case mbFloorGrid of
+        Just floorGrid ->
+            List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
+                |> List.head
+                |> Maybe.map (\rec -> ( fid, rec.x, rec.y ))
+                |> Debug.log "coords of targetId are : "
+
+        Nothing ->
+            Nothing
+
+
+searchFloorForTargetId : Int -> Int -> GameModel.State -> Maybe ( Int, Int, Int )
+searchFloorForTargetId fid target_id state =
+    let
+        mbFloorGrid =
+            Dict.get fid state.floorDict
+
+        getlcoords fgrid =
+            Grid.toCoordinates fgrid
+
+        checkCoords coords_ fgrid =
+            case Grid.get coords_ fgrid of
+                Just (GameModel.Floor finfo) ->
+                    case finfo.floorDrawing of
+                        Just (GameModel.LandingTargetDrawing tid) ->
+                            target_id == tid
+
+                        _ ->
+                            False
+
+                _ ->
+                    False
+
+        _ =
+            Debug.log ("searching for targetId " ++ String.fromInt target_id ++ " in floor ") fid
+    in
+    case mbFloorGrid of
+        Just floorGrid ->
+            List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
+                |> List.head
+                |> Maybe.map (\rec -> ( fid, rec.x, rec.y ))
+                |> Debug.log "coords of targetId are : "
+
+        Nothing ->
+            Nothing
 
 
 searchFloorForStairsId : Int -> Int -> GameModel.State -> Maybe ( Int, Int )
@@ -438,6 +570,15 @@ changeFloorTo state floorId locTuple =
         | player = player_
         , x_display_anchor = max 0 (Tuple.first locTuple - round (toFloat newState.window_width / 2.0))
         , y_display_anchor = max 0 (Tuple.second locTuple - round (toFloat newState.window_height / 2))
+    }
+        |> reveal
+
+
+position_display_anchor_in_order_to_center_player : GameModel.State -> GameModel.State
+position_display_anchor_in_order_to_center_player state =
+    { state
+        | x_display_anchor = max 0 (state.player.location.x - round (toFloat state.window_width / 2.0))
+        , y_display_anchor = max 0 (state.player.location.y - round (toFloat state.window_height / 2))
     }
         |> reveal
 

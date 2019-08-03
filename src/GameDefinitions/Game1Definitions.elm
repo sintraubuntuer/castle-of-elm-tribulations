@@ -47,7 +47,7 @@ dimensions =
     ( 80, 60 )
 
 
-initialStateFunc : ( GameModel.State, Bool )
+initialStateFunc : ( GameModel.State, Bool, Bool )
 initialStateFunc =
     let
         player =
@@ -78,6 +78,9 @@ initialStateFunc =
         firstExplored =
             setAllAsUnexplored firstMap
 
+        randomlyPositionPlayer =
+            True
+
         createRandomMap =
             True
     in
@@ -107,4 +110,5 @@ initialStateFunc =
       , started = True
       }
     , createRandomMap
+    , randomlyPositionPlayer
     )

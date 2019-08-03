@@ -110,15 +110,31 @@ floorOverlay elemStr =
     if elemStr == "ash" then
         Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_ash.png"
 
+    else if elemStr == "landingTarget" then
+        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_landing_target.png"
+
     else
         noForm
 
 
-stairs : Collage msg
-stairs =
+stairs : String -> Collage msg
+stairs upOrDownStr =
     let
         fileStr =
-            "img/floor/floor_stairs_up.png"
+            if String.toLower upOrDownStr == "up" then
+                "img/floor/floor_stairs_up.png"
+
+            else
+                "img/floor/floor_stairs_down.png"
+    in
+    Collage.image ( toFloat xScale, toFloat yScale ) fileStr
+
+
+hole : Collage msg
+hole =
+    let
+        fileStr =
+            "img/floor/floor_hole.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -180,10 +196,23 @@ wall orientationStr =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-wallOverlay : Collage msg
-wallOverlay =
+wallOverlay : GameModel.WallInfo -> Collage msg
+wallOverlay wallinfo =
     --guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } GameModel.Visible
-    noForm
+    case wallinfo.mbTeleporterObject of
+        Just tinfo ->
+            case tinfo.teleporterType of
+                GameModel.Barrel ->
+                    Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_barrel_up.png"
+
+                GameModel.BookCase ->
+                    Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_bookcase_up.png"
+
+                GameModel.Clock ->
+                    Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_clock_up.png"
+
+        _ ->
+            noForm
 
 
 door : Collage msg
@@ -251,15 +280,22 @@ halfFog =
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (rgba 0 0 0 0.6))
 
 
-tile : GameModel.Tile -> Collage msg
-tile t =
+tile : Int -> GameModel.Tile -> Collage msg
+tile currentFloorId t =
     case t of
         GameModel.Floor floorinfo ->
             --floor floorinfo
             floor_ floorinfo
 
         GameModel.Stairs sinfo ->
-            stairs
+            if sinfo.toFloorId > currentFloorId then
+                stairs "up"
+
+            else
+                stairs "down"
+
+        GameModel.Hole hinfo ->
+            hole
 
         GameModel.Wall wallinfo ->
             if wallinfo.orientation == "four_way" then
@@ -331,15 +367,19 @@ tileOverlay : GameModel.Tile -> Collage msg
 tileOverlay t =
     case t of
         GameModel.Floor floorinfo ->
-            case floorinfo.item of
-                Just GameModel.Ash ->
-                    floorOverlay "ash"
+            if floorinfo.item == Just GameModel.Ash then
+                floorOverlay "ash"
 
-                _ ->
-                    floorOverlay ""
+            else
+                case floorinfo.floorDrawing of
+                    Just (GameModel.LandingTargetDrawing nr) ->
+                        floorOverlay "landingTarget"
+
+                    _ ->
+                        floorOverlay ""
 
         GameModel.Wall wallinfo ->
-            wallOverlay
+            wallOverlay wallinfo
 
         GameModel.Door doorinfo ->
             doorOverlay
@@ -506,7 +546,7 @@ mainScreen state =
             --layers [ mkLayer (Grid.toList subgrid) (row tile), mkLayer (Grid.toList subgrid) (row tileOverlay) ]
             Collage.group
                 [ mkLayer (Grid.toList subgrid) (row tileOverlay)
-                , mkLayer (Grid.toList subgrid) (row tile)
+                , mkLayer (Grid.toList subgrid) (row (tile state.currentFloorId))
                 ]
                 |> name "background"
 
