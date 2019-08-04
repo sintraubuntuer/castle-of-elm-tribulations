@@ -207,7 +207,8 @@ addCavernsCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameMode
 addCavernsCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc cavernsInitialRoomRectangles
-        |> MapGen.listTunnelRectangleToGridFunc (cavernsInitialHorizontalTunnelRectangles ++ cavernsStairsTunnel)
+        |> MapGen.listTunnelRectangleWithOptionsToGridFunc cavernsInitialHorizontalTunnelRectanglesWithOptions
+        |> MapGen.listTunnelRectangleToGridFunc cavernsStairsTunnel
         |> MapGen.listTunnelRectangleToGridFunc cavernsInitialVerticalTunnelRectangles
         |> MapGen.createWallBoundaries (cavernsInitialHorizontalTunnelRectangles ++ cavernsStairsTunnel ++ cavernsInitialRoomRectangles ++ cavernsInitialVerticalTunnelRectangles)
         --|> make sure if cell width x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
@@ -753,6 +754,13 @@ get_teleporter_coords_from_room_row_col row_nr col_nr rtype pos_in_room teleport
             else
                 -- String.toLower pos_in_room == "right" then
                 ( top_left_x + room_width, top_left_y + room_height // 2 )
+
+        _ =
+            if row_nr == 7 && col_nr == 5 && rtype == HorizontalRoom then
+                Debug.log "getting teleporter coords for row 7 col 5 . coords are " coords
+
+            else
+                ( -1, -1 )
     in
     coords
 
@@ -1085,9 +1093,9 @@ groundFloorInitialRoomRectangles =
 
     --
     , getRoom 7 2 SquareRoom
-    , getRoom 7 3 SquareRoom
-    , getRoom 7 4 SquareRoom
-    , getRoom 7 5 SquareRoom
+    , getRoom 7 3 HorizontalRoom
+    , getRoom 7 4 HorizontalRoom
+    , getRoom 7 5 HorizontalRoom
     , getRoom 7 6 SquareRoom
 
     --
@@ -1421,49 +1429,62 @@ cavernsInitialRoomRectangles =
     ]
 
 
+defaultHorizontalOpenDoorOptions =
+    { left = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToTheRight)
+    , top = GameModel.NoDoorNoWall
+    , right = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToTheLeft)
+    , bottom = GameModel.NoDoorNoWall
+    }
+
+
+cavernsInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+cavernsInitialHorizontalTunnelRectanglesWithOptions =
+    [ ( getCommonHorizontalTunnel 1 7, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 1 8, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 1 9, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 1 10, defaultHorizontalOpenDoorOptions )
+
+    --
+    , ( getCommonHorizontalTunnel 2 1, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 2 2, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 2 3, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 2 4, defaultHorizontalOpenDoorOptions )
+
+    --
+    , ( getCommonHorizontalTunnel 3 6, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 3 5, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 3 7, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 3 8, defaultHorizontalOpenDoorOptions )
+
+    --
+    , ( getCommonHorizontalTunnel 4 3, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 4 4, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 4 5, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 4 8, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 4 9, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 4 10, defaultHorizontalOpenDoorOptions )
+
+    --
+    , ( getCommonHorizontalTunnel 5 2, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 5 3, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 5 4, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 5 5, defaultHorizontalOpenDoorOptions )
+
+    --
+    , ( getCommonHorizontalTunnel 6 5, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 6, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 7, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 8, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 9, defaultHorizontalOpenDoorOptions )
+
+    --
+    , ( getCommonHorizontalTunnel 7 6, defaultHorizontalOpenDoorOptions )
+    ]
+
+
 cavernsInitialHorizontalTunnelRectangles : List TunnelRectangle
 cavernsInitialHorizontalTunnelRectangles =
-    [ getCommonHorizontalTunnel 1 7
-    , getCommonHorizontalTunnel 1 8
-    , getCommonHorizontalTunnel 1 9
-    , getCommonHorizontalTunnel 1 10
-
-    --
-    , getCommonHorizontalTunnel 2 1
-    , getCommonHorizontalTunnel 2 2
-    , getCommonHorizontalTunnel 2 3
-    , getCommonHorizontalTunnel 2 4
-
-    --
-    , getCommonHorizontalTunnel 3 5
-    , getCommonHorizontalTunnel 3 6
-    , getCommonHorizontalTunnel 3 7
-    , getCommonHorizontalTunnel 3 8
-
-    --
-    , getCommonHorizontalTunnel 4 3
-    , getCommonHorizontalTunnel 4 4
-    , getCommonHorizontalTunnel 4 5
-    , getCommonHorizontalTunnel 4 8
-    , getCommonHorizontalTunnel 4 9
-    , getCommonHorizontalTunnel 4 10
-
-    --
-    , getCommonHorizontalTunnel 5 2
-    , getCommonHorizontalTunnel 5 3
-    , getCommonHorizontalTunnel 5 4
-    , getCommonHorizontalTunnel 5 5
-
-    --
-    , getCommonHorizontalTunnel 6 5
-    , getCommonHorizontalTunnel 6 6
-    , getCommonHorizontalTunnel 6 7
-    , getCommonHorizontalTunnel 6 8
-    , getCommonHorizontalTunnel 6 9
-
-    --
-    , getCommonHorizontalTunnel 7 6
-    ]
+    List.map (\( tun, opt ) -> tun) cavernsInitialHorizontalTunnelRectanglesWithOptions
 
 
 cavernsInitialVerticalTunnelRectangles : List TunnelRectangle

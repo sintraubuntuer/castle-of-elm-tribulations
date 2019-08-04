@@ -1,4 +1,11 @@
-module GameSimulation exposing (getRandomIntBetweenValues, getWallTilePositionsFromGrid, mbTurnNeighbourWallCellstoAshes, randomlySelectPositionFromListAndSimulateWallToAshes, simulationToGetLeverPositions, turnNeighbourWallCellstoAshes)
+module GameSimulation exposing
+    ( getRandomIntBetweenValues
+    , getWallTilePositionsFromGrid
+    , mbTurnNeighbourWallCellstoAshes
+    , randomlySelectPositionFromListAndSimulateWallToAshes
+    , simulationToGetLeverPositions
+    , turnNeighbourWallCellstoAshes
+    )
 
 import GameModel
 import Grid

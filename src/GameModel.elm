@@ -1,4 +1,93 @@
-module GameModel exposing (ColumnInfo, DoorInfo, Enemy, EnemyId, FlagCondition(..), FlagInfo, FloorDrawing(..), FloorInfo, FloorStore, HoleInfo, Input(..), Item(..), LeverId, LeverInfo, Location, Player, RoomRectangle, RoomType(..), RoomsInfo, Size, StairsInfo, State, TeleporterInfo, TeleporterType(..), Tile(..), TunnelRectangle, Visibility(..), WallInfo, WallJunction(..), WallOverInfo, WaterInfo, defaultColumnInfo, defaultDoorInfo, defaultFlagInfo, defaultFloorInfo, defaultLeverInfo, defaultOrangeFloorInfo, defaultWallInfo, defaultWallUpInfo, defaultWaterInfo, enemy, getCurrentFloorInfoToStore, getGridTileVisibility, getModelTileVisibility, getRoomBottomY, getRoomCenterX, getRoomCenterY, getRoomLeftX, getRoomRightX, getRoomTopY, getTileVisibility, isFloor, isHorizontalWall, isMbTileHorizontalToTheLeft, isMbTileHorizontalToTheRight, isMbTileHorizontalWall, isMbTileVerticalWall, isMbTileWall, isModelTileExplored, isModelTileTransparent, isModelTileWalkable, isNoTileYet, isTileExplored, isTileTransparent, isTileWalkable, isVerticalWall, isWall, location, mbUpdateEnemyInitiativeByMbEnemyId, mbUpdateEnemyLocation, placeExistingEnemy, player, randomlyPlaceExistingEnemies, setModelTileAsExplored, setModelTileVisibility, setTileAsExplored, setTileVisibility, setWallTileOrientation, showTile, tupleFloatsToLocation, tupleIntsToLocation, validLocation, visibility, visible)
+module GameModel exposing
+    ( ColumnInfo
+    , DoorInfo
+    , DoorOrientation(..)
+    , DoorWallOption(..)
+    , DoorWallOptions
+    , Enemy
+    , EnemyId
+    , FlagCondition(..)
+    , FlagInfo
+    , FloorDrawing(..)
+    , FloorInfo
+    , FloorStore
+    , HoleInfo
+    , Input(..)
+    , Item(..)
+    , LeverId
+    , LeverInfo
+    , Location
+    , Player
+    , RoomRectangle
+    , RoomType(..)
+    , RoomsInfo
+    , Size
+    , StairsInfo
+    , State
+    , TeleporterInfo
+    , TeleporterType(..)
+    , Tile(..)
+    , TunnelRectangle
+    , Visibility(..)
+    , WallInfo
+    , WallJunction(..)
+    , WallOverInfo
+    , WaterInfo
+    , defaultColumnInfo
+    , defaultDoorInfo
+    , defaultFlagInfo
+    , defaultFloorInfo
+    , defaultLeverInfo
+    , defaultOpenDoorInfo
+    , defaultOrangeFloorInfo
+    , defaultWallInfo
+    , defaultWallUpInfo
+    , defaultWaterInfo
+    , enemy
+    , getCurrentFloorInfoToStore
+    , getGridTileVisibility
+    , getModelTileVisibility
+    , getRoomBottomY
+    , getRoomCenterX
+    , getRoomCenterY
+    , getRoomLeftX
+    , getRoomRightX
+    , getRoomTopY
+    , getTileVisibility
+    , isFloor
+    , isHorizontalWall
+    , isMbTileHorizontalToTheLeft
+    , isMbTileHorizontalToTheRight
+    , isMbTileHorizontalWall
+    , isMbTileVerticalWall
+    , isMbTileWall
+    , isModelTileExplored
+    , isModelTileTransparent
+    , isModelTileWalkable
+    , isNoTileYet
+    , isTileExplored
+    , isTileTransparent
+    , isTileWalkable
+    , isVerticalWall
+    , isWall
+    , location
+    , mbUpdateEnemyInitiativeByMbEnemyId
+    , mbUpdateEnemyLocation
+    , placeExistingEnemy
+    , player
+    , randomlyPlaceExistingEnemies
+    , setModelTileAsExplored
+    , setModelTileVisibility
+    , setTileAsExplored
+    , setTileVisibility
+    , setWallTileOrientation
+    , showTile
+    , tupleFloatsToLocation
+    , tupleIntsToLocation
+    , validLocation
+    , visibility
+    , visible
+    )
 
 --import Generator
 --import Generator.Standard
@@ -227,10 +316,15 @@ type alias Size =
 type Item
     = Chest Size
     | Skull
-    | Key
+    | Key KeyInfo
     | Money
     | Box
     | Ash
+
+
+type alias KeyInfo =
+    { keyColor : String
+    }
 
 
 type FloorDrawing
@@ -286,16 +380,45 @@ defaultWallUpInfo =
     { isExplored = False, visibility = Unexplored, orientation = "up", mbTeleporterObject = Nothing }
 
 
+type DoorWallOption
+    = UseDoor DoorInfo
+    | UseWall
+    | NoDoorNoWall
+
+
+type alias DoorWallOptions =
+    { left : DoorWallOption
+    , top : DoorWallOption
+    , right : DoorWallOption
+    , bottom : DoorWallOption
+    }
+
+
+type DoorOrientation
+    = DoorToTheRight
+    | DoorToTheLeft
+    | DoorToUp
+    | DoorToDown
+
+
 type alias DoorInfo =
     { isOpen : Bool
+    , color : Maybe String
+    , orientation : DoorOrientation
+    , requiresToOpen : Maybe Item
     , isExplored : Bool
     , visibility : Visibility
     }
 
 
-defaultDoorInfo : DoorInfo
-defaultDoorInfo =
-    { isOpen = False, isExplored = False, visibility = Unexplored }
+defaultDoorInfo : DoorOrientation -> DoorInfo
+defaultDoorInfo dorientation =
+    { isOpen = False, color = Nothing, orientation = dorientation, requiresToOpen = Nothing, isExplored = False, visibility = Unexplored }
+
+
+defaultOpenDoorInfo : DoorOrientation -> DoorInfo
+defaultOpenDoorInfo dorientation =
+    { isOpen = True, color = Nothing, orientation = dorientation, requiresToOpen = Nothing, isExplored = False, visibility = Unexplored }
 
 
 type alias LeverInfo =

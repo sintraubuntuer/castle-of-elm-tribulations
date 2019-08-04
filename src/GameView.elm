@@ -215,9 +215,13 @@ wallOverlay wallinfo =
             noForm
 
 
-door : Collage msg
-door =
-    rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform purple)
+door : GameModel.DoorInfo -> Collage msg
+door doorinfo =
+    if doorinfo.isOpen then
+        rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform white)
+
+    else
+        rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform purple)
 
 
 doorOverlay : Collage msg
@@ -347,7 +351,7 @@ tile currentFloorId t =
                 wall "horizontal"
 
         GameModel.Door doorinfo ->
-            door
+            door doorinfo
 
         GameModel.NoTileYet ->
             notileyet

@@ -1,4 +1,25 @@
-module Grid exposing (Coordinate, Grid, Size, fromList, get, getGridBoundsToPlaceEnemy, getGridBoundsToPlacePlayer, getRow, getRowOrEmptyList, getRowWithDefault, getSubGrid, getTheLength, getWithDefault, inGrid, initialize, map, neighborhoodCalc, set, toCoordinates, toList)
+module Grid exposing
+    ( Coordinate
+    , Grid
+    , Size
+    , fromList
+    , get
+    , getGridBoundsToPlaceEnemy
+    , getGridBoundsToPlacePlayer
+    , getRow
+    , getRowOrEmptyList
+    , getRowWithDefault
+    , getSubGrid
+    , getTheLength
+    , getWithDefault
+    , inGrid
+    , initialize
+    , map
+    , neighborhoodCalc
+    , set
+    , toCoordinates
+    , toList
+    )
 
 import Array
 import List

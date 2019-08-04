@@ -23,6 +23,7 @@ module MapGen exposing
     , listDungeonRectangleToGridFunc
     , listRoomRectangleToGridFunc
     , listTunnelRectangleToGridFunc
+    , listTunnelRectangleWithOptionsToGridFunc
     , mbCreateHorizontalTunnel
     , mbCreateVerticalTunnel
     , numberOfWalls
@@ -757,14 +758,31 @@ mbCreateVerticalTunnel roomrect1 roomrect2 =
         Nothing
 
 
+
+{- }
+   type alias DoorInfo =
+       { closed : Bool
+       , color : Maybe String
+       , orientation : DoorOrientation
+       , requiresToOpen : Maybe GameModel.Item
+       }
+-}
+
+
 listTunnelRectangleToGridFunc : List GameModel.TunnelRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
 listTunnelRectangleToGridFunc ltunnels grid =
     -- for now , still have to write this
-    listDungeonRectangleToGridFunc ltunnels False (Just "orange") grid
+    listDungeonRectangleToGridFunc (List.map (\tun -> ( tun, noDoornoWallOption )) ltunnels) (Just "orange") grid
 
 
-dungeonRectangleToGridFunc : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Bool -> Maybe String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
-dungeonRectangleToGridFunc roomrect useWalls mbFloorColor grid =
+listTunnelRectangleWithOptionsToGridFunc : List ( GameModel.TunnelRectangle, GameModel.DoorWallOptions ) -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+listTunnelRectangleWithOptionsToGridFunc ltunnelsWithOptions grid =
+    -- for now , still have to write this
+    listDungeonRectangleToGridFunc ltunnelsWithOptions (Just "orange") grid
+
+
+dungeonRectangleToGridFunc : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> GameModel.DoorWallOptions -> Maybe String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
     let
         left_x =
             roomrect.top_left_x
@@ -790,18 +808,49 @@ dungeonRectangleToGridFunc roomrect useWalls mbFloorColor grid =
         defaultFloorInfoWithColor =
             GameModel.defaultFloorInfo |> (\x -> { x | color = floorColor })
 
-        generateTile : Int -> Int -> GameModel.Tile
-        generateTile xval yval =
-            if xval == left_x || xval == right_x || yval == bottom_y || yval == top_y then
-                if useWalls then
+        useWalls =
+            False
+
+        getDoorWallOrFloor : GameModel.DoorWallOption -> GameModel.Tile
+        getDoorWallOrFloor doorWallOption =
+            case doorWallOption of
+                GameModel.UseWall ->
                     GameModel.Wall GameModel.defaultWallInfo
 
-                else
+                GameModel.UseDoor dinfo ->
+                    GameModel.Door dinfo
+
+                GameModel.NoDoorNoWall ->
                     GameModel.Floor defaultFloorInfoWithColor
+
+        generateTile : Int -> Int -> GameModel.Tile
+        generateTile xval yval =
+            if xval == left_x then
+                getDoorWallOrFloor doorWallOptions.left
+
+            else if xval == right_x then
+                getDoorWallOrFloor doorWallOptions.right
+
+            else if yval == bottom_y then
+                getDoorWallOrFloor doorWallOptions.bottom
+
+            else if yval == top_y then
+                getDoorWallOrFloor doorWallOptions.top
 
             else
                 GameModel.Floor defaultFloorInfoWithColor
 
+        {- }
+           if xval == left_x || xval == right_x || yval == bottom_y || yval == top_y then
+               if useWalls then
+                   GameModel.Wall GameModel.defaultWallInfo
+
+               else
+                   GameModel.Floor defaultFloorInfoWithColor
+
+           else
+               GameModel.Floor defaultFloorInfoWithColor
+        -}
         ltiles =
             List.concatMap (\xval -> List.map (\yval -> ( xval, yval, generateTile xval yval )) ly) lx
 
@@ -812,14 +861,19 @@ dungeonRectangleToGridFunc roomrect useWalls mbFloorColor grid =
     new_grid
 
 
-listDungeonRectangleToGridFunc : List { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Bool -> Maybe String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
-listDungeonRectangleToGridFunc lroomrects useWalls mbFloorColor grid =
-    List.foldl (\roomrect gridacc -> dungeonRectangleToGridFunc roomrect useWalls mbFloorColor gridacc) grid lroomrects
+noDoornoWallOption : GameModel.DoorWallOptions
+noDoornoWallOption =
+    GameModel.DoorWallOptions GameModel.NoDoorNoWall GameModel.NoDoorNoWall GameModel.NoDoorNoWall GameModel.NoDoorNoWall
+
+
+listDungeonRectangleToGridFunc : List ( { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int }, GameModel.DoorWallOptions ) -> Maybe String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+listDungeonRectangleToGridFunc lroomrectsWithOptions mbFloorColor grid =
+    List.foldl (\( roomrect, doorWallOptions ) gridacc -> dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor gridacc) grid lroomrectsWithOptions
 
 
 listRoomRectangleToGridFunc : List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
 listRoomRectangleToGridFunc lroomrects grid =
-    listDungeonRectangleToGridFunc lroomrects False Nothing grid
+    listDungeonRectangleToGridFunc (List.map (\rrect -> ( rrect, noDoornoWallOption )) lroomrects) Nothing grid
 
 
 

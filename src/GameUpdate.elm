@@ -1,4 +1,28 @@
-module GameUpdate exposing (Msg(..), ai, attack, attackIfClose, checkAndAlterDisplayAnchorIfNecessary, cleanup, cmdFillRandomIntsPool, cmdFillRandomIntsPoolAndGenerateRandomMap, cmdGenFloatsForRandomCave, cmdGenerateRandomInitiativeValue, cmdGetRandomPositionedEnemy, cmdGetRandomPositionedPlayer, getRandIntPair, getTailWithDefaultEmptyList, increseNrOfEnemyMovesInCurrentTurn, log, move, randIntList, randIntPairsList, resetEnemyMovesCurrentTurn, reveal, turnNeighbourWallCellstoAshes, update)
+module GameUpdate exposing
+    ( Msg(..)
+    , ai
+    , attack
+    , attackIfClose
+    , checkAndAlterDisplayAnchorIfNecessary
+    , cleanup
+    , cmdFillRandomIntsPool
+    , cmdFillRandomIntsPoolAndGenerateRandomMap
+    , cmdGenFloatsForRandomCave
+    , cmdGenerateRandomInitiativeValue
+    , cmdGetRandomPositionedEnemy
+    , cmdGetRandomPositionedPlayer
+    , getRandIntPair
+    , getTailWithDefaultEmptyList
+    , increseNrOfEnemyMovesInCurrentTurn
+    , log
+    , move
+    , randIntList
+    , randIntPairsList
+    , resetEnemyMovesCurrentTurn
+    , reveal
+    , turnNeighbourWallCellstoAshes
+    , update
+    )
 
 --import Generator
 --import Collage
@@ -528,31 +552,36 @@ changeFloorTo state floorId locTuple =
         _ =
             Debug.log ("changeFloorTo was called with floorId " ++ String.fromInt floorId ++ " and coords ") locTuple
 
-        currentFloorInfo =
-            GameModel.getCurrentFloorInfoToStore state
-
-        newStore =
-            Dict.update state.currentFloorId (\_ -> Just currentFloorInfo) state.floorDict
-
-        newCurrentFloor =
-            Dict.get floorId state.floorDict
-
         newState =
-            case newCurrentFloor of
-                Just cFloor ->
-                    { state
-                        | level = cFloor.level
-                        , explored = cFloor.explored
-                        , window_width = cFloor.window_width
-                        , window_height = cFloor.window_height
-                        , total_width = cFloor.total_width
-                        , total_height = cFloor.total_height
-                        , floorDict = newStore
-                        , currentFloorId = floorId
-                    }
+            if state.currentFloorId == floorId then
+                state
 
-                Nothing ->
-                    { state | floorDict = newStore }
+            else
+                let
+                    currentFloorInfo =
+                        GameModel.getCurrentFloorInfoToStore state
+
+                    newStore =
+                        Dict.update state.currentFloorId (\_ -> Just currentFloorInfo) state.floorDict
+
+                    newCurrentFloor =
+                        Dict.get floorId state.floorDict
+                in
+                case newCurrentFloor of
+                    Just cFloor ->
+                        { state
+                            | level = cFloor.level
+                            , explored = cFloor.explored
+                            , window_width = cFloor.window_width
+                            , window_height = cFloor.window_height
+                            , total_width = cFloor.total_width
+                            , total_height = cFloor.total_height
+                            , floorDict = newStore
+                            , currentFloorId = floorId
+                        }
+
+                    Nothing ->
+                        { state | floorDict = newStore }
 
         _ =
             Debug.log "newState currentFloorId is " newState.currentFloorId

@@ -42,7 +42,7 @@ initialLevel =
                     GameModel.Wall GameModel.defaultWallInfo
 
                 '+' ->
-                    GameModel.Door GameModel.defaultDoorInfo
+                    GameModel.Door (GameModel.defaultDoorInfo GameModel.DoorToTheRight)
 
                 _ ->
                     GameModel.NoTileYet
