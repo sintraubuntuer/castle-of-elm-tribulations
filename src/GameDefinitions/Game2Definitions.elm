@@ -209,12 +209,13 @@ addCavernsCustomRoomsAndTunnels grid =
         |> MapGen.listRoomRectangleToGridFunc cavernsInitialRoomRectangles
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc cavernsInitialHorizontalTunnelRectanglesWithOptions
         |> MapGen.listTunnelRectangleToGridFunc cavernsStairsTunnel
-        |> MapGen.listTunnelRectangleToGridFunc cavernsInitialVerticalTunnelRectangles
+        |> MapGen.listTunnelRectangleWithOptionsToGridFunc cavernsInitialVerticalTunnelRectanglesWithOptions
         |> MapGen.createWallBoundaries (cavernsInitialHorizontalTunnelRectangles ++ cavernsStairsTunnel ++ cavernsInitialRoomRectangles ++ cavernsInitialVerticalTunnelRectangles)
         --|> make sure if cell width x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
         |> addCavernsStairs
         |> setLandingTargetsInGrid cavernsLandingTargets
         |> setTeleportersInGrid cavernsTeleporters
+        |> setItemsInGrid cavernsItems
         |> MapGen.transformFloorToWallOnDisplayBoundaries
         |> MapGen.correctSomeWallCorners
 
@@ -223,14 +224,16 @@ addBasementCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameMod
 addBasementCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (basementInitialRoomRectangles ++ basementCustomRoomRectangles)
-        |> MapGen.listTunnelRectangleToGridFunc (basementInitialHorizontalTunnelRectangles ++ basementStairsTunnel)
-        |> MapGen.listTunnelRectangleToGridFunc (basementInitialVerticalTunnelRectangles ++ basementCustomVerticalTunnelRectangles)
+        |> MapGen.listTunnelRectangleWithOptionsToGridFunc basementInitialHorizontalTunnelRectanglesWithOptions
+        |> MapGen.listTunnelRectangleToGridFunc basementStairsTunnel
+        |> MapGen.listTunnelRectangleWithOptionsToGridFunc (basementInitialVerticalTunnelRectanglesWithOptions ++ basementCustomVerticalTunnelRectanglesWithOptions)
         |> MapGen.createWallBoundaries (basementInitialRoomRectangles ++ basementCustomRoomRectangles ++ basementInitialHorizontalTunnelRectangles ++ basementStairsTunnel ++ basementInitialVerticalTunnelRectangles ++ basementCustomVerticalTunnelRectangles)
         --|> make sure if cell with x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
         |> addBasementStairs
         |> setHolesInGrid basementHoles
         |> setLandingTargetsInGrid basementLandingTargets
         |> setTeleportersInGrid basementTeleporters
+        |> setItemsInGrid basementItems
         |> MapGen.transformFloorToWallOnDisplayBoundaries
         |> MapGen.correctSomeWallCorners
 
@@ -247,6 +250,7 @@ addGroundFloorCustomRoomsAndTunnels grid =
         |> setHolesInGrid groundFloorHoles
         |> setLandingTargetsInGrid groundFloorLandingTargets
         |> setTeleportersInGrid groundFloorTeleporters
+        |> setItemsInGrid groundFloorItems
         |> MapGen.transformFloorToWallOnDisplayBoundaries
         |> MapGen.correctSomeWallCorners
 
@@ -263,6 +267,7 @@ addFirstFloorCustomRoomsAndTunnels grid =
         |> setHolesInGrid firstFloorHoles
         |> setLandingTargetsInGrid firstFloorLandingTargets
         |> setTeleportersInGrid firstFloorTeleporters
+        |> setItemsInGrid firstFloorItems
         |> MapGen.transformFloorToWallOnDisplayBoundaries
         |> MapGen.correctSomeWallCorners
 
@@ -279,6 +284,7 @@ addTheAtticCustomRoomsAndTunnels grid =
         |> setHolesInGrid theAtticHoles
         |> setLandingTargetsInGrid theAtticLandingTargets
         |> setTeleportersInGrid theAtticTeleporters
+        |> setItemsInGrid theAtticItems
         |> MapGen.transformFloorToWallOnDisplayBoundaries
         |> MapGen.correctSomeWallCorners
 
@@ -711,13 +717,25 @@ getTeleportersCoordsAndTeleportersInfo : TeleporterInfo -> ( ( Int, Int ), Telep
 getTeleportersCoordsAndTeleportersInfo teleporterInfo =
     let
         ( x_coord, y_coord ) =
-            get_teleporter_coords_from_room_row_col teleporterInfo.room_row_nr teleporterInfo.room_col_nr teleporterInfo.room_type teleporterInfo.position_in_room teleporterInfo.teleporterType
+            get_xy_coords_from_room_row_col teleporterInfo.room_row_nr teleporterInfo.room_col_nr teleporterInfo.room_type teleporterInfo.position_in_room
+
+        ( x_c, y_c ) =
+            case teleporterInfo.teleporterType of
+                Clock ->
+                    if String.toLower teleporterInfo.position_in_room == "up" || String.toLower teleporterInfo.position_in_room == "down" then
+                        ( x_coord - 2, y_coord )
+
+                    else
+                        ( x_coord, y_coord )
+
+                _ ->
+                    ( x_coord, y_coord )
     in
-    ( ( x_coord, y_coord ), teleporterInfo )
+    ( ( x_c, y_c ), teleporterInfo )
 
 
-get_teleporter_coords_from_room_row_col : Int -> Int -> RoomType -> String -> TeleporterType -> ( Int, Int )
-get_teleporter_coords_from_room_row_col row_nr col_nr rtype pos_in_room teleporterType =
+get_xy_coords_from_room_row_col : Int -> Int -> RoomType -> String -> ( Int, Int )
+get_xy_coords_from_room_row_col row_nr col_nr rtype pos_in_room =
     let
         top_left_x =
             get_room_top_left_x row_nr col_nr rtype
@@ -733,20 +751,10 @@ get_teleporter_coords_from_room_row_col row_nr col_nr rtype pos_in_room teleport
 
         coords =
             if String.toLower pos_in_room == "up" then
-                case teleporterType of
-                    Clock ->
-                        ( top_left_x + room_width // 2 - 2, top_left_y - 1 )
-
-                    _ ->
-                        ( top_left_x + room_width // 2, top_left_y - 1 )
+                ( top_left_x + room_width // 2, top_left_y - 1 )
 
             else if String.toLower pos_in_room == "down" then
-                case teleporterType of
-                    Clock ->
-                        ( top_left_x + room_width // 2 - 2, top_left_y + room_height )
-
-                    _ ->
-                        ( top_left_x + room_width // 2, top_left_y + room_height )
+                ( top_left_x + room_width // 2, top_left_y + room_height )
 
             else if String.toLower pos_in_room == "left" then
                 ( top_left_x - 1, top_left_y + room_height // 2 )
@@ -754,13 +762,6 @@ get_teleporter_coords_from_room_row_col row_nr col_nr rtype pos_in_room teleport
             else
                 -- String.toLower pos_in_room == "right" then
                 ( top_left_x + room_width, top_left_y + room_height // 2 )
-
-        _ =
-            if row_nr == 7 && col_nr == 5 && rtype == HorizontalRoom then
-                Debug.log "getting teleporter coords for row 7 col 5 . coords are " coords
-
-            else
-                ( -1, -1 )
     in
     coords
 
@@ -1259,65 +1260,82 @@ basementInitialRoomRectangles =
 
 basementInitialHorizontalTunnelRectangles : List TunnelRectangle
 basementInitialHorizontalTunnelRectangles =
-    [ getCommonHorizontalTunnel 2 1
-    , getCommonHorizontalTunnel 2 2
-    , getCommonHorizontalTunnel 2 3
-    , getCommonHorizontalTunnel 2 4
+    List.map (\( tun, opt ) -> tun) basementInitialHorizontalTunnelRectanglesWithOptions
+
+
+basementInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+basementInitialHorizontalTunnelRectanglesWithOptions =
+    [ ( getCommonHorizontalTunnel 2 1, defaultHorizontalYellowDoorOptions )
+    , ( getCommonHorizontalTunnel 2 2, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 2 3, defaultHorizontalGreenDoorOptions )
+    , ( getCommonHorizontalTunnel 2 4, defaultHorizontalOpenDoorOptions )
 
     --
-    , getCommonHorizontalTunnel 3 2
-    , getCommonHorizontalTunnel 3 3
-    , getCommonHorizontalTunnel 3 4
+    , ( getCommonHorizontalTunnel 3 2, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 3 3, defaultHorizontalRedDoorOptions )
+    , ( getCommonHorizontalTunnel 3 4, defaultHorizontalGreenDoorOptions )
 
     --
-    , getCommonHorizontalTunnel 5 2
-    , getCommonHorizontalTunnel 5 3
-    , getCommonHorizontalTunnel 5 4
+    , ( getCommonHorizontalTunnel 5 2, defaultHorizontalRedDoorOptions )
+    , ( getCommonHorizontalTunnel 5 3, defaultHorizontalRedDoorOptions )
+    , ( getCommonHorizontalTunnel 5 4, defaultHorizontalOpenDoorOptions )
 
     --
-    , getCommonHorizontalTunnel 6 1
-    , getCommonHorizontalTunnel 6 2
-    , getCommonHorizontalTunnel 6 3
-    , getCommonHorizontalTunnel 6 4
-    , getCommonHorizontalTunnel 6 5
+    , ( getCommonHorizontalTunnel 6 1, defaultHorizontalGreenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 2, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 3, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 4, defaultHorizontalYellowDoorOptions )
+    , ( getCommonHorizontalTunnel 6 5, defaultHorizontalOpenDoorOptions )
     ]
 
 
 basementInitialVerticalTunnelRectangles : List TunnelRectangle
 basementInitialVerticalTunnelRectangles =
-    [ getCommonVerticalTunnel 1 2
-    , getCommonVerticalTunnel 1 5
+    List.map (\( tun, opt ) -> tun) basementInitialVerticalTunnelRectanglesWithOptions
+
+
+basementInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+basementInitialVerticalTunnelRectanglesWithOptions =
+    [ ( getCommonVerticalTunnel 1 2, defaultVerticalBlueDoorOptions )
+    , ( getCommonVerticalTunnel 1 5, defaultVerticalOpenDoorOptions )
 
     --
-    , getCommonVerticalTunnel 2 2
-    , getCommonVerticalTunnel 2 3
-    , getCommonVerticalTunnel 2 4
-    , getCommonVerticalTunnel 2 5
+    , ( getCommonVerticalTunnel 2 2, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 2 3, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 2 4, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 2 5, defaultVerticalOpenDoorOptions )
 
     --
-    , getCommonVerticalTunnel 5 2
-    , getCommonVerticalTunnel 5 3
-    , getCommonVerticalTunnel 5 4
-    , getCommonVerticalTunnel 5 5
+    , ( getCommonVerticalTunnel 5 2, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 5 3, defaultVerticalBlueDoorOptions )
+    , ( getCommonVerticalTunnel 5 4, defaultVerticalBlueDoorOptions )
+    , ( getCommonVerticalTunnel 5 5, defaultVerticalOpenDoorOptions )
     ]
 
 
+basementCustomVerticalTunnelRectangles : List TunnelRectangle
 basementCustomVerticalTunnelRectangles =
-    [ getVerticalTunnel 3 2 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( 0, 0 ))
-    , getVerticalTunnel 3 5 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( 0, 0 ))
-    , getVerticalTunnel 3 3 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( -2, 0 ))
-    , getVerticalTunnel 3 4 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( 2, 0 ))
+    List.map (\( tun, opt ) -> tun) basementCustomVerticalTunnelRectanglesWithOptions
+
+
+basementCustomVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+basementCustomVerticalTunnelRectanglesWithOptions =
+    [ ( getVerticalTunnel 3 2 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( 0, 0 )), defaultVerticalBlueDoorOptions )
+    , ( getVerticalTunnel 3 5 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( 0, 0 )), defaultVerticalOpenDoorOptions )
+    , ( getVerticalTunnel 3 3 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( -2, 0 )), defaultVerticalGreenDoorOptions )
+    , ( getVerticalTunnel 3 4 TunnelDown Nothing (Just (4 * horizontal_wall_height + 2 * vertical_space_between_rooms + square_room_height)) Nothing Nothing (Just ( 2, 0 )), defaultVerticalRedDoorOptions )
 
     --
-    , getVerticalTunnel 3 3 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( 2, 0 ))
-    , getVerticalTunnel 3 4 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( -2, 0 ))
+    , ( getVerticalTunnel 3 3 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( 2, 0 )), defaultVerticalGreenDoorOptions )
+    , ( getVerticalTunnel 3 4 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( -2, 0 )), defaultVerticalYellowDoorOptions )
 
     --
-    , getVerticalTunnel 4 3 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( 2, 0 ))
-    , getVerticalTunnel 4 3 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( 8, 0 ))
+    , ( getVerticalTunnel 4 3 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( 2, 0 )), defaultVerticalYellowDoorOptions )
+    , ( getVerticalTunnel 4 3 TunnelDown Nothing (Just (2 * horizontal_wall_height + vertical_space_between_rooms)) Nothing Nothing (Just ( 8, 0 )), defaultVerticalYellowDoorOptions )
     ]
 
 
+basementCustomRoomRectangles : List RoomRectangle
 basementCustomRoomRectangles =
     [ getCustomRoom 4 3 5 0 square_room_side square_room_side
     ]
@@ -1429,6 +1447,7 @@ cavernsInitialRoomRectangles =
     ]
 
 
+defaultHorizontalOpenDoorOptions : GameModel.DoorWallOptions
 defaultHorizontalOpenDoorOptions =
     { left = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToTheRight)
     , top = GameModel.NoDoorNoWall
@@ -1437,11 +1456,92 @@ defaultHorizontalOpenDoorOptions =
     }
 
 
+defaultVerticalOpenDoorOptions : GameModel.DoorWallOptions
+defaultVerticalOpenDoorOptions =
+    { left = GameModel.NoDoorNoWall
+    , top = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToDown)
+    , right = GameModel.NoDoorNoWall
+    , bottom = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToUp)
+    }
+
+
+defaultHorizontalBlueDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalBlueDoorOptions =
+    { left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
+    , top = GameModel.NoDoorNoWall
+    , right = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheLeft)
+    , bottom = GameModel.NoDoorNoWall
+    }
+
+
+defaultVerticalBlueDoorOptions : GameModel.DoorWallOptions
+defaultVerticalBlueDoorOptions =
+    { left = GameModel.NoDoorNoWall
+    , top = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToDown)
+    , right = GameModel.NoDoorNoWall
+    , bottom = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToUp)
+    }
+
+
+defaultHorizontalRedDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalRedDoorOptions =
+    { left = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToTheRight)
+    , top = GameModel.NoDoorNoWall
+    , right = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToTheLeft)
+    , bottom = GameModel.NoDoorNoWall
+    }
+
+
+defaultVerticalRedDoorOptions : GameModel.DoorWallOptions
+defaultVerticalRedDoorOptions =
+    { left = GameModel.NoDoorNoWall
+    , top = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToDown)
+    , right = GameModel.NoDoorNoWall
+    , bottom = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToUp)
+    }
+
+
+defaultHorizontalGreenDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalGreenDoorOptions =
+    { left = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToTheRight)
+    , top = GameModel.NoDoorNoWall
+    , right = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToTheLeft)
+    , bottom = GameModel.NoDoorNoWall
+    }
+
+
+defaultVerticalGreenDoorOptions : GameModel.DoorWallOptions
+defaultVerticalGreenDoorOptions =
+    { left = GameModel.NoDoorNoWall
+    , top = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToDown)
+    , right = GameModel.NoDoorNoWall
+    , bottom = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToUp)
+    }
+
+
+defaultHorizontalYellowDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalYellowDoorOptions =
+    { left = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToTheRight)
+    , top = GameModel.NoDoorNoWall
+    , right = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToTheLeft)
+    , bottom = GameModel.NoDoorNoWall
+    }
+
+
+defaultVerticalYellowDoorOptions : GameModel.DoorWallOptions
+defaultVerticalYellowDoorOptions =
+    { left = GameModel.NoDoorNoWall
+    , top = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToDown)
+    , right = GameModel.NoDoorNoWall
+    , bottom = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToUp)
+    }
+
+
 cavernsInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
 cavernsInitialHorizontalTunnelRectanglesWithOptions =
     [ ( getCommonHorizontalTunnel 1 7, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 1 8, defaultHorizontalOpenDoorOptions )
-    , ( getCommonHorizontalTunnel 1 9, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 1 9, defaultHorizontalGreenDoorOptions )
     , ( getCommonHorizontalTunnel 1 10, defaultHorizontalOpenDoorOptions )
 
     --
@@ -1451,9 +1551,9 @@ cavernsInitialHorizontalTunnelRectanglesWithOptions =
     , ( getCommonHorizontalTunnel 2 4, defaultHorizontalOpenDoorOptions )
 
     --
-    , ( getCommonHorizontalTunnel 3 6, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 3 6, defaultHorizontalBlueDoorOptions )
     , ( getCommonHorizontalTunnel 3 5, defaultHorizontalOpenDoorOptions )
-    , ( getCommonHorizontalTunnel 3 7, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 3 7, defaultHorizontalRedDoorOptions )
     , ( getCommonHorizontalTunnel 3 8, defaultHorizontalOpenDoorOptions )
 
     --
@@ -1462,18 +1562,18 @@ cavernsInitialHorizontalTunnelRectanglesWithOptions =
     , ( getCommonHorizontalTunnel 4 5, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 4 8, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 4 9, defaultHorizontalOpenDoorOptions )
-    , ( getCommonHorizontalTunnel 4 10, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 4 10, defaultHorizontalRedDoorOptions )
 
     --
     , ( getCommonHorizontalTunnel 5 2, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 5 3, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 5 4, defaultHorizontalOpenDoorOptions )
-    , ( getCommonHorizontalTunnel 5 5, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 5 5, defaultHorizontalGreenDoorOptions )
 
     --
     , ( getCommonHorizontalTunnel 6 5, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 6 6, defaultHorizontalOpenDoorOptions )
-    , ( getCommonHorizontalTunnel 6 7, defaultHorizontalOpenDoorOptions )
+    , ( getCommonHorizontalTunnel 6 7, defaultHorizontalBlueDoorOptions )
     , ( getCommonHorizontalTunnel 6 8, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 6 9, defaultHorizontalOpenDoorOptions )
 
@@ -1487,41 +1587,46 @@ cavernsInitialHorizontalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) cavernsInitialHorizontalTunnelRectanglesWithOptions
 
 
+cavernsInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+cavernsInitialVerticalTunnelRectanglesWithOptions =
+    [ ( getCommonVerticalTunnel 2 2, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 3 2, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 4 2, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 5 2, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 6 2, defaultVerticalOpenDoorOptions )
+
+    --
+    , ( getCommonVerticalTunnel 2 3, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 3 3, defaultVerticalOpenDoorOptions )
+
+    --
+    , ( getCommonVerticalTunnel 2 5, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 5 5, defaultVerticalOpenDoorOptions )
+
+    --
+    , ( getCommonVerticalTunnel 4 6, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 5 6, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 6 6, defaultVerticalGreenDoorOptions )
+
+    --
+    , ( getCommonVerticalTunnel 1 7, defaultVerticalRedDoorOptions )
+    , ( getCommonVerticalTunnel 2 7, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 3 7, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 6 7, defaultVerticalOpenDoorOptions )
+
+    --
+    , ( getCommonVerticalTunnel 1 9, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 2 9, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 3 9, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 4 9, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 5 9, defaultVerticalOpenDoorOptions )
+    , ( getCommonVerticalTunnel 6 9, defaultVerticalOpenDoorOptions )
+    ]
+
+
 cavernsInitialVerticalTunnelRectangles : List TunnelRectangle
 cavernsInitialVerticalTunnelRectangles =
-    [ getCommonVerticalTunnel 2 2
-    , getCommonVerticalTunnel 3 2
-    , getCommonVerticalTunnel 4 2
-    , getCommonVerticalTunnel 5 2
-    , getCommonVerticalTunnel 6 2
-
-    --
-    , getCommonVerticalTunnel 2 3
-    , getCommonVerticalTunnel 3 3
-
-    --
-    , getCommonVerticalTunnel 2 5
-    , getCommonVerticalTunnel 5 5
-
-    --
-    , getCommonVerticalTunnel 4 6
-    , getCommonVerticalTunnel 5 6
-    , getCommonVerticalTunnel 6 6
-
-    --
-    , getCommonVerticalTunnel 1 7
-    , getCommonVerticalTunnel 2 7
-    , getCommonVerticalTunnel 3 7
-    , getCommonVerticalTunnel 6 7
-
-    --
-    , getCommonVerticalTunnel 1 9
-    , getCommonVerticalTunnel 2 9
-    , getCommonVerticalTunnel 3 9
-    , getCommonVerticalTunnel 4 9
-    , getCommonVerticalTunnel 5 9
-    , getCommonVerticalTunnel 6 9
-    ]
+    List.map (\( tunnel, opt ) -> tunnel) cavernsInitialVerticalTunnelRectanglesWithOptions
 
 
 cavernsStairsTunnel : List TunnelRectangle
@@ -1559,6 +1664,98 @@ addCavernsStairs grid =
             ]
     in
     List.foldl (\rec gridacc -> getStairsOnRoom rec.room_row rec.room_col rec.stairsId rec.toFloorId rec.toStairsId rec.direction Nothing rec.shift rec.mbLocationShift gridacc) grid lstairs
+
+
+
+-- ITEMS in rooms
+
+
+type alias ItemCreationInfo =
+    { item_id : Int
+    , item : GameModel.Item
+    , floor_id : Int
+    , room_row_nr : Int
+    , room_col_nr : Int
+    , room_type : RoomType
+    , position_in_room : Int --(in WallUp , L R or D )
+    , mbLocationShift : Maybe ( Int, Int )
+    }
+
+
+itemCreationDict : Dict ItemId ItemCreationInfo
+itemCreationDict =
+    Dict.fromList
+        [ ( 1, ItemCreationInfo 1 (GameModel.Key { keyColor = "blue" }) caverns_floor_id 4 3 SquareRoom 5 Nothing )
+        , ( 2, ItemCreationInfo 2 (GameModel.Key { keyColor = "yellow" }) basement_floor_id 4 3 SquareRoom 7 (Just ( 5, 0 )) )
+        , ( 3, ItemCreationInfo 3 (GameModel.Key { keyColor = "red" }) groundFloor_id 1 2 SquareRoom 3 Nothing )
+        , ( 4, ItemCreationInfo 4 (GameModel.Key { keyColor = "green" }) groundFloor_id 5 6 SquareRoom 5 Nothing )
+        ]
+
+
+getItemCoordsAndItemInfo : ItemCreationInfo -> ( ( Int, Int ), ItemCreationInfo )
+getItemCoordsAndItemInfo itemInfo =
+    let
+        ( x_coord, y_coord ) =
+            get_room_position_nr itemInfo.room_row_nr itemInfo.room_col_nr itemInfo.position_in_room itemInfo.room_type
+                |> (\( x, y ) -> ( x + (Maybe.map Tuple.first itemInfo.mbLocationShift |> Maybe.withDefault 0), y + (Maybe.map Tuple.second itemInfo.mbLocationShift |> Maybe.withDefault 0) ))
+    in
+    ( ( x_coord, y_coord ), itemInfo )
+
+
+setItemsInGrid : Dict ItemId ItemCreationInfo -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+setItemsInGrid dItemsToCreate grid =
+    let
+        lcoordsAndInfo =
+            dItemsToCreate
+                |> Dict.values
+                |> List.map getItemCoordsAndItemInfo
+
+        tileItem i_c_info =
+            GameModel.Floor (createItemFloorInfo i_c_info)
+
+        setTileFloorItem xcoord ycoord i_creation_info_ grid_ =
+            Grid.set (Grid.Coordinate xcoord ycoord) (tileItem i_creation_info_) grid_
+    in
+    List.foldl (\( ( x_coord, y_coord ), i_creation_info ) gridacc -> setTileFloorItem x_coord y_coord i_creation_info gridacc) grid lcoordsAndInfo
+
+
+createItemFloorInfo : ItemCreationInfo -> GameModel.FloorInfo
+createItemFloorInfo i_c_info =
+    GameModel.FloorInfo (Just i_c_info.item) Nothing True True False GameModel.Unexplored ""
+
+
+cavernsItems : Dict ItemId ItemCreationInfo
+cavernsItems =
+    getItemsByFloorId caverns_floor_id itemCreationDict
+
+
+basementItems : Dict ItemId ItemCreationInfo
+basementItems =
+    getItemsByFloorId basement_floor_id itemCreationDict
+
+
+groundFloorItems : Dict ItemId ItemCreationInfo
+groundFloorItems =
+    getItemsByFloorId groundFloor_id itemCreationDict
+
+
+firstFloorItems : Dict ItemId ItemCreationInfo
+firstFloorItems =
+    getItemsByFloorId firstFloor_id itemCreationDict
+
+
+theAtticItems : Dict ItemId ItemCreationInfo
+theAtticItems =
+    getItemsByFloorId theAttic_id itemCreationDict
+
+
+type alias ItemId =
+    Int
+
+
+getItemsByFloorId : Int -> Dict ItemId ItemCreationInfo -> Dict ItemId ItemCreationInfo
+getItemsByFloorId floorId dItems =
+    Dict.filter (\k v -> v.floor_id == floorId) dItems
 
 
 

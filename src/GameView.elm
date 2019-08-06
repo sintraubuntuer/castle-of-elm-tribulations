@@ -110,6 +110,9 @@ floorOverlay elemStr =
     if elemStr == "ash" then
         Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_ash.png"
 
+    else if String.startsWith "key" elemStr then
+        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) ("img/items/" ++ elemStr ++ ".png")
+
     else if elemStr == "landingTarget" then
         Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_landing_target.png"
 
@@ -221,7 +224,28 @@ door doorinfo =
         rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform white)
 
     else
-        rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform purple)
+        rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (doorinfo.color |> Maybe.withDefault "white" |> stringToColor))
+
+
+stringToColor : String -> Color
+stringToColor theColorStr =
+    if String.toLower theColorStr == "blue" then
+        blue
+
+    else if String.toLower theColorStr == "white" then
+        white
+
+    else if String.toLower theColorStr == "red" then
+        red
+
+    else if String.toLower theColorStr == "yellow" then
+        yellow
+
+    else if String.toLower theColorStr == "green" then
+        green
+
+    else
+        white
 
 
 doorOverlay : Collage msg
@@ -371,16 +395,21 @@ tileOverlay : GameModel.Tile -> Collage msg
 tileOverlay t =
     case t of
         GameModel.Floor floorinfo ->
-            if floorinfo.item == Just GameModel.Ash then
-                floorOverlay "ash"
+            case floorinfo.item of
+                Just GameModel.Ash ->
+                    floorOverlay "ash"
 
-            else
-                case floorinfo.floorDrawing of
-                    Just (GameModel.LandingTargetDrawing nr) ->
-                        floorOverlay "landingTarget"
+                Just (GameModel.Key keyinfo) ->
+                    --floorOverlay ( "key_" ++ floorinfo.item.color )
+                    floorOverlay ("key_" ++ keyinfo.keyColor)
 
-                    _ ->
-                        floorOverlay ""
+                _ ->
+                    case floorinfo.floorDrawing of
+                        Just (GameModel.LandingTargetDrawing nr) ->
+                            floorOverlay "landingTarget"
+
+                        _ ->
+                            floorOverlay ""
 
         GameModel.Wall wallinfo ->
             wallOverlay wallinfo

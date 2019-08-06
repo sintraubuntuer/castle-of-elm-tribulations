@@ -55,6 +55,7 @@ type Msg
     = Noop
     | StartGameNr Int
     | KeyDown GameModel.Input
+    | TryAddToPlayerInventory
     | TryShiftPlayerPosition ( Int, Int )
     | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
@@ -125,6 +126,17 @@ update msg state =
                 GameModel.Right ->
                     update (TryShiftPlayerPosition ( 0 + 1, 0 )) state
 
+                GameModel.PickUpItem ->
+                    update TryAddToPlayerInventory state
+
+                GameModel.ViewInventory ->
+                    -- for the time being
+                    let
+                        _ =
+                            Debug.log "player inventory : " (Dict.keys state.player.inventory)
+                    in
+                    ( state, Cmd.none )
+
                 GameModel.FloorUp ->
                     update (ChangeFloorTo (state.currentFloorId + 1) ( state.player.location.x, state.player.location.y )) state
 
@@ -133,6 +145,35 @@ update msg state =
 
                 GameModel.Nop ->
                     ( state, Cmd.none )
+
+        TryAddToPlayerInventory ->
+            let
+                player_ =
+                    state.player
+
+                pcoords =
+                    state.player.location
+
+                --checkIfTheresAnItemLocatedAt pcoords
+                ( updatedInventory, newGrid ) =
+                    case Grid.get pcoords state.level of
+                        Just (GameModel.Floor floorinfo) ->
+                            case floorinfo.item of
+                                Just item ->
+                                    ( Dict.update (GameModel.itemToString item) (\_ -> Just item) state.player.inventory
+                                    , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) state.level
+                                    )
+
+                                _ ->
+                                    ( state.player.inventory, state.level )
+
+                        _ ->
+                            ( state.player.inventory, state.level )
+
+                newPlayer =
+                    { player_ | inventory = updatedInventory }
+            in
+            ( { state | player = newPlayer, level = newGrid }, Cmd.none )
 
         TryShiftPlayerPosition shiftTuple ->
             let

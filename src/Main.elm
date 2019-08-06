@@ -100,6 +100,12 @@ fromCode keyCode =
         50 ->
             GameModel.FloorUp
 
+        85 ->
+            GameModel.PickUpItem
+
+        73 ->
+            GameModel.ViewInventory
+
         _ ->
             GameModel.Nop
 
