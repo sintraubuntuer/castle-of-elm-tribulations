@@ -60,7 +60,7 @@ initialLevel =
     Grid.fromList <| List.map (\x -> List.map toTile <| String.toList x) s
 
 
-subscriptions : GameModel.State -> Sub GameUpdate.Msg
+subscriptions : GameModel.Model -> Sub GameUpdate.Msg
 subscriptions model =
     Sub.batch
         [ onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
@@ -114,19 +114,19 @@ type alias Flags =
     {}
 
 
-init : Flags -> ( GameModel.State, Cmd GameUpdate.Msg )
+init : Flags -> ( GameModel.Model, Cmd GameUpdate.Msg )
 init flags =
     let
-        ( initState, createRandomMap ) =
-            GameDefinitions.Common.initialStateFunc
+        ( initModel, createRandomMap ) =
+            GameDefinitions.Common.initialModelFunc
 
         gBounds =
-            Grid.getGridBoundsToPlacePlayer initState.level
+            Grid.getGridBoundsToPlacePlayer initModel.level
     in
-    ( initState, Cmd.none )
+    ( initModel, Cmd.none )
 
 
-main : Program Flags GameModel.State GameUpdate.Msg
+main : Program Flags GameModel.Model GameUpdate.Msg
 main =
     Browser.element
         { init = init

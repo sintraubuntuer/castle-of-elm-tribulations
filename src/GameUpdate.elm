@@ -41,9 +41,9 @@ import Thorns.Types
 import Thorns.Update as ThornsUpdate
 
 
-log : String -> GameModel.State -> GameModel.State
-log s state =
-    { state | log = s :: state.log }
+log : String -> GameModel.Model -> GameModel.Model
+log s model =
+    { model | log = s :: model.log }
 
 
 getTailWithDefaultEmptyList : List a -> List a
@@ -73,170 +73,170 @@ type Msg
     | ThornsMsg Thorns.Types.Msg
 
 
-update : Msg -> GameModel.State -> ( GameModel.State, Cmd Msg )
-update msg state =
+update : Msg -> GameModel.Model -> ( GameModel.Model, Cmd Msg )
+update msg model =
     case msg of
         Noop ->
-            ( state, Cmd.none )
+            ( model, Cmd.none )
 
         ThornsMsg tmsg ->
             let
                 ( newThornsModel, thorns_cmds ) =
-                    ThornsUpdate.update tmsg state.gameOfThornsModel
+                    ThornsUpdate.update tmsg model.gameOfThornsModel
 
-                newState =
+                newModel =
                     if newThornsModel.interactionHasFinished then
                         let
                             ( newEnemies, newOtherCharacters, newPlayer ) =
                                 case newThornsModel.opponent of
                                     Just (Thorns.Types.Enemy erec) ->
-                                        ( Dict.update erec.id (\_ -> Just erec) state.enemies
-                                        , state.otherCharacters
+                                        ( Dict.update erec.id (\_ -> Just erec) model.enemies
+                                        , model.otherCharacters
                                         , newThornsModel.player
                                         )
 
                                     Just (Thorns.Types.Ochar orec) ->
-                                        ( state.enemies
-                                        , Dict.update orec.id (\_ -> Just orec) state.otherCharacters
+                                        ( model.enemies
+                                        , Dict.update orec.id (\_ -> Just orec) model.otherCharacters
                                         , newThornsModel.player
                                         )
 
                                     Nothing ->
-                                        ( state.enemies, state.otherCharacters, state.player )
+                                        ( model.enemies, model.otherCharacters, model.player )
                         in
-                        { state
+                        { model
                             | enemies = newEnemies
                             , otherCharacters = newOtherCharacters
                             , player = newPlayer
                             , gameOfThornsModel = newThornsModel
-                            , gameOfThornsModeisOn = state.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
+                            , gameOfThornsModeisOn = model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
                             , listeningToKeyInput = True
                         }
 
                     else
-                        { state | gameOfThornsModel = newThornsModel, gameOfThornsModeisOn = state.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished }
+                        { model | gameOfThornsModel = newThornsModel, gameOfThornsModeisOn = model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished }
             in
-            ( newState, Cmd.map ThornsMsg thorns_cmds )
+            ( newModel, Cmd.map ThornsMsg thorns_cmds )
 
         StartGameNr nr ->
             let
-                ( initState, createRandomMap, randomlyPositionPlayer ) =
+                ( initModel, createRandomMap, randomlyPositionPlayer ) =
                     case nr of
                         1 ->
-                            GameDefinitions.Game1Definitions.initialStateFunc
+                            GameDefinitions.Game1Definitions.initialModelFunc
 
                         2 ->
-                            GameDefinitions.Game2Definitions.initialStateFunc
+                            GameDefinitions.Game2Definitions.initialModelFunc
 
                         _ ->
-                            ( state, False, False )
+                            ( model, False, False )
 
                 test =
                     ThornGrid.thornToString Beings.CHICANE_ATTACK
 
                 gBounds =
-                    Grid.getGridBoundsToPlacePlayer initState.level
+                    Grid.getGridBoundsToPlacePlayer initModel.level
             in
-            ( initState |> position_display_anchor_in_order_to_center_player
+            ( initModel |> position_display_anchor_in_order_to_center_player
             , Cmd.batch
                 ([ if createRandomMap then
-                    cmdFillRandomIntsPoolAndGenerateRandomMap initState
+                    cmdFillRandomIntsPoolAndGenerateRandomMap initModel
                     --|> Debug.log "trying to create a random map"
 
                    else
-                    cmdFillRandomIntsPool initState
+                    cmdFillRandomIntsPool initModel
                  , cmdGenerateRandomInitiativeValue "player" Nothing 1 100
                  , if randomlyPositionPlayer then
-                    cmdGetRandomPositionedPlayer initState.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
+                    cmdGetRandomPositionedPlayer initModel.player gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY
 
                    else
                     Cmd.none
-                 , Cmd.map ThornsMsg (ThornsUpdate.cmdFillRandomIntsPool True initState.gameOfThornsModel)
+                 , Cmd.map ThornsMsg (ThornsUpdate.cmdFillRandomIntsPool True initModel.gameOfThornsModel)
                  ]
-                    ++ (Dict.map (\enid enemy -> cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initState.enemies
+                    ++ (Dict.map (\enid enemy -> cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initModel.enemies
                             |> Dict.values
                        )
-                    ++ (Dict.map (\enid enemy -> cmdGenerateRandomInitiativeValue "enemy" (Just enid) 1 100) initState.enemies
+                    ++ (Dict.map (\enid enemy -> cmdGenerateRandomInitiativeValue "enemy" (Just enid) 1 100) initModel.enemies
                             |> Dict.values
                        )
                 )
             )
 
         KeyDown input ->
-            if not state.listeningToKeyInput then
+            if not model.listeningToKeyInput then
                 let
                     _ =
-                        Debug.log "currently not listening to key input : " (not state.listeningToKeyInput)
+                        Debug.log "currently not listening to key input : " (not model.listeningToKeyInput)
                 in
-                ( state, Cmd.none )
+                ( model, Cmd.none )
 
             else
                 case input of
                     GameModel.Up ->
-                        update (TryShiftPlayerPosition ( 0, 0 - 1 )) state
+                        update (TryShiftPlayerPosition ( 0, 0 - 1 )) model
 
                     GameModel.Down ->
-                        update (TryShiftPlayerPosition ( 0, 0 + 1 )) state
+                        update (TryShiftPlayerPosition ( 0, 0 + 1 )) model
 
                     GameModel.Left ->
-                        update (TryShiftPlayerPosition ( 0 - 1, 0 )) state
+                        update (TryShiftPlayerPosition ( 0 - 1, 0 )) model
 
                     GameModel.Right ->
-                        update (TryShiftPlayerPosition ( 0 + 1, 0 )) state
+                        update (TryShiftPlayerPosition ( 0 + 1, 0 )) model
 
                     GameModel.PickUpItem ->
-                        update TryAddToPlayerInventory state
+                        update TryAddToPlayerInventory model
 
                     GameModel.ViewInventory ->
                         -- for the time being
                         let
                             _ =
-                                Debug.log "player inventory : " (Dict.keys state.player.inventory)
+                                Debug.log "player inventory : " (Dict.keys model.player.inventory)
                         in
-                        ( state, Cmd.none )
+                        ( model, Cmd.none )
 
                     GameModel.FloorUp ->
-                        update (ChangeFloorTo (state.currentFloorId + 1) ( state.player.location.x, state.player.location.y )) state
+                        update (ChangeFloorTo (model.currentFloorId + 1) ( model.player.location.x, model.player.location.y )) model
 
                     GameModel.FloorDown ->
-                        update (ChangeFloorTo (state.currentFloorId - 1) ( state.player.location.x, state.player.location.y )) state
+                        update (ChangeFloorTo (model.currentFloorId - 1) ( model.player.location.x, model.player.location.y )) model
 
                     GameModel.Nop ->
-                        ( state, Cmd.none )
+                        ( model, Cmd.none )
 
         TryAddToPlayerInventory ->
             let
                 player_ =
-                    state.player
+                    model.player
 
                 pcoords =
-                    state.player.location
+                    model.player.location
 
                 --checkIfTheresAnItemLocatedAt pcoords
                 ( updatedInventory, newGrid ) =
-                    case Grid.get pcoords state.level of
+                    case Grid.get pcoords model.level of
                         Just (GameModel.Floor floorinfo) ->
                             case floorinfo.item of
                                 Just item ->
-                                    ( Dict.update (GameModel.itemToString item) (\_ -> Just item) state.player.inventory
-                                    , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) state.level
+                                    ( Dict.update (GameModel.itemToString item) (\_ -> Just item) model.player.inventory
+                                    , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
                                     )
 
                                 _ ->
-                                    ( state.player.inventory, state.level )
+                                    ( model.player.inventory, model.level )
 
                         _ ->
-                            ( state.player.inventory, state.level )
+                            ( model.player.inventory, model.level )
 
                 newPlayer =
                     { player_ | inventory = updatedInventory }
             in
-            ( { state | player = newPlayer, level = newGrid }, Cmd.none )
+            ( { model | player = newPlayer, level = newGrid }, Cmd.none )
 
         TryShiftPlayerPosition shiftTuple ->
             let
                 player =
-                    state.player
+                    model.player
 
                 { x, y } =
                     player.location
@@ -250,141 +250,141 @@ update msg state =
                 ( x2, y2 ) =
                     ( x + x_, y + y_ )
 
-                newState =
+                newModel =
                     --GameModel.location x2 y2
-                    case Grid.get (GameModel.location x2 y2) state.level of
+                    case Grid.get (GameModel.location x2 y2) model.level of
                         Just (GameModel.Lever leverinfo) ->
                             if leverinfo.isUp then
-                                state
+                                model
                                 --|> Debug.log " you just interacted with an up lever "
 
                             else
-                                { state | level = Grid.set (GameModel.location x2 y2) (GameModel.Lever { leverinfo | isUp = True }) state.level }
+                                { model | level = Grid.set (GameModel.location x2 y2) (GameModel.Lever { leverinfo | isUp = True }) model.level }
                                     |> turnNeighbourWallCellstoAshes (GameModel.location x2 y2)
 
                         --  |> Debug.log " you just interacted with a down lever "
                         _ ->
-                            state
+                            model
 
                 mbEnemy =
-                    case Dict.filter (\enemyid enemy -> enemy.location == GameModel.location x2 y2) state.enemies |> Dict.values of
+                    case Dict.filter (\enemyid enemy -> enemy.location == GameModel.location x2 y2) model.enemies |> Dict.values of
                         [] ->
                             Nothing
 
                         enemy :: es ->
                             Just enemy
 
-                newState2 =
+                newModel2 =
                     case mbEnemy of
                         Just enemy ->
-                            newState
+                            newModel
 
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
-                                { newState | player = move ( x_, y_ ) newState newState.player }
+                                { newModel | player = move ( x_, y_ ) newModel newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
 
                             else
-                                newState
+                                newModel
             in
             case mbEnemy of
                 Just enemy ->
-                    update (StartOpponentInteraction enemy) newState2
+                    update (StartOpponentInteraction enemy) newModel2
 
                 Nothing ->
                     let
-                        newState3 =
-                            newState2 |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
+                        newModel3 =
+                            newModel2 |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
                     in
-                    ( newState3, cmdFillRandomIntsPool newState3 )
+                    ( newModel3, cmdFillRandomIntsPool newModel3 )
 
         StartOpponentInteraction enemy ->
             let
                 ( newThornsModel, thornsCmd ) =
-                    ThornsUpdate.update (Thorns.Types.SetOpponentAndPlayerAndInitializeGrid enemy state.player) state.gameOfThornsModel
+                    ThornsUpdate.update (Thorns.Types.SetOpponentAndPlayerAndInitializeGrid enemy model.player) model.gameOfThornsModel
 
                 -- ThornsUpdate.update (Thorns.Types.SetOpponent enemy)
                 {- }
                    attackOutput =
-                       attack state.player enemy state.pseudoRandomIntsPool
+                       attack model.player enemy model.pseudoRandomIntsPool
 
-                   newState =
+                   newModel =
                        log attackOutput.textMsg
-                           { state
+                           { model
                                | player = attackOutput.dudeA
-                               , enemies = Dict.insert enemy.id attackOutput.dudeB state.enemies --enemy_ :: getTailWithDefaultEmptyList state.enemies
+                               , enemies = Dict.insert enemy.id attackOutput.dudeB model.enemies --enemy_ :: getTailWithDefaultEmptyList model.enemies
                                , pseudoRandomIntsPool = attackOutput.randInts
                            }
                 -}
-                newState =
-                    { state
+                newModel =
+                    { model
                         | gameOfThornsModeisOn = True
                         , gameOfThornsModel = newThornsModel
                         , listeningToKeyInput = False
                     }
 
-                newState_after_cleanup =
-                    --newState |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
-                    newState |> cleanup |> reveal
+                newModel_after_cleanup =
+                    --newModel |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
+                    newModel |> cleanup |> reveal
             in
-            ( newState_after_cleanup
+            ( newModel_after_cleanup
             , Cmd.batch
-                [ cmdFillRandomIntsPool newState_after_cleanup
+                [ cmdFillRandomIntsPool newModel_after_cleanup
                 , Cmd.map ThornsMsg thornsCmd
                 ]
             )
 
         ChangeFloorTo floorId locTuple ->
             let
-                newState =
-                    changeFloorTo state floorId locTuple
+                newModel =
+                    changeFloorTo model floorId locTuple
             in
-            ( newState, Cmd.none )
+            ( newModel, Cmd.none )
 
         NewRandomPointToPlacePlayer tupPosition ->
             let
                 oldPlayer =
-                    state.player
+                    model.player
 
                 newLocation =
                     GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition)
 
                 gridBounds =
-                    Grid.getGridBoundsToPlacePlayer state.level
+                    Grid.getGridBoundsToPlacePlayer model.level
 
                 --|> Debug.log "grid bounds are : "
                 newPlayer =
                     { oldPlayer | location = newLocation, placed = True }
 
                 --_ =
-                --    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation state)
+                --    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation model)
             in
-            case GameModel.isModelTileWalkable newLocation state of
+            case GameModel.isModelTileWalkable newLocation model of
                 True ->
-                    ( { state
+                    ( { model
                         | player = newPlayer
-                        , x_display_anchor = max 0 (newLocation.x - round (toFloat state.window_width / 2.0))
-                        , y_display_anchor = max 0 (newLocation.y - round (toFloat state.window_height / 2))
+                        , x_display_anchor = max 0 (newLocation.x - round (toFloat model.window_width / 2.0))
+                        , y_display_anchor = max 0 (newLocation.y - round (toFloat model.window_height / 2))
                       }
                         |> reveal
                     , Cmd.none
                     )
 
                 False ->
-                    ( state, cmdGetRandomPositionedPlayer { oldPlayer | placed = False } gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
+                    ( model, cmdGetRandomPositionedPlayer { oldPlayer | placed = False } gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
         NewRandomPointToPlaceEnemy enemyId tupPosition ->
             let
                 mbActualEnemy =
-                    Dict.get enemyId state.enemies
+                    Dict.get enemyId model.enemies
 
                 newLocation =
                     GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition)
 
                 gridBounds =
-                    Grid.getGridBoundsToPlaceEnemy state.level
+                    Grid.getGridBoundsToPlaceEnemy model.level
 
                 mbNewEnemy =
                     case mbActualEnemy of
@@ -396,69 +396,69 @@ update msg state =
             in
             case mbActualEnemy of
                 Nothing ->
-                    ( state, Cmd.none )
+                    ( model, Cmd.none )
 
                 Just actualEnemy ->
-                    case GameModel.isModelTileWalkable newLocation state of
+                    case GameModel.isModelTileWalkable newLocation model of
                         True ->
-                            ( { state | enemies = GameModel.placeExistingEnemy enemyId newLocation state.enemies }, Cmd.none )
+                            ( { model | enemies = GameModel.placeExistingEnemy enemyId newLocation model.enemies }, Cmd.none )
 
                         False ->
-                            --( { state | player = newPlayer }, Cmd.none )
-                            ( state, cmdGetRandomPositionedEnemy actualEnemy enemyId gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
+                            --( { model | player = newPlayer }, Cmd.none )
+                            ( model, cmdGetRandomPositionedEnemy actualEnemy enemyId gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
-        --randomlyPlaceExistingEnemies : List ( Location, EnemyId ) -> State -> State
+        --randomlyPlaceExistingEnemies : List ( Location, EnemyId ) -> Model -> Model
         NewRandomFloatsForGenCave lfloats ->
             let
                 theSize =
-                    state.level.size
+                    model.level.size
 
                 newGrid =
                     MapGen.randomCave ( theSize.width, theSize.height ) lfloats
             in
-            ( { state | level = newGrid }, Cmd.none )
+            ( { model | level = newGrid }, Cmd.none )
 
         RandomInitiativeValue strCharacter mbCharacterId intval ->
             if strCharacter == "player" then
                 let
                     oldPlayer =
-                        state.player
+                        model.player
 
                     newPlayer =
                         { oldPlayer | initiative = intval }
                 in
-                ( { state | player = newPlayer }, Cmd.none )
+                ( { model | player = newPlayer }, Cmd.none )
 
             else if strCharacter == "enemy" then
                 let
-                    newState =
-                        GameModel.mbUpdateEnemyInitiativeByMbEnemyId intval mbCharacterId state
+                    newModel =
+                        GameModel.mbUpdateEnemyInitiativeByMbEnemyId intval mbCharacterId model
                 in
-                ( newState, Cmd.none )
+                ( newModel, Cmd.none )
 
             else
-                ( state, Cmd.none )
+                ( model, Cmd.none )
 
         NewRandomIntsAddToPool lints ->
-            ( { state | pseudoRandomIntsPool = lints ++ state.pseudoRandomIntsPool }
+            ( { model | pseudoRandomIntsPool = lints ++ model.pseudoRandomIntsPool }
             , Cmd.none
             )
 
         NewRandomIntsAddToPoolAndGenerateRandomMap lints ->
             let
                 maxNrOfRooms =
-                    state.roomsInfo |> Maybe.map .maxNrOfRooms |> Maybe.withDefault 0
+                    model.roomsInfo |> Maybe.map .maxNrOfRooms |> Maybe.withDefault 0
 
                 maxRoomSize =
-                    state.roomsInfo |> Maybe.map .maxRoomSize |> Maybe.withDefault 0
+                    model.roomsInfo |> Maybe.map .maxRoomSize |> Maybe.withDefault 0
 
                 minRoomSize =
-                    state.roomsInfo |> Maybe.map .minRoomSize |> Maybe.withDefault 0
+                    model.roomsInfo |> Maybe.map .minRoomSize |> Maybe.withDefault 0
 
                 --( newGrid, lrectangles, ltunnelrectangles, unused_prand_lints ) =
                 genOutputRecord =
                     --{ tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
-                    MapGen.randomMapGeneratorWithRooms state.total_width state.total_height maxNrOfRooms maxRoomSize minRoomSize lints state.level
+                    MapGen.randomMapGeneratorWithRooms model.total_width model.total_height maxNrOfRooms maxRoomSize minRoomSize lints model.level
 
                 gridAsList =
                     Grid.toList genOutputRecord.tileGrid |> List.concatMap identity
@@ -466,22 +466,22 @@ update msg state =
                 wallPercentage =
                     getWallPercentage gridAsList
 
-                newstate =
-                    { state
+                newmodel =
+                    { model
                         | level = genOutputRecord.tileGrid
                         , pseudoRandomIntsPool = genOutputRecord.unusedRandoms
                         , wallPercentage = Just wallPercentage
                     }
             in
-            ( newstate, cmdFillRandomIntsPool newstate )
+            ( newmodel, cmdFillRandomIntsPool newmodel )
 
 
-isPlayerStandingOnStairs : GameModel.State -> Bool
-isPlayerStandingOnStairs state =
+isPlayerStandingOnStairs : GameModel.Model -> Bool
+isPlayerStandingOnStairs model =
     --False
     let
         mbTile =
-            Grid.get state.player.location state.level
+            Grid.get model.player.location model.level
     in
     case mbTile of
         Just (GameModel.Stairs sinfo) ->
@@ -491,17 +491,17 @@ isPlayerStandingOnStairs state =
             False
 
 
-checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor : GameModel.State -> GameModel.State
-checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor state =
+checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor : GameModel.Model -> GameModel.Model
+checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
     let
         mbTile =
-            Grid.get state.player.location state.level
+            Grid.get model.player.location model.level
     in
     case mbTile of
         Just (GameModel.Stairs sinfo) ->
             let
                 mbDestinationCoordsTuple =
-                    searchFloorForStairsId sinfo.toFloorId sinfo.toStairsId state
+                    searchFloorForStairsId sinfo.toFloorId sinfo.toStairsId model
             in
             case mbDestinationCoordsTuple of
                 Just ( newX, newY ) ->
@@ -509,18 +509,18 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor state =
                         _ =
                             Debug.log "going to call changeFloorTo with coords " ( newX, newY )
                     in
-                    changeFloorTo state sinfo.toFloorId ( newX + Tuple.first sinfo.shift, newY + Tuple.second sinfo.shift )
+                    changeFloorTo model sinfo.toFloorId ( newX + Tuple.first sinfo.shift, newY + Tuple.second sinfo.shift )
 
                 Nothing ->
-                    state
+                    model
 
         Just (GameModel.Hole hinfo) ->
             let
                 lfloorIds =
-                    state.floorDict |> Dict.filter (\floorId v -> floorId < state.currentFloorId) |> Dict.keys
+                    model.floorDict |> Dict.filter (\floorId v -> floorId < model.currentFloorId) |> Dict.keys
 
                 mbDestinationFloorAndCoordsTuple =
-                    List.map (\floorId -> searchFloorForTargetId floorId hinfo.target_id state) lfloorIds
+                    List.map (\floorId -> searchFloorForTargetId floorId hinfo.target_id model) lfloorIds
                         |> List.filterMap (\x -> x)
                         |> List.head
             in
@@ -530,31 +530,31 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor state =
                         _ =
                             Debug.log "Went through a hole , going to call changeFloorTo with coords " ( newX, newY )
                     in
-                    changeFloorTo state floorId ( newX, newY )
+                    changeFloorTo model floorId ( newX, newY )
 
                 Nothing ->
-                    state
+                    model
 
         Just (GameModel.Wall wallinfo) ->
             case wallinfo.mbTeleporterObject of
                 Nothing ->
-                    state
+                    model
 
                 Just teleporter ->
                     let
                         sameFloorId =
-                            state.currentFloorId
+                            model.currentFloorId
 
                         lOtherFloorIds =
-                            state.floorDict |> Dict.filter (\floorId v -> floorId /= state.currentFloorId) |> Dict.keys
+                            model.floorDict |> Dict.filter (\floorId v -> floorId /= model.currentFloorId) |> Dict.keys
 
                         mbDestinationFloorAndCoordsTuple =
-                            case searchFloorForTeleporterId sameFloorId teleporter.target_id state of
+                            case searchFloorForTeleporterId sameFloorId teleporter.target_id model of
                                 Just ( floorid, xcoord, ycoord ) ->
                                     Just ( floorid, xcoord + Tuple.first teleporter.shift, ycoord + Tuple.second teleporter.shift )
 
                                 Nothing ->
-                                    List.map (\floorId -> searchFloorForTeleporterId floorId teleporter.target_id state) lOtherFloorIds
+                                    List.map (\floorId -> searchFloorForTeleporterId floorId teleporter.target_id model) lOtherFloorIds
                                         |> List.filterMap (\x -> x)
                                         |> List.head
                                         |> Maybe.map (\( floorid, xcoord, ycoord ) -> ( floorid, xcoord + Tuple.first teleporter.shift, ycoord + Tuple.second teleporter.shift ))
@@ -565,16 +565,16 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor state =
                                 _ =
                                     Debug.log "Went through a teleporter , going to call changeFloorTo with floorId and coords " ( floorId, newX, newY )
                             in
-                            changeFloorTo state floorId ( newX, newY )
+                            changeFloorTo model floorId ( newX, newY )
 
                         Nothing ->
-                            state
+                            model
 
         _ ->
-            state
+            model
 
 
-searchFloorForTeleporterId : Int -> Int -> GameModel.State -> Maybe ( Int, Int, Int )
+searchFloorForTeleporterId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int, Int )
 searchFloorForTeleporterId fid target_id_ state =
     let
         mbFloorGrid =
@@ -610,7 +610,7 @@ searchFloorForTeleporterId fid target_id_ state =
             Nothing
 
 
-searchFloorForTargetId : Int -> Int -> GameModel.State -> Maybe ( Int, Int, Int )
+searchFloorForTargetId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int, Int )
 searchFloorForTargetId fid target_id state =
     let
         mbFloorGrid =
@@ -646,7 +646,7 @@ searchFloorForTargetId fid target_id state =
             Nothing
 
 
-searchFloorForStairsId : Int -> Int -> GameModel.State -> Maybe ( Int, Int )
+searchFloorForStairsId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int )
 searchFloorForStairsId floorId stairsId state =
     let
         mbFloorGrid =
@@ -677,13 +677,13 @@ searchFloorForStairsId floorId stairsId state =
             Nothing
 
 
-changeFloorTo : GameModel.State -> Int -> ( Int, Int ) -> GameModel.State
+changeFloorTo : GameModel.Model -> Int -> ( Int, Int ) -> GameModel.Model
 changeFloorTo state floorId locTuple =
     let
         _ =
             Debug.log ("changeFloorTo was called with floorId " ++ String.fromInt floorId ++ " and coords ") locTuple
 
-        newState =
+        newModel =
             if state.currentFloorId == floorId then
                 state
 
@@ -715,26 +715,26 @@ changeFloorTo state floorId locTuple =
                         { state | floorDict = newStore }
 
         _ =
-            Debug.log "newState currentFloorId is " newState.currentFloorId
+            Debug.log "newModel currentFloorId is " newModel.currentFloorId
 
         delta_x =
-            Tuple.first locTuple - newState.player.location.x
+            Tuple.first locTuple - newModel.player.location.x
 
         delta_y =
-            Tuple.second locTuple - newState.player.location.y
+            Tuple.second locTuple - newModel.player.location.y
 
         player_ =
-            move ( delta_x, delta_y ) newState newState.player
+            move ( delta_x, delta_y ) newModel newModel.player
     in
-    { newState
+    { newModel
         | player = player_
-        , x_display_anchor = max 0 (Tuple.first locTuple - round (toFloat newState.window_width / 2.0))
-        , y_display_anchor = max 0 (Tuple.second locTuple - round (toFloat newState.window_height / 2))
+        , x_display_anchor = max 0 (Tuple.first locTuple - round (toFloat newModel.window_width / 2.0))
+        , y_display_anchor = max 0 (Tuple.second locTuple - round (toFloat newModel.window_height / 2))
     }
         |> reveal
 
 
-position_display_anchor_in_order_to_center_player : GameModel.State -> GameModel.State
+position_display_anchor_in_order_to_center_player : GameModel.Model -> GameModel.Model
 position_display_anchor_in_order_to_center_player state =
     { state
         | x_display_anchor = max 0 (state.player.location.x - round (toFloat state.window_width / 2.0))
@@ -743,7 +743,7 @@ position_display_anchor_in_order_to_center_player state =
         |> reveal
 
 
-turnNeighbourWallCellstoAshes : Grid.Coordinate -> GameModel.State -> GameModel.State
+turnNeighbourWallCellstoAshes : Grid.Coordinate -> GameModel.Model -> GameModel.Model
 turnNeighbourWallCellstoAshes { x, y } state =
     let
         upCell =
@@ -778,7 +778,7 @@ turnNeighbourWallCellstoAshes { x, y } state =
         |> updateWallPercentageValue
 
 
-updateWallPercentageValue : GameModel.State -> GameModel.State
+updateWallPercentageValue : GameModel.Model -> GameModel.Model
 updateWallPercentageValue state =
     let
         thegrid =
@@ -813,7 +813,7 @@ getWallPercentage gridAsList =
         |> (\tup -> (Tuple.first tup |> toFloat) / (Tuple.second tup |> toFloat))
 
 
-checkAndAlterDisplayAnchorIfNecessary : GameModel.State -> GameModel.State
+checkAndAlterDisplayAnchorIfNecessary : GameModel.Model -> GameModel.Model
 checkAndAlterDisplayAnchorIfNecessary state =
     let
         p_x_dist =
@@ -870,7 +870,7 @@ cmdGenerateRandomInitiativeValue strCharacter mbCharacterId minval maxval =
     Random.generate (RandomInitiativeValue strCharacter mbCharacterId) (Random.int minval maxval)
 
 
-cmdFillRandomIntsPool : GameModel.State -> Cmd Msg
+cmdFillRandomIntsPool : GameModel.Model -> Cmd Msg
 cmdFillRandomIntsPool state =
     let
         nrToAdd =
@@ -883,7 +883,7 @@ cmdFillRandomIntsPool state =
         Cmd.none
 
 
-cmdFillRandomIntsPoolAndGenerateRandomMap : GameModel.State -> Cmd Msg
+cmdFillRandomIntsPoolAndGenerateRandomMap : GameModel.Model -> Cmd Msg
 cmdFillRandomIntsPoolAndGenerateRandomMap state =
     let
         nrToAdd =
@@ -920,7 +920,7 @@ cmdGenFloatsForRandomCave w h =
     Random.generate NewRandomFloatsForGenCave (Random.list nrFloats (Random.float 0 1))
 
 
-move : ( Int, Int ) -> GameModel.State -> { a | location : GameModel.Location, initiative : Int } -> { a | location : GameModel.Location, initiative : Int }
+move : ( Int, Int ) -> GameModel.Model -> { a | location : GameModel.Location, initiative : Int } -> { a | location : GameModel.Location, initiative : Int }
 move ( x, y ) state a =
     let
         location =
@@ -1007,7 +1007,7 @@ attack dude1 dude2 lprandInts =
     { dudeA = { dude1 | initiative = dude1.initiative + 100 }, dudeB = { dude2 | health = result }, textMsg = msg, randInts = newprandInts2 }
 
 
-resetEnemyMovesCurrentTurn : GameModel.State -> GameModel.State
+resetEnemyMovesCurrentTurn : GameModel.Model -> GameModel.Model
 resetEnemyMovesCurrentTurn state =
     let
         newEnemies =
@@ -1016,7 +1016,7 @@ resetEnemyMovesCurrentTurn state =
     { state | enemies = newEnemies }
 
 
-increseNrOfEnemyMovesInCurrentTurn : EnemyId -> GameModel.State -> GameModel.State
+increseNrOfEnemyMovesInCurrentTurn : EnemyId -> GameModel.Model -> GameModel.Model
 increseNrOfEnemyMovesInCurrentTurn enemyid state =
     let
         newEnemies =
@@ -1025,7 +1025,7 @@ increseNrOfEnemyMovesInCurrentTurn enemyid state =
     { state | enemies = newEnemies }
 
 
-cleanup : GameModel.State -> GameModel.State
+cleanup : GameModel.Model -> GameModel.Model
 cleanup state =
     let
         dead =
@@ -1049,7 +1049,7 @@ cleanup state =
             log m { state | enemies = alive }
 
 
-enemy_AI : GameModel.State -> GameModel.State
+enemy_AI : GameModel.Model -> GameModel.Model
 enemy_AI state =
     let
         mbEnemyIdEnemyPair =
@@ -1071,7 +1071,7 @@ enemy_AI state =
             state
 
 
-attackIfClose : Enemy -> GameModel.State -> GameModel.State
+attackIfClose : Enemy -> GameModel.Model -> GameModel.Model
 attackIfClose enemy state =
     case List.filter (\location -> location == state.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
         location :: locs ->
@@ -1131,10 +1131,10 @@ attackIfClose enemy state =
 -- Right now this just reveals a box around the player
 
 
-reveal : GameModel.State -> GameModel.State
+reveal : GameModel.Model -> GameModel.Model
 reveal state =
     let
-        intermediateStateGrid =
+        intermediateModelGrid =
             Grid.map
                 (\t ->
                     if GameModel.getTileVisibility t == GameModel.Visible then
@@ -1145,13 +1145,13 @@ reveal state =
                 )
                 state.level
 
-        intermediateState =
-            { state | level = intermediateStateGrid }
+        intermediateModel =
+            { state | level = intermediateModelGrid }
 
-        newState =
-            List.foldl (\loc istate -> GameModel.setModelTileVisibility loc GameModel.Visible istate) intermediateState (GameModel.visible state)
+        newModel =
+            List.foldl (\loc istate -> GameModel.setModelTileVisibility loc GameModel.Visible istate) intermediateModel (GameModel.visible state)
     in
-    newState
+    newModel
 
 
 
@@ -1159,7 +1159,7 @@ reveal state =
    -- Right now this just reveals a box around the player
 
 
-   reveal : GameModel.State -> GameModel.State
+   reveal : GameModel.Model -> GameModel.Model
    reveal state =
        let
            exploredAcc =

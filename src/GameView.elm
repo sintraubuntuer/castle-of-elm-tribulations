@@ -499,18 +499,18 @@ guy r visibility =
 -}
 
 
-mainScreen : GameModel.State -> Collage msg
-mainScreen state =
+mainScreen : GameModel.Model -> Collage msg
+mainScreen model =
     let
         ( subgrid, txtmsg ) =
-            state.level
-                |> Grid.getSubGrid state.x_display_anchor (state.x_display_anchor + state.window_width - 1) state.y_display_anchor (state.y_display_anchor + state.window_height - 1)
+            model.level
+                |> Grid.getSubGrid model.x_display_anchor (model.x_display_anchor + model.window_width - 1) model.y_display_anchor (model.y_display_anchor + model.window_height - 1)
 
         --subgridList =
         --    subgrid
         --        |> Grid.toList
         ( wwidth, wheight ) =
-            --( state.window_width, state.window_height )
+            --( model.window_width, model.window_height )
             ( subgrid.size.width, subgrid.size.height )
 
         ( w, h ) =
@@ -518,11 +518,11 @@ mainScreen state =
 
         xOffset : Int -> Float
         xOffset n =
-            (toFloat n - toFloat state.x_display_anchor - toFloat wwidth / 2) * toFloat xScale
+            (toFloat n - toFloat model.x_display_anchor - toFloat wwidth / 2) * toFloat xScale
 
         yOffset : Int -> Float
         yOffset n =
-            (toFloat n - toFloat state.y_display_anchor - toFloat wheight / 2) * toFloat yScale
+            (toFloat n - toFloat model.y_display_anchor - toFloat wheight / 2) * toFloat yScale
 
         xOffset_for_subgrid : Int -> Float
         xOffset_for_subgrid n =
@@ -560,30 +560,30 @@ mainScreen state =
             List.map makeTile tiles_
 
         player_ =
-            guy state.player GameModel.Visible |> shift (location state.player)
+            guy model.player GameModel.Visible |> shift (location model.player)
 
         enemy_ =
             let
                 relevantEnemiesDict =
-                    Dict.filter (\enId enem -> (enem.location.x >= state.x_display_anchor && enem.location.x - state.x_display_anchor < state.window_width) && (enem.location.y >= state.y_display_anchor && enem.location.y - state.y_display_anchor < state.window_height)) state.enemies
+                    Dict.filter (\enId enem -> (enem.location.x >= model.x_display_anchor && enem.location.x - model.x_display_anchor < model.window_width) && (enem.location.y >= model.y_display_anchor && enem.location.y - model.y_display_anchor < model.window_height)) model.enemies
 
                 mkEnemy enid anenemy =
                     --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
-                    guy anenemy (GameModel.getGridTileVisibility anenemy.location state.level)
+                    guy anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
                         |> shift (location anenemy)
             in
             group <| (Dict.map mkEnemy relevantEnemiesDict |> Dict.values)
 
         --grid =
-        --Grid.toList state.level
+        --Grid.toList model.level
         bg : Collage msg
         bg =
-            --background state.level state
-            --background subgrid state
+            --background model.level model
+            --background subgrid model
             --layers [ mkLayer (Grid.toList subgrid) (row tile), mkLayer (Grid.toList subgrid) (row tileOverlay) ]
             Collage.group
                 [ mkLayer (Grid.toList subgrid) (row tileOverlay)
-                , mkLayer (Grid.toList subgrid) (row (tile state.currentFloorId))
+                , mkLayer (Grid.toList subgrid) (row (tile model.currentFloorId))
                 ]
                 |> name "background"
 
@@ -624,9 +624,9 @@ mainScreen state =
 
          --, fogger
          --layers [ bg, pg ]
-         --flow down <| List.map text (List.take 3 state.log)
+         --flow down <| List.map text (List.take 3 model.log)
          ]
-         --  ++ List.map (Text.fromString >> Collage.rendered) (List.take 3 state.log)
+         --  ++ List.map (Text.fromString >> Collage.rendered) (List.take 3 model.log)
         )
         |> name "mainScreen"
 
@@ -638,15 +638,15 @@ inViewRange enemy_ =
 
 
 {-
-   background : Grid.Grid GameModel.Tile -> GameModel.State -> Element
-   background subgrid state =
+   background : Grid.Grid GameModel.Tile -> GameModel.Model -> Element
+   background subgrid model =
        let
            grid =
                subgrid
                    |> Grid.toList
 
            ( wwidth, wheight ) =
-               --( state.window_width, state.window_height )
+               --( model.window_width, model.window_height )
                ( subgrid.size.width, subgrid.size.height )
 
            ( w, h ) =
@@ -687,8 +687,8 @@ inViewRange enemy_ =
 -}
 
 
-sidebar : GameModel.State -> ( Float, Float ) -> Collage msg
-sidebar state pos =
+sidebar : GameModel.Model -> ( Float, Float ) -> Collage msg
+sidebar model pos =
     let
         x =
             5
@@ -701,21 +701,21 @@ sidebar state pos =
 
         bar =
             --flow down
-            [ state.player.textAvatar ++ " : " ++ state.player.name |> Text.fromString |> theColor |> Collage.rendered
-            , "Health: " ++ String.fromInt state.player.health |> Text.fromString |> theColor |> Collage.rendered
-            , "Energy: " ++ String.fromInt state.player.energy |> Text.fromString |> theColor |> Collage.rendered
-            , "Hunger: " ++ String.fromInt state.player.hunger |> Text.fromString |> theColor |> Collage.rendered
-            , "Stealth: " ++ String.fromInt state.player.stealth ++ "%" |> Text.fromString |> theColor |> Collage.rendered
-            , "Armor: " ++ String.fromInt state.player.armor |> Text.fromString |> theColor |> Collage.rendered
-            , "Protection: " ++ String.fromInt state.player.protection ++ "%" |> Text.fromString |> theColor |> Collage.rendered
-            , "Coordination: " ++ String.fromInt state.player.coordination ++ "%" |> Text.fromString |> theColor |> Collage.rendered
-            , "Power: " ++ String.fromInt state.player.power |> Text.fromString |> theColor |> Collage.rendered
-            , "Initiative: " ++ String.fromInt state.player.initiative |> Text.fromString |> theColor |> Collage.rendered
-            , "x_display_anchor: " ++ String.fromInt state.x_display_anchor |> Text.fromString |> theColor |> Collage.rendered
-            , "y_display_anchor: " ++ String.fromInt state.y_display_anchor |> Text.fromString |> theColor |> Collage.rendered
-            , "current_player_x : " ++ String.fromInt state.player.location.x |> Text.fromString |> theColor |> Collage.rendered
-            , "current_player_y : " ++ String.fromInt state.player.location.y |> Text.fromString |> theColor |> Collage.rendered
-            , "wall percentage : " ++ String.fromFloat (state.wallPercentage |> Maybe.withDefault 0) |> Text.fromString |> theColor |> Collage.rendered
+            [ model.player.textAvatar ++ " : " ++ model.player.name |> Text.fromString |> theColor |> Collage.rendered
+            , "Health: " ++ String.fromInt model.player.health |> Text.fromString |> theColor |> Collage.rendered
+            , "Energy: " ++ String.fromInt model.player.energy |> Text.fromString |> theColor |> Collage.rendered
+            , "Hunger: " ++ String.fromInt model.player.hunger |> Text.fromString |> theColor |> Collage.rendered
+            , "Stealth: " ++ String.fromInt model.player.stealth ++ "%" |> Text.fromString |> theColor |> Collage.rendered
+            , "Armor: " ++ String.fromInt model.player.armor |> Text.fromString |> theColor |> Collage.rendered
+            , "Protection: " ++ String.fromInt model.player.protection ++ "%" |> Text.fromString |> theColor |> Collage.rendered
+            , "Coordination: " ++ String.fromInt model.player.coordination ++ "%" |> Text.fromString |> theColor |> Collage.rendered
+            , "Power: " ++ String.fromInt model.player.power |> Text.fromString |> theColor |> Collage.rendered
+            , "Initiative: " ++ String.fromInt model.player.initiative |> Text.fromString |> theColor |> Collage.rendered
+            , "x_display_anchor: " ++ String.fromInt model.x_display_anchor |> Text.fromString |> theColor |> Collage.rendered
+            , "y_display_anchor: " ++ String.fromInt model.y_display_anchor |> Text.fromString |> theColor |> Collage.rendered
+            , "current_player_x : " ++ String.fromInt model.player.location.x |> Text.fromString |> theColor |> Collage.rendered
+            , "current_player_y : " ++ String.fromInt model.player.location.y |> Text.fromString |> theColor |> Collage.rendered
+            , "wall percentage : " ++ String.fromFloat (model.wallPercentage |> Maybe.withDefault 0) |> Text.fromString |> theColor |> Collage.rendered
             ]
                 |> List.indexedMap (\i elem -> shift ( -400, 200 - toFloat i * 25 ) elem)
                 |> Collage.group
@@ -725,24 +725,24 @@ sidebar state pos =
 
 
 display :
-    GameModel.State
+    GameModel.Model
     -> Collage msg --Element
-display state =
+display model =
     let
         pos =
-            locate "mainScreen" topLeft (mainScreen state)
+            locate "mainScreen" topLeft (mainScreen model)
                 |> Maybe.withDefault ( -100000, -100000 )
 
         --|> Debug.log "mainScreen topLeft is : "
     in
-    --flow right [ sidebar state, mainScreen state ] |> color black
+    --flow right [ sidebar model, mainScreen model ] |> color black
     Collage.group
-        [ sidebar state pos
+        [ sidebar model pos
 
-        --|> shift ( -state.x_display_anchor * xScale |> toFloat >> (\x -> x * 0.5), state.y_display_anchor * yScale |> toFloat )
-        , mainScreen state
+        --|> shift ( -model.x_display_anchor * xScale |> toFloat >> (\x -> x * 0.5), model.y_display_anchor * yScale |> toFloat )
+        , mainScreen model
 
-        --|> shift pos --|> shift ( -state.x_display_anchor * xScale |> toFloat, -state.y_display_anchor * yScale |> toFloat )
+        --|> shift pos --|> shift ( -model.x_display_anchor * xScale |> toFloat, -model.y_display_anchor * yScale |> toFloat )
         ]
 
 
@@ -766,14 +766,14 @@ gridToHtmlList grid =
     List.map (\astr -> Html.h1 [] [ Html.text astr ]) lofstrs
 
 
-viewDebugGrid : Grid.Grid a -> GameModel.State -> List (Html msg)
-viewDebugGrid grid state =
+viewDebugGrid : Grid.Grid a -> GameModel.Model -> List (Html msg)
+viewDebugGrid grid model =
     let
         --_ =
         --    Debug.log "viewDebugGrid has been called "
         ( subgrid, txtmsg ) =
             grid
-                |> Grid.getSubGrid state.x_display_anchor (state.x_display_anchor + state.window_width - 1) state.y_display_anchor (state.y_display_anchor + state.window_height - 1)
+                |> Grid.getSubGrid model.x_display_anchor (model.x_display_anchor + model.window_width - 1) model.y_display_anchor (model.y_display_anchor + model.window_height - 1)
     in
     [ Html.div []
         ([ Html.h1 [] [ Html.text ("viewDebugGrid has been called with : " ++ txtmsg) ] ]
@@ -784,24 +784,24 @@ viewDebugGrid grid state =
     ]
 
 
-viewDebugPlayer : GameModel.State -> Html msg
-viewDebugPlayer state =
+viewDebugPlayer : GameModel.Model -> Html msg
+viewDebugPlayer model =
     Html.h2 []
         [ Html.text
             ("player is in position "
-                ++ String.fromInt state.player.location.x
+                ++ String.fromInt model.player.location.x
                 ++ " , "
-                ++ String.fromInt state.player.location.y
+                ++ String.fromInt model.player.location.y
                 ++ " , has health = "
-                ++ String.fromInt state.player.health
+                ++ String.fromInt model.player.health
                 ++ " , and energy = "
-                ++ String.fromInt state.player.energy
+                ++ String.fromInt model.player.energy
             )
         ]
 
 
-viewDebugEnemies : GameModel.State -> List (Html msg)
-viewDebugEnemies state =
+viewDebugEnemies : GameModel.Model -> List (Html msg)
+viewDebugEnemies model =
     let
         enemyToHtmlFunc enemy_ enemyId =
             Html.h2 []
@@ -817,11 +817,11 @@ viewDebugEnemies state =
                     )
                 ]
     in
-    Dict.map (\enid enemy_ -> enemyToHtmlFunc enemy_ enid) state.enemies
+    Dict.map (\enid enemy_ -> enemyToHtmlFunc enemy_ enid) model.enemies
         |> Dict.values
 
 
-view : GameModel.State -> Html GameUpdate.Msg
+view : GameModel.Model -> Html GameUpdate.Msg
 view model =
     case model.started of
         True ->
@@ -844,12 +844,12 @@ view model =
             viewStartMenuChoices model
 
 
-viewGameOfThorns : GameModel.State -> Html GameUpdate.Msg
+viewGameOfThorns : GameModel.Model -> Html GameUpdate.Msg
 viewGameOfThorns model =
     Html.div [] [ Html.map GameUpdate.ThornsMsg (ThornsView.view model.gameOfThornsModel) ]
 
 
-viewStartMenuChoices : GameModel.State -> Html GameUpdate.Msg
+viewStartMenuChoices : GameModel.Model -> Html GameUpdate.Msg
 viewStartMenuChoices model =
     Html.div []
         [ Html.div []

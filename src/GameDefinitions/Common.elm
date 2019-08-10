@@ -1,4 +1,4 @@
-module GameDefinitions.Common exposing (dimensions, gridInitializer, initialEnemy, initialPlayer, initialStateFunc, setAllAsUnexplored)
+module GameDefinitions.Common exposing (dimensions, gridInitializer, initialEnemy, initialModelFunc, initialPlayer, setAllAsUnexplored)
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
@@ -49,8 +49,8 @@ dimensions =
     ( 10, 10 )
 
 
-initialStateFunc : ( GameModel.State, Bool )
-initialStateFunc =
+initialModelFunc : ( GameModel.Model, Bool )
+initialModelFunc =
     let
         player =
             initialPlayer
@@ -77,7 +77,7 @@ initialStateFunc =
         createRandomMap =
             False
     in
-    -- GameModel.State
+    -- GameModel.Model
     ( { player = player
       , enemies =
             Dict.fromList

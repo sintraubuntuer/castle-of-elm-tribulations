@@ -14,11 +14,11 @@ module GameModel exposing
     , LeverId
     , LeverInfo
     , Location
+    , Model
     , RoomRectangle
     , RoomType(..)
     , RoomsInfo
     , StairsInfo
-    , State
     , TeleporterInfo
     , TeleporterType(..)
     , Tile(..)
@@ -120,7 +120,7 @@ type Tile
     | NoTileYet
 
 
-type alias State =
+type alias Model =
     { player : Player
     , enemies : Dict EnemyId Enemy
     , otherCharacters : Dict CharacterId OtherCharacter
@@ -155,14 +155,14 @@ type alias FloorStore =
     }
 
 
-getCurrentFloorInfoToStore : State -> FloorStore
-getCurrentFloorInfoToStore state =
-    { level = state.level
-    , explored = state.explored
-    , window_width = state.window_width
-    , window_height = state.window_height
-    , total_width = state.total_width
-    , total_height = state.total_height
+getCurrentFloorInfoToStore : Model -> FloorStore
+getCurrentFloorInfoToStore model =
+    { level = model.level
+    , explored = model.explored
+    , window_width = model.window_width
+    , window_height = model.window_height
+    , total_width = model.total_width
+    , total_height = model.total_height
     }
 
 
@@ -585,9 +585,9 @@ location =
     Grid.Coordinate
 
 
-validLocation : Location -> State -> Bool
-validLocation location_ state =
-    Grid.inGrid location_ state.level
+validLocation : Location -> Model -> Bool
+validLocation location_ model =
+    Grid.inGrid location_ model.level
 
 
 isFloor : Tile -> Bool
@@ -782,10 +782,10 @@ isTileWalkable player_ tile =
             False
 
 
-isModelTileWalkable : Location -> State -> Bool
-isModelTileWalkable location_ state =
-    Grid.get location_ state.level
-        |> Maybe.map (isTileWalkable state.player)
+isModelTileWalkable : Location -> Model -> Bool
+isModelTileWalkable location_ model =
+    Grid.get location_ model.level
+        |> Maybe.map (isTileWalkable model.player)
         |> Maybe.withDefault False
 
 
@@ -826,9 +826,9 @@ isTileTransparent tile =
             False
 
 
-isModelTileTransparent : Location -> State -> Bool
-isModelTileTransparent location_ state =
-    Grid.get location_ state.level
+isModelTileTransparent : Location -> Model -> Bool
+isModelTileTransparent location_ model =
+    Grid.get location_ model.level
         |> Maybe.map isTileTransparent
         |> Maybe.withDefault False
 
@@ -870,9 +870,9 @@ isTileExplored tile =
             False
 
 
-isModelTileExplored : Location -> State -> Bool
-isModelTileExplored location_ state =
-    Grid.get location_ state.level
+isModelTileExplored : Location -> Model -> Bool
+isModelTileExplored location_ model =
+    Grid.get location_ model.level
         |> Maybe.map isTileExplored
         |> Maybe.withDefault False
 
@@ -914,18 +914,18 @@ setTileAsExplored tile =
             NoTileYet
 
 
-setModelTileAsExplored : Location -> State -> State
-setModelTileAsExplored location_ state =
-    case Grid.get location_ state.level of
+setModelTileAsExplored : Location -> Model -> Model
+setModelTileAsExplored location_ model =
+    case Grid.get location_ model.level of
         Nothing ->
-            state
+            model
 
         Just tile ->
             let
                 newTile =
                     setTileAsExplored tile
             in
-            { state | level = Grid.set location_ newTile state.level }
+            { model | level = Grid.set location_ newTile model.level }
 
 
 getTileVisibility : Tile -> Visibility
@@ -972,9 +972,9 @@ getGridTileVisibility location_ gridtiles =
         |> Maybe.withDefault Unexplored
 
 
-getModelTileVisibility : Location -> State -> Visibility
-getModelTileVisibility location_ state =
-    Grid.get location_ state.level
+getModelTileVisibility : Location -> Model -> Visibility
+getModelTileVisibility location_ model =
+    Grid.get location_ model.level
         |> Maybe.map getTileVisibility
         |> Maybe.withDefault Unexplored
 
@@ -1016,61 +1016,61 @@ setTileVisibility visibility_ tile =
             NoTileYet
 
 
-setModelTileVisibility : Location -> Visibility -> State -> State
-setModelTileVisibility location_ visibility_ state =
-    case Grid.get location_ state.level of
+setModelTileVisibility : Location -> Visibility -> Model -> Model
+setModelTileVisibility location_ visibility_ model =
+    case Grid.get location_ model.level of
         Nothing ->
-            state
+            model
 
         Just tile ->
             let
                 newTile =
                     setTileVisibility visibility_ tile
             in
-            { state | level = Grid.set location_ newTile state.level }
+            { model | level = Grid.set location_ newTile model.level }
 
 
 
 {-
-   getRandomPathable : State -> ( Location, State )
-   getRandomPathable state =
+   getRandomPathable : Model  -> ( Location, Model  )
+   getRandomPathable model =
        let
            ( x, gen' ) =
-               Generator.int32Range ( 1, state.level.size.width ) state.generator
+               Generator.int32Range ( 1, model.level.size.width ) model.generator
 
            ( y, gen'' ) =
-               Generator.int32Range ( 1, state.level.size.height ) gen'
+               Generator.int32Range ( 1, model.level.size.height ) gen'
 
            locn =
                location x y
 
-           state' =
-               { state | generator = gen'' }
+           model' =
+               { model | generator = gen'' }
        in
-       case pathable locn state' of
+       case pathable locn model' of
            True ->
-               ( locn, state' )
+               ( locn, model' )
 
            False ->
-               getRandomPathable state'
+               getRandomPathable model'
 
 
 
 -}
 
 
-mbUpdateEnemyInitiativeByMbEnemyId : Int -> Maybe EnemyId -> State -> State
-mbUpdateEnemyInitiativeByMbEnemyId intval mbEnemyid state =
+mbUpdateEnemyInitiativeByMbEnemyId : Int -> Maybe EnemyId -> Model -> Model
+mbUpdateEnemyInitiativeByMbEnemyId intval mbEnemyid model =
     case mbEnemyid of
         Nothing ->
-            state
+            model
 
         Just enemyid ->
             let
                 newEnemies =
-                    Dict.update enemyid (\mbEnemy -> mbEnemy |> Maybe.map (\enemyRec -> { enemyRec | initiative = intval })) state.enemies
+                    Dict.update enemyid (\mbEnemy -> mbEnemy |> Maybe.map (\enemyRec -> { enemyRec | initiative = intval })) model.enemies
             in
-            { state | enemies = newEnemies }
+            { model | enemies = newEnemies }
 
 
 mbUpdateEnemyLocation : Location -> Maybe Enemy -> Maybe Enemy
@@ -1093,16 +1093,16 @@ placeExistingEnemy enid loc dictacc =
             Dict.update enid (\mbenemy -> mbUpdateEnemyLocation loc mbenemy) dictacc
 
 
-randomlyPlaceExistingEnemies : List ( Location, EnemyId ) -> State -> State
-randomlyPlaceExistingEnemies lpairIntIds state =
+randomlyPlaceExistingEnemies : List ( Location, EnemyId ) -> Model -> Model
+randomlyPlaceExistingEnemies lpairIntIds model =
     let
         dictenemies =
-            state.enemies
+            model.enemies
 
         newDictEnemies =
             List.foldl (\( loc, enid ) dictacc -> placeExistingEnemy enid loc dictacc) dictenemies lpairIntIds
     in
-    { state | enemies = newDictEnemies }
+    { model | enemies = newDictEnemies }
 
 
 showTile : Tile -> Text.Text
@@ -1143,12 +1143,12 @@ showTile tile =
 --Element.centered << Text.monospace << Text.fromString <| c
 
 
-visible : State -> List Location
-visible state =
-    Grid.neighborhoodCalc 8 state.player.location
+visible : Model -> List Location
+visible model =
+    Grid.neighborhoodCalc 8 model.player.location
 
 
-visibility : State -> Location -> Visibility
-visibility state location_ =
-    --Grid.getWithDefault Unexplored location state.explored
-    getModelTileVisibility location_ state
+visibility : Model -> Location -> Visibility
+visibility model location_ =
+    --Grid.getWithDefault Unexplored location model.explored
+    getModelTileVisibility location_ model

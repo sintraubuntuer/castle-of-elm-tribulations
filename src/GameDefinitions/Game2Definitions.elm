@@ -1,4 +1,4 @@
-module GameDefinitions.Game2Definitions exposing (initialStateFunc)
+module GameDefinitions.Game2Definitions exposing (initialModelFunc)
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
@@ -55,8 +55,8 @@ dimensions =
 --( 92, 60 )
 
 
-initialStateFunc : ( GameModel.State, Bool, Bool )
-initialStateFunc =
+initialModelFunc : ( GameModel.Model, Bool, Bool )
+initialModelFunc =
     let
         player =
             initialPlayer
@@ -76,7 +76,7 @@ initialStateFunc =
         createRandomMap =
             False
     in
-    -- GameModel.State
+    -- GameModel.Model
     ( { player = { player | location = { x = 60, y = 36 } }
       , enemies =
             Dict.fromList
