@@ -34,6 +34,7 @@ module GameView exposing
 
 --import Element exposing (..)
 
+import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Collage exposing (..)
 import Collage.Layout exposing (..)
 import Collage.Render exposing (svg)
@@ -47,6 +48,7 @@ import Grid
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
+import Item exposing (Item(..), KeyInfo)
 
 
 xScale : Int
@@ -396,10 +398,10 @@ tileOverlay t =
     case t of
         GameModel.Floor floorinfo ->
             case floorinfo.item of
-                Just GameModel.Ash ->
+                Just Ash ->
                     floorOverlay "ash"
 
-                Just (GameModel.Key keyinfo) ->
+                Just (Key keyinfo) ->
                     --floorOverlay ( "key_" ++ floorinfo.item.color )
                     floorOverlay ("key_" ++ keyinfo.keyColor)
 
@@ -627,7 +629,7 @@ mainScreen state =
         |> name "mainScreen"
 
 
-inViewRange : GameModel.Enemy -> Bool
+inViewRange : Enemy -> Bool
 inViewRange enemy_ =
     False
 
@@ -691,6 +693,9 @@ sidebar state pos =
 
         theColor =
             Text.color white
+
+        theColor2 =
+            Text.color red
 
         bar =
             --flow down

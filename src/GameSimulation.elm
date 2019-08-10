@@ -9,6 +9,7 @@ module GameSimulation exposing
 
 import GameModel
 import Grid
+import Item exposing (Item(..), KeyInfo)
 
 
 mbTurnNeighbourWallCellstoAshes : Maybe Grid.Coordinate -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
@@ -40,7 +41,7 @@ turnNeighbourWallCellstoAshes { x, y } grid =
                         floorinfo =
                             GameModel.defaultFloorInfo
                     in
-                    Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just GameModel.Ash }) grid_
+                    Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just Ash }) grid_
                         |> turnNeighbourWallCellstoAshes cellCoords
 
                 _ ->

@@ -27,13 +27,16 @@ module GameUpdate exposing
 --import Generator
 --import Collage
 
+import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameDefinitions.Game1Definitions
 import GameDefinitions.Game2Definitions
 import GameModel
 import Grid
+import Item exposing (Item(..), KeyInfo)
 import MapGen
 import Random
+import Thorns.ThornGrid as ThornGrid
 
 
 log : String -> GameModel.State -> GameModel.State
@@ -59,9 +62,9 @@ type Msg
     | TryShiftPlayerPosition ( Int, Int )
     | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
-    | NewRandomPointToPlaceEnemy GameModel.EnemyId ( Int, Int )
+    | NewRandomPointToPlaceEnemy EnemyId ( Int, Int )
     | NewRandomFloatsForGenCave (List Float)
-    | RandomInitiativeValue String (Maybe GameModel.EnemyId) Int
+    | RandomInitiativeValue String (Maybe EnemyId) Int
     | NewRandomIntsAddToPool (List Int)
     | NewRandomIntsAddToPoolAndGenerateRandomMap (List Int)
 
@@ -84,6 +87,9 @@ update msg state =
 
                         _ ->
                             ( state, False, False )
+
+                test =
+                    ThornGrid.thornToString Beings.CHICANE_ATTACK
 
                 gBounds =
                     Grid.getGridBoundsToPlacePlayer initState.level
@@ -675,7 +681,7 @@ turnNeighbourWallCellstoAshes { x, y } state =
                         floorinfo =
                             GameModel.defaultFloorInfo
                     in
-                    { thestate | level = Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just GameModel.Ash }) thestate.level }
+                    { thestate | level = Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just Ash }) thestate.level }
                         |> turnNeighbourWallCellstoAshes cellCoords
 
                 _ ->
@@ -757,7 +763,7 @@ checkAndAlterDisplayAnchorIfNecessary state =
     { state | x_display_anchor = newXanchor, y_display_anchor = newYanchor }
 
 
-cmdGetRandomPositionedPlayer : GameModel.Player -> Int -> Int -> Int -> Int -> Cmd Msg
+cmdGetRandomPositionedPlayer : Player -> Int -> Int -> Int -> Int -> Cmd Msg
 cmdGetRandomPositionedPlayer player minX maxX minY maxY =
     if player.placed then
         Cmd.none
@@ -766,7 +772,7 @@ cmdGetRandomPositionedPlayer player minX maxX minY maxY =
         Random.generate NewRandomPointToPlacePlayer (getRandIntPair minX maxX minY maxY)
 
 
-cmdGetRandomPositionedEnemy : GameModel.Enemy -> GameModel.EnemyId -> Int -> Int -> Int -> Int -> Cmd Msg
+cmdGetRandomPositionedEnemy : Enemy -> EnemyId -> Int -> Int -> Int -> Int -> Cmd Msg
 cmdGetRandomPositionedEnemy actualEnemy enemyId minX maxX minY maxY =
     if actualEnemy.placed then
         Cmd.none
@@ -775,7 +781,7 @@ cmdGetRandomPositionedEnemy actualEnemy enemyId minX maxX minY maxY =
         Random.generate (NewRandomPointToPlaceEnemy enemyId) (getRandIntPair minX maxX minY maxY)
 
 
-cmdGenerateRandomInitiativeValue : String -> Maybe GameModel.EnemyId -> Int -> Int -> Cmd Msg
+cmdGenerateRandomInitiativeValue : String -> Maybe EnemyId -> Int -> Int -> Cmd Msg
 cmdGenerateRandomInitiativeValue strCharacter mbCharacterId minval maxval =
     Random.generate (RandomInitiativeValue strCharacter mbCharacterId) (Random.int minval maxval)
 
@@ -926,7 +932,7 @@ resetEnemyMovesCurrentTurn state =
     { state | enemies = newEnemies }
 
 
-increseNrOfEnemyMovesInCurrentTurn : GameModel.EnemyId -> GameModel.State -> GameModel.State
+increseNrOfEnemyMovesInCurrentTurn : EnemyId -> GameModel.State -> GameModel.State
 increseNrOfEnemyMovesInCurrentTurn enemyid state =
     let
         newEnemies =
@@ -981,7 +987,7 @@ ai state =
             state
 
 
-attackIfClose : GameModel.Enemy -> GameModel.State -> GameModel.State
+attackIfClose : Enemy -> GameModel.State -> GameModel.State
 attackIfClose enemy state =
     case List.filter (\location -> location == state.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
         location :: locs ->

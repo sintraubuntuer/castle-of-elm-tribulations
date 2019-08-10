@@ -4,8 +4,6 @@ module GameModel exposing
     , DoorOrientation(..)
     , DoorWallOption(..)
     , DoorWallOptions
-    , Enemy
-    , EnemyId
     , FlagCondition(..)
     , FlagInfo
     , FloorDrawing(..)
@@ -13,15 +11,12 @@ module GameModel exposing
     , FloorStore
     , HoleInfo
     , Input(..)
-    , Item(..)
     , LeverId
     , LeverInfo
     , Location
-    , Player
     , RoomRectangle
     , RoomType(..)
     , RoomsInfo
-    , Size
     , StairsInfo
     , State
     , TeleporterInfo
@@ -99,13 +94,11 @@ module GameModel exposing
 --import Keyboard
 --import Element
 
+import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Collage.Text as Text
 import Dict exposing (Dict)
 import Grid
-
-
-type alias EnemyId =
-    Int
+import Item exposing (Item(..), KeyInfo)
 
 
 type alias LeverId =
@@ -263,46 +256,51 @@ type alias TeleporterInfo =
 
 -- RoomsInfo [] 20 13 8
 -- 20 13 8
+{- }
 
-
-type alias Player =
-    { location : Location
-    , textAvatar : String --Element.Element
-    , name : String
-    , health : Int
-    , energy : Int
-    , inventory : Inventory
-    , hunger : Int
-    , stealth : Int
-    , armor : Int
-    , protection : Int
-    , coordination : Int
-    , power : Int
-    , initiative : Int
-    , placed : Bool
-    }
+   type alias Player =
+       { location : Location
+       , textAvatar : String --Element.Element
+       , name : String
+       , health : Int
+       , energy : Int
+       , inventory : Inventory
+       , hunger : Int
+       , stealth : Int
+       , armor : Int
+       , protection : Int
+       , coordination : Int
+       , power : Int
+       , initiative : Int
+       , placed : Bool
+       }
+-}
 
 
 type alias Inventory =
     Dict String Item
 
 
-type alias Enemy =
-    { location : Location
-    , id : EnemyId
-    , textAvatar : String --Element.Element
-    , name : String
-    , health : Int
-    , stealth : Int
-    , armor : Int
-    , protection : Int
-    , coordination : Int
-    , power : Int
-    , initiative : Int
-    , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
-    , nrMovesInCurrentTurn : Int
-    , placed : Bool
-    }
+
+{- }
+
+   type alias Enemy =
+       { location : Location
+       , id : EnemyId
+       , textAvatar : String --Element.Element
+       , name : String
+       , health : Int
+       , stealth : Int
+       , armor : Int
+       , protection : Int
+       , coordination : Int
+       , power : Int
+       , initiative : Int
+       , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
+       , nrMovesInCurrentTurn : Int
+       , placed : Bool
+       }
+-}
 
 
 type alias Location =
@@ -317,19 +315,6 @@ tupleIntsToLocation ( x, y ) =
 tupleFloatsToLocation : ( Float, Float ) -> Location
 tupleFloatsToLocation ( x, y ) =
     Grid.Coordinate (round x) (round y)
-
-
-type alias Size =
-    Int
-
-
-type Item
-    = Chest Size
-    | Skull
-    | Key KeyInfo
-    | Money
-    | Box
-    | Ash
 
 
 itemToString : Item -> String
@@ -352,11 +337,6 @@ itemToString item =
 
         Ash ->
             "ash"
-
-
-type alias KeyInfo =
-    { keyColor : String
-    }
 
 
 type FloorDrawing
@@ -561,6 +541,7 @@ player elem pname =
     , name = pname
     , health = 10
     , energy = 10
+    , mana = 100
     , inventory = Dict.empty
     , hunger = 10
     , stealth = 20
@@ -580,6 +561,8 @@ enemy elem enemyid ename =
     , textAvatar = elem
     , name = ename
     , health = 10
+    , mana = 100
+    , inventory = Dict.empty
     , stealth = 20
     , armor = 1
     , protection = 50

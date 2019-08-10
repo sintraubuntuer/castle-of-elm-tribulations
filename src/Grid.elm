@@ -4,6 +4,7 @@ module Grid exposing
     , Size
     , fromList
     , get
+    , getColumnWithDefault
     , getGridBoundsToPlaceEnemy
     , getGridBoundsToPlacePlayer
     , getRow
@@ -17,6 +18,7 @@ module Grid exposing
     , map
     , neighborhoodCalc
     , set
+    , setColumn
     , toCoordinates
     , toList
     )
@@ -246,7 +248,6 @@ getSubGrid minCol maxCol minRow maxRow grid =
 
         therows =
             List.range minRow_ maxRow_
-                --|> List.map (\v -> getRow (grid_nr_rows - 1 - v) grid)
                 |> List.map (\v -> getRow v grid)
 
         txtmsg =
@@ -260,6 +261,37 @@ getSubGrid minCol maxCol minRow maxRow grid =
         |> fromList
     , txtmsg
     )
+
+
+getColumnWithDefault : Int -> a -> Grid a -> List a
+getColumnWithDefault n a_val grid =
+    if n < 0 then
+        []
+
+    else if n >= grid.size.width then
+        []
+
+    else
+        List.range 0 (grid.size.height - 1)
+            |> List.map (\rownr -> Coordinate n rownr)
+            |> List.map (\coord -> get coord grid |> Maybe.withDefault a_val)
+
+
+setColumn : Int -> a -> List a -> Grid a -> Grid a
+setColumn n adef lelems grid =
+    --check that column has same nr of elements than the others
+    if List.length lelems /= grid.size.height then
+        grid
+
+    else
+        toCoordinates grid
+            |> List.filter (\coords -> coords.x == n)
+            |> List.foldl (\coords gridacc -> set coords (getElemWithDefault coords.y adef lelems) gridacc) grid
+
+
+getElemWithDefault : Int -> a -> List a -> a
+getElemWithDefault y aval lelems =
+    List.drop y lelems |> List.head |> Maybe.withDefault aval
 
 
 

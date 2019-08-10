@@ -1,5 +1,6 @@
 module GameDefinitions.Game1Definitions exposing (initialStateFunc)
 
+import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameModel
 import Grid
@@ -14,7 +15,7 @@ setAllAsUnexplored level =
     List.map (\row -> List.map (\_ -> GameModel.Unexplored) row) grid |> Grid.fromList
 
 
-initialPlayer : GameModel.Player
+initialPlayer : Player
 initialPlayer =
     let
         elem =
@@ -28,7 +29,7 @@ initialPlayer =
     GameModel.player elem "You"
 
 
-initialEnemy : GameModel.EnemyId -> GameModel.Enemy
+initialEnemy : EnemyId -> Enemy
 initialEnemy enemyid =
     let
         elem =
