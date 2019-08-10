@@ -49,6 +49,8 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Item exposing (Item(..), KeyInfo)
+import Thorns.Types exposing (Msg(..))
+import Thorns.View as ThornsView
 
 
 xScale : Int
@@ -824,16 +826,27 @@ view model =
     case model.started of
         True ->
             Html.div []
-                ([ display model
-                    |> svg
-                 ]
-                 --++ [ viewDebugPlayer model ]
-                 --  ++ viewDebugEnemies model
-                 --  ++ viewDebugGrid model.level model
-                )
+                [ if not model.gameOfThornsModeisOn then
+                    Html.div []
+                        ([ display model
+                            |> svg
+                         ]
+                         --++ [ viewDebugPlayer model ]
+                         --  ++ viewDebugEnemies model
+                         --  ++ viewDebugGrid model.level model
+                        )
+
+                  else
+                    viewGameOfThorns model
+                ]
 
         False ->
             viewStartMenuChoices model
+
+
+viewGameOfThorns : GameModel.State -> Html GameUpdate.Msg
+viewGameOfThorns model =
+    Html.div [] [ Html.map GameUpdate.ThornsMsg (ThornsView.view model.gameOfThornsModel) ]
 
 
 viewStartMenuChoices : GameModel.State -> Html GameUpdate.Msg

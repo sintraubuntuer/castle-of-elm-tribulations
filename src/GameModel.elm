@@ -94,11 +94,12 @@ module GameModel exposing
 --import Keyboard
 --import Element
 
-import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings exposing (CharacterId, Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), OtherCharacter, Player)
 import Collage.Text as Text
 import Dict exposing (Dict)
 import Grid
 import Item exposing (Item(..), KeyInfo)
+import Thorns.Types
 
 
 type alias LeverId =
@@ -122,9 +123,13 @@ type Tile
 type alias State =
     { player : Player
     , enemies : Dict EnemyId Enemy
+    , otherCharacters : Dict CharacterId OtherCharacter
     , level : Grid.Grid Tile
     , explored : Grid.Grid Visibility
     , log : List String
+    , gameOfThornsModel : Thorns.Types.Model
+    , gameOfThornsModeisOn : Bool
+    , listeningToKeyInput : Bool
     , pseudoRandomIntsPool : List Int
     , x_display_anchor : Int
     , y_display_anchor : Int

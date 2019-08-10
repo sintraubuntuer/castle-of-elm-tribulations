@@ -1,6 +1,5 @@
 module GameUpdate exposing
     ( Msg(..)
-    , ai
     , attack
     , attackIfClose
     , checkAndAlterDisplayAnchorIfNecessary
@@ -11,6 +10,7 @@ module GameUpdate exposing
     , cmdGenerateRandomInitiativeValue
     , cmdGetRandomPositionedEnemy
     , cmdGetRandomPositionedPlayer
+    , enemy_AI
     , getRandIntPair
     , getTailWithDefaultEmptyList
     , increseNrOfEnemyMovesInCurrentTurn
@@ -37,6 +37,8 @@ import Item exposing (Item(..), KeyInfo)
 import MapGen
 import Random
 import Thorns.ThornGrid as ThornGrid
+import Thorns.Types
+import Thorns.Update as ThornsUpdate
 
 
 log : String -> GameModel.State -> GameModel.State
@@ -60,6 +62,7 @@ type Msg
     | KeyDown GameModel.Input
     | TryAddToPlayerInventory
     | TryShiftPlayerPosition ( Int, Int )
+    | StartOpponentInteraction Enemy
     | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
     | NewRandomPointToPlaceEnemy EnemyId ( Int, Int )
@@ -67,6 +70,7 @@ type Msg
     | RandomInitiativeValue String (Maybe EnemyId) Int
     | NewRandomIntsAddToPool (List Int)
     | NewRandomIntsAddToPoolAndGenerateRandomMap (List Int)
+    | ThornsMsg Thorns.Types.Msg
 
 
 update : Msg -> GameModel.State -> ( GameModel.State, Cmd Msg )
@@ -74,6 +78,45 @@ update msg state =
     case msg of
         Noop ->
             ( state, Cmd.none )
+
+        ThornsMsg tmsg ->
+            let
+                ( newThornsModel, thorns_cmds ) =
+                    ThornsUpdate.update tmsg state.gameOfThornsModel
+
+                newState =
+                    if newThornsModel.interactionHasFinished then
+                        let
+                            ( newEnemies, newOtherCharacters, newPlayer ) =
+                                case newThornsModel.opponent of
+                                    Just (Thorns.Types.Enemy erec) ->
+                                        ( Dict.update erec.id (\_ -> Just erec) state.enemies
+                                        , state.otherCharacters
+                                        , newThornsModel.player
+                                        )
+
+                                    Just (Thorns.Types.Ochar orec) ->
+                                        ( state.enemies
+                                        , Dict.update orec.id (\_ -> Just orec) state.otherCharacters
+                                        , newThornsModel.player
+                                        )
+
+                                    Nothing ->
+                                        ( state.enemies, state.otherCharacters, state.player )
+                        in
+                        { state
+                            | enemies = newEnemies
+                            , otherCharacters = newOtherCharacters
+                            , player = newPlayer
+                            , gameOfThornsModel = newThornsModel
+                            , gameOfThornsModeisOn = state.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
+                            , listeningToKeyInput = True
+                        }
+
+                    else
+                        { state | gameOfThornsModel = newThornsModel, gameOfThornsModeisOn = state.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished }
+            in
+            ( newState, Cmd.map ThornsMsg thorns_cmds )
 
         StartGameNr nr ->
             let
@@ -108,6 +151,7 @@ update msg state =
 
                    else
                     Cmd.none
+                 , Cmd.map ThornsMsg (ThornsUpdate.cmdFillRandomIntsPool True initState.gameOfThornsModel)
                  ]
                     ++ (Dict.map (\enid enemy -> cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initState.enemies
                             |> Dict.values
@@ -119,38 +163,46 @@ update msg state =
             )
 
         KeyDown input ->
-            case input of
-                GameModel.Up ->
-                    update (TryShiftPlayerPosition ( 0, 0 - 1 )) state
+            if not state.listeningToKeyInput then
+                let
+                    _ =
+                        Debug.log "currently not listening to key input : " (not state.listeningToKeyInput)
+                in
+                ( state, Cmd.none )
 
-                GameModel.Down ->
-                    update (TryShiftPlayerPosition ( 0, 0 + 1 )) state
+            else
+                case input of
+                    GameModel.Up ->
+                        update (TryShiftPlayerPosition ( 0, 0 - 1 )) state
 
-                GameModel.Left ->
-                    update (TryShiftPlayerPosition ( 0 - 1, 0 )) state
+                    GameModel.Down ->
+                        update (TryShiftPlayerPosition ( 0, 0 + 1 )) state
 
-                GameModel.Right ->
-                    update (TryShiftPlayerPosition ( 0 + 1, 0 )) state
+                    GameModel.Left ->
+                        update (TryShiftPlayerPosition ( 0 - 1, 0 )) state
 
-                GameModel.PickUpItem ->
-                    update TryAddToPlayerInventory state
+                    GameModel.Right ->
+                        update (TryShiftPlayerPosition ( 0 + 1, 0 )) state
 
-                GameModel.ViewInventory ->
-                    -- for the time being
-                    let
-                        _ =
-                            Debug.log "player inventory : " (Dict.keys state.player.inventory)
-                    in
-                    ( state, Cmd.none )
+                    GameModel.PickUpItem ->
+                        update TryAddToPlayerInventory state
 
-                GameModel.FloorUp ->
-                    update (ChangeFloorTo (state.currentFloorId + 1) ( state.player.location.x, state.player.location.y )) state
+                    GameModel.ViewInventory ->
+                        -- for the time being
+                        let
+                            _ =
+                                Debug.log "player inventory : " (Dict.keys state.player.inventory)
+                        in
+                        ( state, Cmd.none )
 
-                GameModel.FloorDown ->
-                    update (ChangeFloorTo (state.currentFloorId - 1) ( state.player.location.x, state.player.location.y )) state
+                    GameModel.FloorUp ->
+                        update (ChangeFloorTo (state.currentFloorId + 1) ( state.player.location.x, state.player.location.y )) state
 
-                GameModel.Nop ->
-                    ( state, Cmd.none )
+                    GameModel.FloorDown ->
+                        update (ChangeFloorTo (state.currentFloorId - 1) ( state.player.location.x, state.player.location.y )) state
+
+                    GameModel.Nop ->
+                        ( state, Cmd.none )
 
         TryAddToPlayerInventory ->
             let
@@ -225,17 +277,7 @@ update msg state =
                 newState2 =
                     case mbEnemy of
                         Just enemy ->
-                            let
-                                --( player_, enemy_, msg_, newprandInts ) =
-                                attackOutput =
-                                    attack player enemy newState.pseudoRandomIntsPool
-                            in
-                            log attackOutput.textMsg
-                                { newState
-                                    | player = attackOutput.dudeA
-                                    , enemies = Dict.insert enemy.id attackOutput.dudeB newState.enemies --enemy_ :: getTailWithDefaultEmptyList state.enemies
-                                    , pseudoRandomIntsPool = attackOutput.randInts
-                                }
+                            newState
 
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
@@ -246,11 +288,53 @@ update msg state =
 
                             else
                                 newState
-
-                newState3 =
-                    newState2 |> cleanup |> resetEnemyMovesCurrentTurn |> ai |> reveal
             in
-            ( newState3, cmdFillRandomIntsPool newState3 )
+            case mbEnemy of
+                Just enemy ->
+                    update (StartOpponentInteraction enemy) newState2
+
+                Nothing ->
+                    let
+                        newState3 =
+                            newState2 |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
+                    in
+                    ( newState3, cmdFillRandomIntsPool newState3 )
+
+        StartOpponentInteraction enemy ->
+            let
+                ( newThornsModel, thornsCmd ) =
+                    ThornsUpdate.update (Thorns.Types.SetOpponentAndPlayerAndInitializeGrid enemy state.player) state.gameOfThornsModel
+
+                -- ThornsUpdate.update (Thorns.Types.SetOpponent enemy)
+                {- }
+                   attackOutput =
+                       attack state.player enemy state.pseudoRandomIntsPool
+
+                   newState =
+                       log attackOutput.textMsg
+                           { state
+                               | player = attackOutput.dudeA
+                               , enemies = Dict.insert enemy.id attackOutput.dudeB state.enemies --enemy_ :: getTailWithDefaultEmptyList state.enemies
+                               , pseudoRandomIntsPool = attackOutput.randInts
+                           }
+                -}
+                newState =
+                    { state
+                        | gameOfThornsModeisOn = True
+                        , gameOfThornsModel = newThornsModel
+                        , listeningToKeyInput = False
+                    }
+
+                newState_after_cleanup =
+                    --newState |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
+                    newState |> cleanup |> reveal
+            in
+            ( newState_after_cleanup
+            , Cmd.batch
+                [ cmdFillRandomIntsPool newState_after_cleanup
+                , Cmd.map ThornsMsg thornsCmd
+                ]
+            )
 
         ChangeFloorTo floorId locTuple ->
             let
@@ -965,8 +1049,8 @@ cleanup state =
             log m { state | enemies = alive }
 
 
-ai : GameModel.State -> GameModel.State
-ai state =
+enemy_AI : GameModel.State -> GameModel.State
+enemy_AI state =
     let
         mbEnemyIdEnemyPair =
             Dict.filter (\enemyid enemy -> enemy.initiative <= state.player.initiative && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) state.enemies
@@ -981,7 +1065,7 @@ ai state =
                         -- prevent possible infinite recursion
                         |> increseNrOfEnemyMovesInCurrentTurn enemyid
             in
-            ai state2
+            enemy_AI state2
 
         Nothing ->
             state
@@ -1015,6 +1099,7 @@ attackIfClose enemy state =
 
                 xscaled =
                     if x <= 33 then
+                        -- 1/3 probability
                         -1
 
                     else if x > 33 && x <= 66 then

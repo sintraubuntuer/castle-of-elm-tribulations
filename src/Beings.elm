@@ -1,9 +1,11 @@
 module Beings exposing
-    ( Enemy
+    ( CharacterId
+    , Enemy
     , EnemyId
     , Inventory
     , Location
     , OPPONENT_INTERACTION_OPTIONS(..)
+    , OtherCharacter
     , Player
     )
 
@@ -17,6 +19,10 @@ type alias Location =
 
 
 type alias EnemyId =
+    Int
+
+
+type alias CharacterId =
     Int
 
 
@@ -54,6 +60,26 @@ type alias Player =
 type alias Enemy =
     { location : Location
     , id : EnemyId
+    , textAvatar : String --Element.Element
+    , name : String
+    , health : Int
+    , mana : Int
+    , inventory : Inventory
+    , stealth : Int
+    , armor : Int
+    , protection : Int
+    , coordination : Int
+    , power : Int
+    , initiative : Int
+    , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
+    , nrMovesInCurrentTurn : Int
+    , placed : Bool
+    }
+
+
+type alias OtherCharacter =
+    { location : Location
+    , id : CharacterId
     , textAvatar : String --Element.Element
     , name : String
     , health : Int

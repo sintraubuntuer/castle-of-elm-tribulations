@@ -6,6 +6,7 @@ import GameModel exposing (HoleInfo, RoomRectangle, RoomType(..), TeleporterInfo
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
+import Thorns.Types
 
 
 setAllAsUnexplored : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Visibility
@@ -82,11 +83,15 @@ initialStateFunc =
                 [ ( 1, enemy )
                 , ( 2, enemy2 )
                 ]
+      , otherCharacters = Dict.empty
       , level = gridGroundFloor -- Grid.Grid Tile
 
       --, levers = levers --Dict LeverId LeverInfo
       , explored = setAllAsUnexplored gridGroundFloor -- Grid.Grid Visibility
       , log = [ "you enter the dungeons Ground Floor " ] --List String
+      , gameOfThornsModel = Thorns.Types.initialModel player Nothing
+      , gameOfThornsModeisOn = False
+      , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
       , x_display_anchor = 3 -- Int , this value doesn't really matter because after the player is randomly placed this value is readjusted
       , y_display_anchor = 3 --Int   , this value doesn't really matter because after the player is randomly placed this value is readjusted

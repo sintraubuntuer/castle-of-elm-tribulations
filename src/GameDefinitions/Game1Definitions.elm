@@ -4,6 +4,7 @@ import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player
 import Dict exposing (Dict)
 import GameModel
 import Grid
+import Thorns.Types
 
 
 setAllAsUnexplored : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Visibility
@@ -92,11 +93,15 @@ initialStateFunc =
                 [ ( 1, enemy )
                 , ( 2, enemy2 )
                 ]
+      , otherCharacters = Dict.empty
       , level = firstMap -- Grid.Grid Tile
 
       --, levers = levers --Dict LeverId LeverInfo
       , explored = firstExplored -- Grid.Grid Visibility
       , log = [ "you enter the dungeon" ] --List String
+      , gameOfThornsModel = Thorns.Types.initialModel player Nothing
+      , gameOfThornsModeisOn = False
+      , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
       , x_display_anchor = 3 -- Int
       , y_display_anchor = 3 --Int
