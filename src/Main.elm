@@ -30,36 +30,6 @@ seed =
     2015
 
 
-initialLevel : Grid.Grid GameModel.Tile
-initialLevel =
-    let
-        toTile c =
-            case c of
-                ' ' ->
-                    GameModel.Floor GameModel.defaultFloorInfo
-
-                '#' ->
-                    GameModel.Wall GameModel.defaultWallInfo
-
-                '+' ->
-                    GameModel.Door (GameModel.defaultDoorInfo GameModel.DoorToTheRight)
-
-                _ ->
-                    GameModel.NoTileYet
-
-        s =
-            [ "####################"
-            , "#        #         #"
-            , "#        #         #"
-            , "#                  #"
-            , "#        #         #"
-            , "#        #         #"
-            , "####################"
-            ]
-    in
-    Grid.fromList <| List.map (\x -> List.map toTile <| String.toList x) s
-
-
 subscriptions : GameModel.Model -> Sub GameUpdate.Msg
 subscriptions model =
     Sub.batch
