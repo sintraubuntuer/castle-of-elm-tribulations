@@ -27,7 +27,7 @@ initialPlayer =
         --|> Text.color white
         --|> centered
     in
-    GameModel.player elem "You"
+    Beings.playerCreationFunc elem "You"
 
 
 initialEnemy : EnemyId -> Enemy
@@ -41,7 +41,7 @@ initialEnemy enemyid =
         --|> Text.color white
         --|> centered
     in
-    GameModel.enemy elem enemyid ("enemy" ++ String.fromInt enemyid)
+    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid)
 
 
 dimensions : ( Int, Int )

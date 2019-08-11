@@ -7,6 +7,8 @@ module Beings exposing
     , OPPONENT_INTERACTION_OPTIONS(..)
     , OtherCharacter
     , Player
+    , enemyCreationFunc
+    , playerCreationFunc
     )
 
 import Dict exposing (Dict)
@@ -106,3 +108,44 @@ type OPPONENT_INTERACTION_OPTIONS
     | OPPONENT_CHICANE_ATTACK
     | ENLIGHTENMENT_SPELL
     | OPPONENT_ENLIGHTENMENT_SPELL
+
+
+playerCreationFunc : String -> String -> Player
+playerCreationFunc elem pname =
+    { location = Grid.Coordinate 10 10
+    , textAvatar = elem
+    , name = pname
+    , health = 10
+    , energy = 10
+    , mana = 100
+    , inventory = Dict.empty
+    , hunger = 10
+    , stealth = 20
+    , armor = 1
+    , protection = 50
+    , coordination = 100
+    , power = 2
+    , initiative = 2 -- this will be altered by generating a random int between 1 and 100
+    , placed = False
+    }
+
+
+enemyCreationFunc : String -> EnemyId -> String -> Enemy
+enemyCreationFunc elem enemyid ename =
+    { location = Grid.Coordinate 14 4
+    , id = enemyid
+    , textAvatar = elem
+    , name = ename
+    , health = 10
+    , mana = 100
+    , inventory = Dict.empty
+    , stealth = 20
+    , armor = 1
+    , protection = 50
+    , coordination = 100
+    , power = 2
+    , initiative = 1 -- this will be altered by generating a random int between 1 and 100
+    , maxNrEnemyMovesPerTurn = 10 -- to prevent possible infinite recursion in ai
+    , nrMovesInCurrentTurn = 0
+    , placed = False
+    }

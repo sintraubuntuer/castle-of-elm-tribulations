@@ -30,7 +30,7 @@ module GameUpdate exposing
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameDefinitions.Game1Definitions
-import GameDefinitions.Game2Definitions
+import GameDefinitions.Game2.Game2Definitions
 import GameModel
 import Grid
 import Item exposing (Item(..), KeyInfo)
@@ -126,7 +126,7 @@ update msg model =
                             GameDefinitions.Game1Definitions.initialModelFunc
 
                         2 ->
-                            GameDefinitions.Game2Definitions.initialModelFunc
+                            GameDefinitions.Game2.Game2Definitions.initialModelFunc
 
                         _ ->
                             ( model, False, False )
@@ -575,10 +575,10 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
 
 
 searchFloorForTeleporterId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int, Int )
-searchFloorForTeleporterId fid target_id_ state =
+searchFloorForTeleporterId fid target_id_ model =
     let
         mbFloorGrid =
-            Dict.get fid state.floorDict
+            Dict.get fid model.floorDict
 
         getlcoords fgrid =
             Grid.toCoordinates fgrid
@@ -611,10 +611,10 @@ searchFloorForTeleporterId fid target_id_ state =
 
 
 searchFloorForTargetId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int, Int )
-searchFloorForTargetId fid target_id state =
+searchFloorForTargetId fid target_id model =
     let
         mbFloorGrid =
-            Dict.get fid state.floorDict
+            Dict.get fid model.floorDict
 
         getlcoords fgrid =
             Grid.toCoordinates fgrid
@@ -647,10 +647,10 @@ searchFloorForTargetId fid target_id state =
 
 
 searchFloorForStairsId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int )
-searchFloorForStairsId floorId stairsId state =
+searchFloorForStairsId floorId stairsId model =
     let
         mbFloorGrid =
-            Dict.get floorId state.floorDict
+            Dict.get floorId model.floorDict
 
         getlcoords fgrid =
             Grid.toCoordinates fgrid
@@ -678,29 +678,29 @@ searchFloorForStairsId floorId stairsId state =
 
 
 changeFloorTo : GameModel.Model -> Int -> ( Int, Int ) -> GameModel.Model
-changeFloorTo state floorId locTuple =
+changeFloorTo model floorId locTuple =
     let
         _ =
             Debug.log ("changeFloorTo was called with floorId " ++ String.fromInt floorId ++ " and coords ") locTuple
 
         newModel =
-            if state.currentFloorId == floorId then
-                state
+            if model.currentFloorId == floorId then
+                model
 
             else
                 let
                     currentFloorInfo =
-                        GameModel.getCurrentFloorInfoToStore state
+                        GameModel.getCurrentFloorInfoToStore model
 
                     newStore =
-                        Dict.update state.currentFloorId (\_ -> Just currentFloorInfo) state.floorDict
+                        Dict.update model.currentFloorId (\_ -> Just currentFloorInfo) model.floorDict
 
                     newCurrentFloor =
-                        Dict.get floorId state.floorDict
+                        Dict.get floorId model.floorDict
                 in
                 case newCurrentFloor of
                     Just cFloor ->
-                        { state
+                        { model
                             | level = cFloor.level
                             , explored = cFloor.explored
                             , window_width = cFloor.window_width
@@ -712,7 +712,7 @@ changeFloorTo state floorId locTuple =
                         }
 
                     Nothing ->
-                        { state | floorDict = newStore }
+                        { model | floorDict = newStore }
 
         _ =
             Debug.log "newModel currentFloorId is " newModel.currentFloorId
@@ -735,16 +735,16 @@ changeFloorTo state floorId locTuple =
 
 
 position_display_anchor_in_order_to_center_player : GameModel.Model -> GameModel.Model
-position_display_anchor_in_order_to_center_player state =
-    { state
-        | x_display_anchor = max 0 (state.player.location.x - round (toFloat state.window_width / 2.0))
-        , y_display_anchor = max 0 (state.player.location.y - round (toFloat state.window_height / 2))
+position_display_anchor_in_order_to_center_player model =
+    { model
+        | x_display_anchor = max 0 (model.player.location.x - round (toFloat model.window_width / 2.0))
+        , y_display_anchor = max 0 (model.player.location.y - round (toFloat model.window_height / 2))
     }
         |> reveal
 
 
 turnNeighbourWallCellstoAshes : Grid.Coordinate -> GameModel.Model -> GameModel.Model
-turnNeighbourWallCellstoAshes { x, y } state =
+turnNeighbourWallCellstoAshes { x, y } model =
     let
         upCell =
             GameModel.location x (y - 1)
@@ -758,20 +758,20 @@ turnNeighbourWallCellstoAshes { x, y } state =
         rightCell =
             GameModel.location (x + 1) y
 
-        convertCellsFunc cellCoords thestate =
-            case Grid.get cellCoords thestate.level of
+        convertCellsFunc cellCoords themodel =
+            case Grid.get cellCoords themodel.level of
                 Just (GameModel.Wall wallinfo) ->
                     let
                         floorinfo =
                             GameModel.defaultFloorInfo
                     in
-                    { thestate | level = Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just Ash }) thestate.level }
+                    { themodel | level = Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just Ash }) themodel.level }
                         |> turnNeighbourWallCellstoAshes cellCoords
 
                 _ ->
-                    thestate
+                    themodel
     in
-    convertCellsFunc upCell state
+    convertCellsFunc upCell model
         |> convertCellsFunc downCell
         |> convertCellsFunc leftCell
         |> convertCellsFunc rightCell
@@ -779,10 +779,10 @@ turnNeighbourWallCellstoAshes { x, y } state =
 
 
 updateWallPercentageValue : GameModel.Model -> GameModel.Model
-updateWallPercentageValue state =
+updateWallPercentageValue model =
     let
         thegrid =
-            state.level
+            model.level
 
         gridAsList =
             Grid.toList thegrid |> List.concatMap identity
@@ -790,7 +790,7 @@ updateWallPercentageValue state =
         wallPercentage =
             getWallPercentage gridAsList
     in
-    { state | wallPercentage = Just wallPercentage }
+    { model | wallPercentage = Just wallPercentage }
 
 
 getWallPercentage : List GameModel.Tile -> Float
@@ -814,37 +814,37 @@ getWallPercentage gridAsList =
 
 
 checkAndAlterDisplayAnchorIfNecessary : GameModel.Model -> GameModel.Model
-checkAndAlterDisplayAnchorIfNecessary state =
+checkAndAlterDisplayAnchorIfNecessary model =
     let
         p_x_dist =
             5
 
         newXanchor =
-            if state.player.location.x <= state.x_display_anchor then
-                max 0 (state.x_display_anchor - (state.window_width - p_x_dist))
+            if model.player.location.x <= model.x_display_anchor then
+                max 0 (model.x_display_anchor - (model.window_width - p_x_dist))
 
-            else if state.player.location.x >= (state.x_display_anchor + (state.window_width - 1)) then
-                --min (state.x_display_anchor + (state.window_width - 2)) (state.total_width - 1)
-                min (state.x_display_anchor + (state.window_width - p_x_dist)) (state.total_width - (state.window_width - p_x_dist))
+            else if model.player.location.x >= (model.x_display_anchor + (model.window_width - 1)) then
+                --min (model.x_display_anchor + (model.window_width - 2)) (model.total_width - 1)
+                min (model.x_display_anchor + (model.window_width - p_x_dist)) (model.total_width - (model.window_width - p_x_dist))
 
             else
-                state.x_display_anchor
+                model.x_display_anchor
 
         p_y_dist =
             5
 
         newYanchor =
-            if state.player.location.y <= state.y_display_anchor then
-                max 0 (state.y_display_anchor - (state.window_height - p_y_dist))
+            if model.player.location.y <= model.y_display_anchor then
+                max 0 (model.y_display_anchor - (model.window_height - p_y_dist))
 
-            else if state.player.location.y >= (state.y_display_anchor + (state.window_height - 1)) then
-                --min (state.y_display_anchor + (state.window_height - 2)) (state.total_height - 1)
-                min (state.y_display_anchor + (state.window_height - p_y_dist)) (state.total_height - (state.window_height - p_y_dist))
+            else if model.player.location.y >= (model.y_display_anchor + (model.window_height - 1)) then
+                --min (model.y_display_anchor + (model.window_height - 2)) (model.total_height - 1)
+                min (model.y_display_anchor + (model.window_height - p_y_dist)) (model.total_height - (model.window_height - p_y_dist))
 
             else
-                state.y_display_anchor
+                model.y_display_anchor
     in
-    { state | x_display_anchor = newXanchor, y_display_anchor = newYanchor }
+    { model | x_display_anchor = newXanchor, y_display_anchor = newYanchor }
 
 
 cmdGetRandomPositionedPlayer : Player -> Int -> Int -> Int -> Int -> Cmd Msg
@@ -871,10 +871,10 @@ cmdGenerateRandomInitiativeValue strCharacter mbCharacterId minval maxval =
 
 
 cmdFillRandomIntsPool : GameModel.Model -> Cmd Msg
-cmdFillRandomIntsPool state =
+cmdFillRandomIntsPool model =
     let
         nrToAdd =
-            500 - List.length state.pseudoRandomIntsPool
+            500 - List.length model.pseudoRandomIntsPool
     in
     if nrToAdd > 0 then
         Random.generate NewRandomIntsAddToPool (Random.list nrToAdd (Random.int 1 100))
@@ -884,10 +884,10 @@ cmdFillRandomIntsPool state =
 
 
 cmdFillRandomIntsPoolAndGenerateRandomMap : GameModel.Model -> Cmd Msg
-cmdFillRandomIntsPoolAndGenerateRandomMap state =
+cmdFillRandomIntsPoolAndGenerateRandomMap model =
     let
         nrToAdd =
-            500 - List.length state.pseudoRandomIntsPool
+            500 - List.length model.pseudoRandomIntsPool
     in
     if nrToAdd > 0 then
         Random.generate NewRandomIntsAddToPoolAndGenerateRandomMap (Random.list nrToAdd (Random.int 1 100))
@@ -921,7 +921,7 @@ cmdGenFloatsForRandomCave w h =
 
 
 move : ( Int, Int ) -> GameModel.Model -> { a | location : GameModel.Location, initiative : Int } -> { a | location : GameModel.Location, initiative : Int }
-move ( x, y ) state a =
+move ( x, y ) model a =
     let
         location =
             GameModel.location (a.location.x + x) (a.location.y + y)
@@ -929,7 +929,7 @@ move ( x, y ) state a =
         initiative =
             a.initiative + 100
     in
-    case GameModel.isModelTileWalkable location state of
+    case GameModel.isModelTileWalkable location model of
         False ->
             a
 
@@ -1008,31 +1008,31 @@ attack dude1 dude2 lprandInts =
 
 
 resetEnemyMovesCurrentTurn : GameModel.Model -> GameModel.Model
-resetEnemyMovesCurrentTurn state =
+resetEnemyMovesCurrentTurn model =
     let
         newEnemies =
-            Dict.map (\enemyid enemy -> { enemy | nrMovesInCurrentTurn = 0 }) state.enemies
+            Dict.map (\enemyid enemy -> { enemy | nrMovesInCurrentTurn = 0 }) model.enemies
     in
-    { state | enemies = newEnemies }
+    { model | enemies = newEnemies }
 
 
 increseNrOfEnemyMovesInCurrentTurn : EnemyId -> GameModel.Model -> GameModel.Model
-increseNrOfEnemyMovesInCurrentTurn enemyid state =
+increseNrOfEnemyMovesInCurrentTurn enemyid model =
     let
         newEnemies =
-            Dict.update enemyid (\mbenemy -> mbenemy |> Maybe.map (\en -> { en | nrMovesInCurrentTurn = en.nrMovesInCurrentTurn + 1 })) state.enemies
+            Dict.update enemyid (\mbenemy -> mbenemy |> Maybe.map (\en -> { en | nrMovesInCurrentTurn = en.nrMovesInCurrentTurn + 1 })) model.enemies
     in
-    { state | enemies = newEnemies }
+    { model | enemies = newEnemies }
 
 
 cleanup : GameModel.Model -> GameModel.Model
-cleanup state =
+cleanup model =
     let
         dead =
-            Dict.filter (\enemyId enemy -> enemy.health <= 0) state.enemies
+            Dict.filter (\enemyId enemy -> enemy.health <= 0) model.enemies
 
         alive =
-            Dict.filter (\enemyId enemy -> enemy.health > 0) state.enemies
+            Dict.filter (\enemyId enemy -> enemy.health > 0) model.enemies
 
         msg =
             if Dict.size dead == 0 then
@@ -1043,58 +1043,58 @@ cleanup state =
     in
     case msg of
         Nothing ->
-            state
+            model
 
         Just m ->
-            log m { state | enemies = alive }
+            log m { model | enemies = alive }
 
 
 enemy_AI : GameModel.Model -> GameModel.Model
-enemy_AI state =
+enemy_AI model =
     let
         mbEnemyIdEnemyPair =
-            Dict.filter (\enemyid enemy -> enemy.initiative <= state.player.initiative && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) state.enemies
+            Dict.filter (\enemyid enemy -> enemy.initiative <= model.player.initiative && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) model.enemies
                 |> Dict.toList
                 |> List.head
     in
     case mbEnemyIdEnemyPair of
         Just ( enemyid, enemy ) ->
             let
-                state2 =
-                    attackIfClose enemy state
+                model2 =
+                    attackIfClose enemy model
                         -- prevent possible infinite recursion
                         |> increseNrOfEnemyMovesInCurrentTurn enemyid
             in
-            enemy_AI state2
+            enemy_AI model2
 
         Nothing ->
-            state
+            model
 
 
 attackIfClose : Enemy -> GameModel.Model -> GameModel.Model
-attackIfClose enemy state =
-    case List.filter (\location -> location == state.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
+attackIfClose enemy model =
+    case List.filter (\location -> location == model.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
         location :: locs ->
             let
                 --( enemy_, player_, msg, newprandInts ) =
                 attackOutput =
-                    attack enemy state.player state.pseudoRandomIntsPool
+                    attack enemy model.player model.pseudoRandomIntsPool
             in
             log attackOutput.textMsg
-                { state
+                { model
                     | player = attackOutput.dudeB
-                    , enemies = Dict.insert enemy.id attackOutput.dudeA state.enemies -- enemy_ :: getTailWithDefaultEmptyList state.enemies
+                    , enemies = Dict.insert enemy.id attackOutput.dudeA model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
                     , pseudoRandomIntsPool = attackOutput.randInts
                 }
 
         [] ->
             let
                 ( x, y, newprandInts ) =
-                    ( List.head state.pseudoRandomIntsPool |> Maybe.withDefault 0
-                    , List.drop 1 state.pseudoRandomIntsPool
+                    ( List.head model.pseudoRandomIntsPool |> Maybe.withDefault 0
+                    , List.drop 1 model.pseudoRandomIntsPool
                         |> List.head
                         |> Maybe.withDefault 0
-                    , List.drop 2 state.pseudoRandomIntsPool
+                    , List.drop 2 model.pseudoRandomIntsPool
                     )
 
                 xscaled =
@@ -1119,10 +1119,10 @@ attackIfClose enemy state =
                         1
 
                 enemy_ =
-                    move ( xscaled, yscaled ) state enemy
+                    move ( xscaled, yscaled ) model enemy
             in
-            { state
-                | enemies = Dict.insert enemy.id enemy_ state.enemies -- enemy_ :: getTailWithDefaultEmptyList state.enemies
+            { model
+                | enemies = Dict.insert enemy.id enemy_ model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
                 , pseudoRandomIntsPool = newprandInts
             }
 
@@ -1132,7 +1132,7 @@ attackIfClose enemy state =
 
 
 reveal : GameModel.Model -> GameModel.Model
-reveal state =
+reveal model =
     let
         intermediateModelGrid =
             Grid.map
@@ -1143,13 +1143,13 @@ reveal state =
                     else
                         t
                 )
-                state.level
+                model.level
 
         intermediateModel =
-            { state | level = intermediateModelGrid }
+            { model | level = intermediateModelGrid }
 
         newModel =
-            List.foldl (\loc istate -> GameModel.setModelTileVisibility loc GameModel.Visible istate) intermediateModel (GameModel.visible state)
+            List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc GameModel.Visible imodel) intermediateModel (GameModel.visible model)
     in
     newModel
 
@@ -1160,7 +1160,7 @@ reveal state =
 
 
    reveal : GameModel.Model -> GameModel.Model
-   reveal state =
+   reveal model =
        let
            exploredAcc =
                Grid.map
@@ -1170,10 +1170,10 @@ reveal state =
                        else
                            t
                    )
-                   state.explored
+                   model.explored
 
            explored_ =
-               List.foldl (\l explored -> Grid.set l GameModel.Visible explored) exploredAcc (GameModel.visible state)
+               List.foldl (\l explored -> Grid.set l GameModel.Visible explored) exploredAcc (GameModel.visible model)
        in
-       { state | explored = explored_ }
+       { model | explored = explored_ }
 -}

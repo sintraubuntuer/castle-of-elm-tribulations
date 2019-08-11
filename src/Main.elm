@@ -9,7 +9,7 @@ import Collage.Text as Text
 import Dict exposing (Dict)
 import GameDefinitions.Common
 import GameDefinitions.Game1Definitions
-import GameDefinitions.Game2Definitions
+import GameDefinitions.Game2.Game2Definitions
 import GameModel
 import GameUpdate
 import GameView

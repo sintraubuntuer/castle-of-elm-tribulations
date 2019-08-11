@@ -29,6 +29,7 @@ module GameModel exposing
     , WallOverInfo
     , WaterInfo
     , defaultBlueDoorInfo
+    , defaultBrickWallInfo
     , defaultColumnInfo
     , defaultDoorInfo
     , defaultFlagInfo
@@ -42,7 +43,6 @@ module GameModel exposing
     , defaultWallUpInfo
     , defaultWaterInfo
     , defaultYellowDoorInfo
-    , enemy
     , getCurrentFloorInfoToStore
     , getGridTileVisibility
     , getModelTileVisibility
@@ -74,7 +74,6 @@ module GameModel exposing
     , mbUpdateEnemyInitiativeByMbEnemyId
     , mbUpdateEnemyLocation
     , placeExistingEnemy
-    , player
     , randomlyPlaceExistingEnemies
     , setModelTileAsExplored
     , setModelTileVisibility
@@ -88,11 +87,6 @@ module GameModel exposing
     , visibility
     , visible
     )
-
---import Generator
---import Generator.Standard
---import Keyboard
---import Element
 
 import Beings exposing (CharacterId, Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), OtherCharacter, Player)
 import Collage.Text as Text
@@ -387,6 +381,11 @@ type alias WallInfo =
     }
 
 
+defaultBrickWallInfo : WallInfo
+defaultBrickWallInfo =
+    { isExplored = False, visibility = Unexplored, orientation = "just_bricks", mbTeleporterObject = Nothing }
+
+
 defaultWallInfo : WallInfo
 defaultWallInfo =
     { isExplored = False, visibility = Unexplored, orientation = "horizontal", mbTeleporterObject = Nothing }
@@ -537,47 +536,6 @@ type Input
     | PickUpItem
     | ViewInventory
     | Nop
-
-
-player : String -> String -> Player
-player elem pname =
-    { location = Grid.Coordinate 10 10
-    , textAvatar = elem
-    , name = pname
-    , health = 10
-    , energy = 10
-    , mana = 100
-    , inventory = Dict.empty
-    , hunger = 10
-    , stealth = 20
-    , armor = 1
-    , protection = 50
-    , coordination = 100
-    , power = 2
-    , initiative = 2 -- this will be altered by generating a random int between 1 and 100
-    , placed = False
-    }
-
-
-enemy : String -> EnemyId -> String -> Enemy
-enemy elem enemyid ename =
-    { location = Grid.Coordinate 14 4
-    , id = enemyid
-    , textAvatar = elem
-    , name = ename
-    , health = 10
-    , mana = 100
-    , inventory = Dict.empty
-    , stealth = 20
-    , armor = 1
-    , protection = 50
-    , coordination = 100
-    , power = 2
-    , initiative = 1 -- this will be altered by generating a random int between 1 and 100
-    , maxNrEnemyMovesPerTurn = 10 -- to prevent possible infinite recursion in ai
-    , nrMovesInCurrentTurn = 0
-    , placed = False
-    }
 
 
 location : Int -> Int -> Location

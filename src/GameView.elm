@@ -196,9 +196,13 @@ wall orientationStr =
             else if String.toLower orientationStr == "cul_de_sac_at_right" then
                 "img/walls/empty-flat-flat-flat.png"
 
+            else if String.toLower orientationStr == "just_bricks" then
+                "img/walls/wall.png"
+
             else
-                --"img/walls/wall.png"
-                "img/walls/empty-flat-empty-flat.png"
+                "img/walls/wall.png"
+
+        --"img/walls/empty-flat-empty-flat.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -375,6 +379,9 @@ tile currentFloorId t =
             else if wallinfo.orientation == "cul_de_sac_at_right" then
                 wall "cul_de_sac_at_right"
 
+            else if wallinfo.orientation == "just_bricks" then
+                wall "just_bricks"
+
             else
                 wall "horizontal"
 
@@ -391,8 +398,20 @@ tile currentFloorId t =
             else
                 lever "off"
 
+        GameModel.Water waterinfo ->
+            water waterinfo
+
         _ ->
             notileyet
+
+
+water : GameModel.WaterInfo -> Collage msg
+water waterinfo =
+    let
+        fileStr =
+            "img/water/water_01.png"
+    in
+    Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
 tileOverlay : GameModel.Tile -> Collage msg
