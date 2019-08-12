@@ -1,14 +1,33 @@
 module GameDefinitions.Game2.LastFloor exposing (gridLastFloor)
 
+import GameDefinitions.Common exposing (StairsOrientation(..))
+import GameDefinitions.Game2.ConfigParamsAndInfo
+    exposing
+        ( basement_floor_id
+        , caverns_floor_id
+        , config_params
+        , firstFloor_id
+        , groundFloor_id
+        , holesDict
+        , itemCreationDict
+        , landingTargetsDict
+        , lastFloor_id
+        , teleporterInfoDict
+        , theAttic_id
+        )
 import GameModel
     exposing
-        ( Tile(..)
+        ( StairsInfo
+        , Tile(..)
         , WallInfo
         , defaultBrickWallInfo
         , defaultFloorInfo
+        , defaultGrassInfo
         , defaultWallInfo
         , defaultWallUpInfo
         , defaultWaterInfo
+        , defaultWaterWallLeftInfo
+        , defaultWaterWallUpInfo
         )
 import Grid
 
@@ -31,6 +50,12 @@ lastFloorGridTiles =
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall (WallInfo False GameModel.Unexplored "corner_top_right" Nothing)
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 2nd Row
@@ -50,6 +75,12 @@ lastFloorGridTiles =
     , Wall defaultBrickWallInfo
     , Wall defaultBrickWallInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 3rd Row
@@ -68,7 +99,17 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
-    , Wall defaultWallUpInfo
+
+    --, Wall defaultWallUpInfo
+    --, Water defaultWaterWallLeftInfo
+    --, Water defaultWaterInfo
+    , Floor defaultFloorInfo
+    , Floor defaultFloorInfo
+    , Floor defaultFloorInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 4th Row
@@ -88,6 +129,12 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 5th Row
@@ -107,6 +154,12 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 6th Row
@@ -126,6 +179,12 @@ lastFloorGridTiles =
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall (WallInfo False GameModel.Unexplored "three_way_at_right" Nothing)
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 7th Row
@@ -145,6 +204,12 @@ lastFloorGridTiles =
     , Wall defaultBrickWallInfo
     , Wall defaultBrickWallInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 8th Row
@@ -164,6 +229,12 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 9th Row
@@ -183,6 +254,12 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 10th Row
@@ -202,6 +279,12 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 11th Row
@@ -221,6 +304,12 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 12th Row
@@ -240,6 +329,12 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Wall defaultWallUpInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 13th Row
@@ -259,6 +354,12 @@ lastFloorGridTiles =
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall (WallInfo False GameModel.Unexplored "corner_bottom_right" Nothing)
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 14th Row
@@ -278,30 +379,68 @@ lastFloorGridTiles =
     , Wall defaultBrickWallInfo
     , Wall defaultBrickWallInfo
     , Wall defaultBrickWallInfo
+    , Water defaultWaterWallLeftInfo
+    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
 
     -- start 15th Row
     , NoTileYet
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
+    , Water defaultWaterWallUpInfo
     , Water defaultWaterInfo
     , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
-    , Water defaultWaterInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
+    , Grass defaultGrassInfo
     , NoTileYet
     ]
 
 
+addLastFloorStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addLastFloorStairs grid =
+    let
+        recstairs =
+            { room_x = 20
+            , room_y = 13
+            , stairsId = 12
+            , current_floor_id = lastFloor_id
+            , toFloorId = groundFloor_id
+            , toStairsId = 11
+            , shift = ( -1, 0 )
+            , mbLocationShift = Nothing
+            , direction = StairsDown
+            }
 
+        tileStairs =
+            GameModel.Stairs (GameModel.StairsInfo recstairs.stairsId recstairs.toFloorId recstairs.toStairsId recstairs.shift False GameModel.Unexplored)
+    in
+    Grid.set (Grid.Coordinate recstairs.room_x recstairs.room_y) tileStairs grid
+
+
+
+{- }
+   , defaultWaterWallUpInfo
+   , defaultWaterWallLeftInfo
+   , defaultWaterWallUpInfo
+-}
 {- }
    getLocCoordinateFromNr nr =
        let
@@ -322,7 +461,7 @@ lastFloorGridTiles =
 
 
 nr_cols =
-    17
+    23
 
 
 nr_rows =
@@ -359,3 +498,4 @@ gridLastFloor =
             Grid.toCoordinates grid
     in
     List.foldl (\coords gridacc -> Grid.set coords (getTileAtCoords coords) gridacc) grid lcoords
+        |> addLastFloorStairs

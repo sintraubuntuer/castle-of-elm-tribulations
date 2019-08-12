@@ -49,6 +49,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
         , holesDict
         , itemCreationDict
         , landingTargetsDict
+        , lastFloor_id
         , teleporterInfoDict
         , theAttic_id
         )
@@ -82,7 +83,7 @@ addGroundFloorCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (groundFloorInitialRoomRectangles ++ groundFloorCustomRoomRectangles)
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc groundFloorInitialHorizontalTunnelRectanglesWithOptions
-        |> MapGen.listTunnelRectangleToGridFunc groundFloorStairsTunnel
+        |> MapGen.listTunnelRectangleWithOptionsToGridFunc groundFloorStairsTunnelWithOptions
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc groundFloorInitialVerticalTunnelRectanglesWithOptions
         |> MapGen.createWallBoundaries (groundFloorInitialRoomRectangles ++ groundFloorCustomRoomRectangles ++ groundFloorInitialHorizontalTunnelRectangles ++ groundFloorStairsTunnel ++ groundFloorInitialVerticalTunnelRectangles)
         --|> make sure if cell with x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
@@ -260,13 +261,29 @@ groundFloorInitialHorizontalTunnelRectanglesWithOptions =
         |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))
 
 
+groundFloorStairsTunnelWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+groundFloorStairsTunnelWithOptions =
+    [ ( getVerticalTunnel 9 2 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) Nothing Nothing (Just ( -6, 0 )), defaultNoDoorOptions )
+    , ( getVerticalTunnel 5 6 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) (Just HorizontalRoom) Nothing, defaultNoDoorOptions )
+    , ( getVerticalTunnel 3 6 TunnelDown Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) Nothing Nothing, defaultNoDoorOptions )
+
+    --
+    , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
+      , { left = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToTheRight)
+
+        --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
+        , top = GameModel.NoDoorNoWall
+        , right = GameModel.NoDoorNoWall
+        , bottom = GameModel.NoDoorNoWall
+        }
+      )
+    ]
+        |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))
+
+
 groundFloorStairsTunnel : List TunnelRectangle
 groundFloorStairsTunnel =
-    [ getVerticalTunnel 9 2 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) Nothing Nothing (Just ( -6, 0 ))
-    , getVerticalTunnel 5 6 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) (Just HorizontalRoom) Nothing
-    , getVerticalTunnel 3 6 TunnelDown Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) Nothing Nothing
-    ]
-        |> List.map (\xfunc -> xfunc config_params)
+    List.map (\( tun, opt ) -> tun) groundFloorStairsTunnelWithOptions
 
 
 addGroundFloorStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
@@ -305,6 +322,17 @@ addGroundFloorStairs grid =
               , mbLocationShift = Nothing
               , direction = StairsDown
               , roomType = Just HorizontalRoom
+              }
+            , { room_row = 4
+              , room_col = 7
+              , stairsId = 11
+              , current_floor_id = groundFloor_id
+              , toFloorId = lastFloor_id
+              , toStairsId = 12
+              , shift = ( 0, -1 )
+              , mbLocationShift = Just ( 0, 0 )
+              , direction = StairsToTheRight
+              , roomType = Just SquareRoom
               }
             ]
     in

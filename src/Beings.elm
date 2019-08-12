@@ -28,18 +28,6 @@ type alias CharacterId =
     Int
 
 
-
-{- }
-   let COMBAT_OPTIONS = {
-   	[ATTACK_1]: 2,
-   	[ATTACK_2]: 2,
-   	[MAGIC_1]: 2,
-   	[MAGIC_2]: 2
-   };
-
--}
-
-
 type alias Player =
     { location : Location
     , textAvatar : String --Element.Element

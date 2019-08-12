@@ -401,15 +401,38 @@ tile currentFloorId t =
         GameModel.Water waterinfo ->
             water waterinfo
 
+        GameModel.Grass grassinfo ->
+            grass grassinfo
+
         _ ->
             notileyet
+
+
+grass : GameModel.GrassInfo -> Collage msg
+grass grassinfo =
+    let
+        fileStr =
+            if grassinfo.description == "grass_with_dirt" then
+                "img/grass/grass_and_dirt.png"
+
+            else
+                "img/grass/grass.png"
+    in
+    Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
 water : GameModel.WaterInfo -> Collage msg
 water waterinfo =
     let
         fileStr =
-            "img/water/water_01.png"
+            if waterinfo.description == "water_wall_up" then
+                "img/water/water_wall_up.png"
+
+            else if waterinfo.description == "water_wall_left" then
+                "img/water/water_wall_left.png"
+
+            else
+                "img/water/just_water.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 

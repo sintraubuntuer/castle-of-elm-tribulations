@@ -758,17 +758,6 @@ mbCreateVerticalTunnel roomrect1 roomrect2 =
         Nothing
 
 
-
-{- }
-   type alias DoorInfo =
-       { closed : Bool
-       , color : Maybe String
-       , orientation : DoorOrientation
-       , requiresToOpen : Maybe GameModel.Item
-       }
--}
-
-
 listTunnelRectangleToGridFunc : List GameModel.TunnelRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
 listTunnelRectangleToGridFunc ltunnels grid =
     -- for now , still have to write this
@@ -863,17 +852,6 @@ dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
             else
                 GameModel.Floor defaultFloorInfoWithColor
 
-        {- }
-           if xval == left_x || xval == right_x || yval == bottom_y || yval == top_y then
-               if useWalls then
-                   GameModel.Wall GameModel.defaultWallInfo
-
-               else
-                   GameModel.Floor defaultFloorInfoWithColor
-
-           else
-               GameModel.Floor defaultFloorInfoWithColor
-        -}
         ltiles =
             List.concatMap (\xval -> List.map (\yval -> ( xval, yval, generateTile xval yval )) ly) lx
 

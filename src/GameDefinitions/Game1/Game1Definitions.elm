@@ -1,4 +1,4 @@
-module GameDefinitions.Game1Definitions exposing (initialModelFunc)
+module GameDefinitions.Game1.Game1Definitions exposing (initialModelFunc)
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)

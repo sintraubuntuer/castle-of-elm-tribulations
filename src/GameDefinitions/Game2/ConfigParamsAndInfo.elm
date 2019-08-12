@@ -7,6 +7,7 @@ module GameDefinitions.Game2.ConfigParamsAndInfo exposing
     , holesDict
     , itemCreationDict
     , landingTargetsDict
+    , lastFloor_id
     , teleporterInfoDict
     , theAttic_id
     )
@@ -110,6 +111,11 @@ firstFloor_id =
 theAttic_id : Int
 theAttic_id =
     4
+
+
+lastFloor_id : Int
+lastFloor_id =
+    5
 
 
 holesDict : Dict HoleId GameModel.HoleInfo

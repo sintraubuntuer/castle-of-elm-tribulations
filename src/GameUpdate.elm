@@ -29,7 +29,7 @@ module GameUpdate exposing
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
-import GameDefinitions.Game1Definitions
+import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
 import GameModel
 import Grid
@@ -123,7 +123,7 @@ update msg model =
                 ( initModel, createRandomMap, randomlyPositionPlayer ) =
                     case nr of
                         1 ->
-                            GameDefinitions.Game1Definitions.initialModelFunc
+                            GameDefinitions.Game1.Game1Definitions.initialModelFunc
 
                         2 ->
                             GameDefinitions.Game2.Game2Definitions.initialModelFunc
@@ -982,17 +982,19 @@ attack dude1 dude2 lprandInts =
                 False
 
         dmg =
-            if hit && not block then
+            (if hit && not block then
                 dude1.power
 
-            else if hit && block then
+             else if hit && block then
                 max 0 (dude1.power - dude2.armor)
 
-            else if not hit then
+             else if not hit then
                 0
 
-            else
+             else
                 0
+            )
+                |> Debug.log "enemy produced a damage of "
 
         result =
             dude2.health - dmg

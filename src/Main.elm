@@ -8,7 +8,7 @@ import Browser.Events
 import Collage.Text as Text
 import Dict exposing (Dict)
 import GameDefinitions.Common
-import GameDefinitions.Game1Definitions
+import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
 import GameModel
 import GameUpdate

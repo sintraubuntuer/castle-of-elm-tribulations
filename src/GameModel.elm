@@ -9,6 +9,7 @@ module GameModel exposing
     , FloorDrawing(..)
     , FloorInfo
     , FloorStore
+    , GrassInfo
     , HoleInfo
     , Input(..)
     , LeverId
@@ -28,12 +29,15 @@ module GameModel exposing
     , WallJunction(..)
     , WallOverInfo
     , WaterInfo
+    , defaultBlackDoorInfo
     , defaultBlueDoorInfo
     , defaultBrickWallInfo
     , defaultColumnInfo
     , defaultDoorInfo
     , defaultFlagInfo
     , defaultFloorInfo
+    , defaultGrassInfo
+    , defaultGrassWithDirtInfo
     , defaultGreenDoorInfo
     , defaultLeverInfo
     , defaultOpenDoorInfo
@@ -42,6 +46,8 @@ module GameModel exposing
     , defaultWallInfo
     , defaultWallUpInfo
     , defaultWaterInfo
+    , defaultWaterWallLeftInfo
+    , defaultWaterWallUpInfo
     , defaultYellowDoorInfo
     , getCurrentFloorInfoToStore
     , getGridTileVisibility
@@ -111,7 +117,17 @@ type Tile
     | Flag FlagInfo
     | Column ColumnInfo
     | Water WaterInfo
+    | Grass GrassInfo
     | NoTileYet
+
+
+type alias GrassInfo =
+    { description : String
+    , isTransparent : Bool
+    , isWalkable : Bool
+    , isExplored : Bool
+    , visibility : Visibility
+    }
 
 
 type alias Model =
@@ -396,6 +412,16 @@ defaultWallUpInfo =
     { isExplored = False, visibility = Unexplored, orientation = "up", mbTeleporterObject = Nothing }
 
 
+defaultGrassWithDirtInfo : GrassInfo
+defaultGrassWithDirtInfo =
+    { description = "grass_with_dirt", isTransparent = False, isWalkable = True, isExplored = False, visibility = Unexplored }
+
+
+defaultGrassInfo : GrassInfo
+defaultGrassInfo =
+    { description = "grass", isTransparent = False, isWalkable = True, isExplored = False, visibility = Unexplored }
+
+
 type DoorWallOption
     = UseDoor DoorInfo
     | UseWall
@@ -440,6 +466,11 @@ defaultOpenDoorInfo dorientation =
 defaultBlueDoorInfo : DoorOrientation -> DoorInfo
 defaultBlueDoorInfo dorientation =
     { isOpen = False, color = Just "blue", orientation = dorientation, requiresToOpen = Just (Key { keyColor = "blue" }), isExplored = False, visibility = Unexplored }
+
+
+defaultBlackDoorInfo : DoorOrientation -> DoorInfo
+defaultBlackDoorInfo dorientation =
+    { isOpen = False, color = Just "black", orientation = dorientation, requiresToOpen = Just (Key { keyColor = "black" }), isExplored = False, visibility = Unexplored }
 
 
 defaultRedDoorInfo : DoorOrientation -> DoorInfo
@@ -500,15 +531,26 @@ defaultColumnInfo =
 
 
 type alias WaterInfo =
-    { isTransparent : Bool
+    { description : String
+    , isTransparent : Bool
     , isExplored : Bool
     , visibility : Visibility
     }
 
 
+defaultWaterWallUpInfo : WaterInfo
+defaultWaterWallUpInfo =
+    { description = "water_wall_up", isTransparent = False, isExplored = False, visibility = Unexplored }
+
+
+defaultWaterWallLeftInfo : WaterInfo
+defaultWaterWallLeftInfo =
+    { description = "water_wall_left", isTransparent = False, isExplored = False, visibility = Unexplored }
+
+
 defaultWaterInfo : WaterInfo
 defaultWaterInfo =
-    { isTransparent = False, isExplored = False, visibility = Unexplored }
+    { description = "just_water", isTransparent = False, isExplored = False, visibility = Unexplored }
 
 
 type WallJunction
@@ -572,6 +614,16 @@ isStairs : Tile -> Bool
 isStairs tile =
     case tile of
         Stairs _ ->
+            True
+
+        _ ->
+            False
+
+
+isGrass : Tile -> Bool
+isGrass tile =
+    case tile of
+        Grass _ ->
             True
 
         _ ->
@@ -696,6 +748,9 @@ isTileWalkable player_ tile =
         Floor floorinfo ->
             floorinfo.isWalkable
 
+        Grass grassinfo ->
+            grassinfo.isWalkable
+
         Stairs sinfo ->
             True
 
@@ -753,6 +808,9 @@ isTileTransparent tile =
         Floor floorinfo ->
             floorinfo.isTransparent
 
+        Grass grassinfo ->
+            grassinfo.isTransparent
+
         Stairs sinfo ->
             False
 
@@ -797,6 +855,9 @@ isTileExplored tile =
         Floor floorinfo ->
             floorinfo.isExplored
 
+        Grass ginfo ->
+            ginfo.isExplored
+
         Stairs sinfo ->
             sinfo.isExplored
 
@@ -840,6 +901,9 @@ setTileAsExplored tile =
     case tile of
         Floor floorinfo ->
             Floor { floorinfo | isExplored = True }
+
+        Grass grassinfo ->
+            Grass { grassinfo | isExplored = True }
 
         Stairs sinfo ->
             Stairs { sinfo | isExplored = True }
@@ -892,6 +956,9 @@ getTileVisibility tile =
         Floor floorinfo ->
             floorinfo.visibility
 
+        Grass grassinfo ->
+            grassinfo.visibility
+
         Stairs sinfo ->
             sinfo.visibility
 
@@ -942,6 +1009,9 @@ setTileVisibility visibility_ tile =
     case tile of
         Floor floorinfo ->
             Floor { floorinfo | visibility = visibility_ }
+
+        Grass grassinfo ->
+            Grass { grassinfo | visibility = visibility_ }
 
         Stairs sinfo ->
             Stairs { sinfo | visibility = visibility_ }
@@ -1070,6 +1140,9 @@ showTile tile =
             case tile of
                 Floor floorinfo ->
                     " "
+
+                Grass ginfo ->
+                    "g"
 
                 Stairs sinfo ->
                     "/"
