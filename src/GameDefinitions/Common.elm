@@ -96,8 +96,8 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> Enemy
-initialEnemy enemyid =
+initialEnemy : EnemyId -> Int -> Enemy
+initialEnemy enemyid floor_id =
     let
         elem =
             "e" ++ String.fromInt enemyid
@@ -107,7 +107,7 @@ initialEnemy enemyid =
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid)
+    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) floor_id
 
 
 dimensions : ( Int, Int )
@@ -122,10 +122,10 @@ initialModelFunc =
             initialPlayer
 
         enemy =
-            initialEnemy 1
+            initialEnemy 1 theFloorId
 
         enemy2 =
-            initialEnemy 2
+            initialEnemy 2 theFloorId
 
         levers =
             Dict.empty
@@ -139,6 +139,9 @@ initialModelFunc =
         firstMap =
             -- MapGen.randomCave dimensions
             gridInitializer w h cParams
+
+        theFloorId =
+            1
 
         createRandomMap =
             False
@@ -167,7 +170,7 @@ initialModelFunc =
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = Dict.empty
-      , currentFloorId = 1
+      , currentFloorId = theFloorId
       , started = False
       }
     , createRandomMap

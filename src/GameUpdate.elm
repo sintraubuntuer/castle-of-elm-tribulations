@@ -62,6 +62,7 @@ type Msg
     | KeyDown GameModel.Input
     | TryAddToPlayerInventory
     | TryShiftPlayerPosition ( Int, Int )
+    | CleanUpAndEnemyLogic
     | StartOpponentInteraction Enemy
     | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
@@ -112,6 +113,7 @@ update msg model =
                             , gameOfThornsModeisOn = model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
                             , listeningToKeyInput = True
                         }
+                            |> cleanup
 
                     else
                         { model | gameOfThornsModel = newThornsModel, gameOfThornsModeisOn = model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished }
@@ -164,10 +166,6 @@ update msg model =
 
         KeyDown input ->
             if not model.listeningToKeyInput then
-                let
-                    _ =
-                        Debug.log "currently not listening to key input : " (not model.listeningToKeyInput)
-                in
                 ( model, Cmd.none )
 
             else
@@ -267,7 +265,7 @@ update msg model =
                             model
 
                 mbEnemy =
-                    case Dict.filter (\enemyid enemy -> enemy.location == GameModel.location x2 y2) model.enemies |> Dict.values of
+                    case Dict.filter (\enemyid enemy -> enemy.floorId == model.currentFloorId && enemy.location == GameModel.location x2 y2) model.enemies |> Dict.values of
                         [] ->
                             Nothing
 
@@ -291,14 +289,26 @@ update msg model =
             in
             case mbEnemy of
                 Just enemy ->
-                    update (StartOpponentInteraction enemy) newModel2
+                    if enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax then
+                        update (StartOpponentInteraction enemy) newModel2
+
+                    else
+                        update CleanUpAndEnemyLogic newModel2
 
                 Nothing ->
-                    let
-                        newModel3 =
-                            newModel2 |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
-                    in
-                    ( newModel3, cmdFillRandomIntsPool newModel3 )
+                    update CleanUpAndEnemyLogic newModel2
+
+        CleanUpAndEnemyLogic ->
+            let
+                ( newModel, lenemies ) =
+                    model |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI
+            in
+            case lenemies |> List.head of
+                Just enemy_ ->
+                    update (StartOpponentInteraction enemy_) newModel
+
+                Nothing ->
+                    ( newModel |> reveal, cmdFillRandomIntsPool newModel )
 
         StartOpponentInteraction enemy ->
             let
@@ -505,10 +515,6 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
             in
             case mbDestinationCoordsTuple of
                 Just ( newX, newY ) ->
-                    let
-                        _ =
-                            Debug.log "going to call changeFloorTo with coords " ( newX, newY )
-                    in
                     changeFloorTo model sinfo.toFloorId ( newX + Tuple.first sinfo.shift, newY + Tuple.second sinfo.shift )
 
                 Nothing ->
@@ -526,10 +532,6 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
             in
             case mbDestinationFloorAndCoordsTuple of
                 Just ( floorId, newX, newY ) ->
-                    let
-                        _ =
-                            Debug.log "Went through a hole , going to call changeFloorTo with coords " ( newX, newY )
-                    in
                     changeFloorTo model floorId ( newX, newY )
 
                 Nothing ->
@@ -561,10 +563,6 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
                     in
                     case mbDestinationFloorAndCoordsTuple of
                         Just ( floorId, newX, newY ) ->
-                            let
-                                _ =
-                                    Debug.log "Went through a teleporter , going to call changeFloorTo with floorId and coords " ( floorId, newX, newY )
-                            in
                             changeFloorTo model floorId ( newX, newY )
 
                         Nothing ->
@@ -595,16 +593,12 @@ searchFloorForTeleporterId fid target_id_ model =
 
                 _ ->
                     False
-
-        _ =
-            Debug.log ("searching for teleporter with targetId " ++ String.fromInt target_id_ ++ " in floor ") fid
     in
     case mbFloorGrid of
         Just floorGrid ->
             List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
                 |> List.head
                 |> Maybe.map (\rec -> ( fid, rec.x, rec.y ))
-                |> Debug.log "coords of targetId are : "
 
         Nothing ->
             Nothing
@@ -631,16 +625,12 @@ searchFloorForTargetId fid target_id model =
 
                 _ ->
                     False
-
-        _ =
-            Debug.log ("searching for targetId " ++ String.fromInt target_id ++ " in floor ") fid
     in
     case mbFloorGrid of
         Just floorGrid ->
             List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
                 |> List.head
                 |> Maybe.map (\rec -> ( fid, rec.x, rec.y ))
-                |> Debug.log "coords of targetId are : "
 
         Nothing ->
             Nothing
@@ -662,16 +652,12 @@ searchFloorForStairsId floorId stairsId model =
 
                 _ ->
                     False
-
-        _ =
-            Debug.log ("searching for stairsId " ++ String.fromInt stairsId ++ " in floor ") floorId
     in
     case mbFloorGrid of
         Just floorGrid ->
             List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
                 |> List.head
                 |> Maybe.map (\rec -> ( rec.x, rec.y ))
-                |> Debug.log "coords of stairs are : "
 
         Nothing ->
             Nothing
@@ -680,9 +666,6 @@ searchFloorForStairsId floorId stairsId model =
 changeFloorTo : GameModel.Model -> Int -> ( Int, Int ) -> GameModel.Model
 changeFloorTo model floorId locTuple =
     let
-        _ =
-            Debug.log ("changeFloorTo was called with floorId " ++ String.fromInt floorId ++ " and coords ") locTuple
-
         newModel =
             if model.currentFloorId == floorId then
                 model
@@ -713,9 +696,6 @@ changeFloorTo model floorId locTuple =
 
                     Nothing ->
                         { model | floorDict = newStore }
-
-        _ =
-            Debug.log "newModel currentFloorId is " newModel.currentFloorId
 
         delta_x =
             Tuple.first locTuple - newModel.player.location.x
@@ -982,19 +962,17 @@ attack dude1 dude2 lprandInts =
                 False
 
         dmg =
-            (if hit && not block then
+            if hit && not block then
                 dude1.power
 
-             else if hit && block then
+            else if hit && block then
                 max 0 (dude1.power - dude2.armor)
 
-             else if not hit then
+            else if not hit then
                 0
 
-             else
+            else
                 0
-            )
-                |> Debug.log "enemy produced a damage of "
 
         result =
             dude2.health - dmg
@@ -1030,103 +1008,173 @@ increseNrOfEnemyMovesInCurrentTurn enemyid model =
 cleanup : GameModel.Model -> GameModel.Model
 cleanup model =
     let
-        dead =
-            Dict.filter (\enemyId enemy -> enemy.health <= 0) model.enemies
+        dead_and_disappears =
+            Dict.filter (\enemyId enemy -> enemy.health <= 0 && enemy.disappearsWhenHealthIsZero) model.enemies
 
-        alive =
-            Dict.filter (\enemyId enemy -> enemy.health > 0) model.enemies
+        dead_and_doesnt_disappear =
+            Dict.filter (\enemyId enemy -> enemy.health <= 0 && not enemy.disappearsWhenHealthIsZero) model.enemies
+
+        alive_no_enlightenment =
+            Dict.filter (\enemyId enemy -> enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax) model.enemies
+
+        alive_enlightened_disappears =
+            Dict.filter (\enemyId enemy -> enemy.health > 0 && enemy.indexOfLight >= enemy.indexOfLightMax && enemy.disappearsWhenIndexOfLightMax) model.enemies
+
+        alive_enlightened_doesnt_disappear =
+            Dict.filter (\enemyId enemy -> enemy.health > 0 && enemy.indexOfLight >= enemy.indexOfLightMax && not enemy.disappearsWhenIndexOfLightMax) model.enemies
+
+        keys_to_remove =
+            (dead_and_disappears |> Dict.keys) ++ (alive_enlightened_disappears |> Dict.keys)
 
         msg =
-            if Dict.size dead == 0 then
+            if Dict.size dead_and_disappears == 0 then
                 Nothing
 
             else
-                Just (Dict.foldl (\id nstr acc -> acc ++ nstr) "" <| Dict.map (\enemyId enemy -> enemy.name ++ " died. ") dead)
+                Just (Dict.foldl (\id nstr acc -> acc ++ nstr) "" <| Dict.map (\enemyId enemy -> enemy.name ++ " died. ") dead_and_disappears)
+
+        --newModel =  { model | enemies = ( alive ++ dead_and_doesnt_disappear ++ alive_no_enlightenment ++  alive_enlightened_doesnt_disappear )  }
+        newModel =
+            { model | enemies = Dict.filter (\k v -> not (inList k keys_to_remove)) model.enemies }
     in
     case msg of
         Nothing ->
-            model
+            newModel
 
         Just m ->
-            log m { model | enemies = alive }
+            log m newModel
 
 
-enemy_AI : GameModel.Model -> GameModel.Model
+enemyExceedsNrMovesInCurrentTurn : EnemyId -> GameModel.Model -> Bool
+enemyExceedsNrMovesInCurrentTurn enemyid model =
+    let
+        mbEnemy =
+            Dict.get enemyid model.enemies
+    in
+    case mbEnemy of
+        Nothing ->
+            True
+
+        Just enemy ->
+            enemy.nrMovesInCurrentTurn >= enemy.maxNrEnemyMovesPerTurn
+
+
+enemy_AI : GameModel.Model -> ( GameModel.Model, List Enemy )
 enemy_AI model =
     let
-        mbEnemyIdEnemyPair =
-            Dict.filter (\enemyid enemy -> enemy.initiative <= model.player.initiative && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) model.enemies
+        enemyIdEnemyPairList =
+            Dict.filter (\enemyid enemy -> enemy.health > 0 && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) model.enemies
                 |> Dict.toList
-                |> List.head
+
+        --&& enemy.initiative <= model.player.initiative
+        --|> List.head
+        ai_helper_func : EnemyId -> ( GameModel.Model, List Enemy ) -> ( GameModel.Model, List Enemy )
+        ai_helper_func enemyid ( model_, lmbe ) =
+            if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model_.gameOfThornsModeisOn then
+                ( model_, lmbe )
+
+            else
+                let
+                    mbenemy =
+                        Dict.get enemyid model_.enemies
+
+                    ( model2, mbenemyForGameOfThorns ) =
+                        case mbenemy of
+                            Nothing ->
+                                ( model_, Nothing )
+
+                            Just enemy ->
+                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && not model_.gameOfThornsModeisOn then
+                                    attackIfClose enemy model_
+                                        -- prevent possible infinite recursion
+                                        |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))
+
+                                else
+                                    ( enemyMove enemy model_
+                                        |> increseNrOfEnemyMovesInCurrentTurn enemyid
+                                    , Nothing
+                                    )
+                in
+                case mbenemyForGameOfThorns of
+                    Just en ->
+                        ( model2, lmbe ++ [ en ] )
+
+                    Nothing ->
+                        --ai_helper_func enemyid ( model2, lmbe )
+                        ai_helper_func enemyid ( model2, lmbe )
     in
-    case mbEnemyIdEnemyPair of
-        Just ( enemyid, enemy ) ->
-            let
-                model2 =
-                    attackIfClose enemy model
-                        -- prevent possible infinite recursion
-                        |> increseNrOfEnemyMovesInCurrentTurn enemyid
-            in
-            enemy_AI model2
-
-        Nothing ->
-            model
+    List.foldl (\enpair ( modelacc, lmbenemies ) -> ai_helper_func (Tuple.first enpair) ( modelacc, lmbenemies )) ( model, [] ) enemyIdEnemyPairList
 
 
-attackIfClose : Enemy -> GameModel.Model -> GameModel.Model
+attackIfClose : Enemy -> GameModel.Model -> ( GameModel.Model, Maybe Enemy )
 attackIfClose enemy model =
-    case List.filter (\location -> location == model.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
-        location :: locs ->
-            let
-                --( enemy_, player_, msg, newprandInts ) =
-                attackOutput =
-                    attack enemy model.player model.pseudoRandomIntsPool
-            in
-            log attackOutput.textMsg
-                { model
-                    | player = attackOutput.dudeB
-                    , enemies = Dict.insert enemy.id attackOutput.dudeA model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
-                    , pseudoRandomIntsPool = attackOutput.randInts
-                }
+    if enemy.floorId /= model.currentFloorId && enemy.health > 0 then
+        ( enemyMove enemy model, Nothing )
 
-        [] ->
-            let
-                ( x, y, newprandInts ) =
-                    ( List.head model.pseudoRandomIntsPool |> Maybe.withDefault 0
-                    , List.drop 1 model.pseudoRandomIntsPool
-                        |> List.head
-                        |> Maybe.withDefault 0
-                    , List.drop 2 model.pseudoRandomIntsPool
+    else
+        case List.filter (\location -> location == model.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
+            location :: locs ->
+                if enemy.attacksUsingGameOfThorns then
+                    ( model, Just enemy )
+
+                else
+                    let
+                        --( enemy_, player_, msg, newprandInts ) =
+                        attackOutput =
+                            attack enemy model.player model.pseudoRandomIntsPool
+                    in
+                    ( log attackOutput.textMsg
+                        { model
+                            | player = attackOutput.dudeB
+                            , enemies = Dict.insert enemy.id attackOutput.dudeA model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
+                            , pseudoRandomIntsPool = attackOutput.randInts
+                        }
+                    , Nothing
                     )
 
-                xscaled =
-                    if x <= 33 then
-                        -- 1/3 probability
-                        -1
+            [] ->
+                ( enemyMove enemy model, Nothing )
 
-                    else if x > 33 && x <= 66 then
-                        0
 
-                    else
-                        1
+enemyMove : Enemy -> GameModel.Model -> GameModel.Model
+enemyMove enemy model =
+    let
+        ( x, y, newprandInts ) =
+            ( List.head model.pseudoRandomIntsPool |> Maybe.withDefault 0
+            , List.drop 1 model.pseudoRandomIntsPool
+                |> List.head
+                |> Maybe.withDefault 0
+            , List.drop 2 model.pseudoRandomIntsPool
+            )
 
-                yscaled =
-                    if y <= 33 then
-                        -1
+        xscaled =
+            if x <= 33 then
+                -- 1/3 probability
+                -1
 
-                    else if y > 33 && y <= 66 then
-                        0
+            else if x > 33 && x <= 66 then
+                0
 
-                    else
-                        1
+            else
+                1
 
-                enemy_ =
-                    move ( xscaled, yscaled ) model enemy
-            in
-            { model
-                | enemies = Dict.insert enemy.id enemy_ model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
-                , pseudoRandomIntsPool = newprandInts
-            }
+        yscaled =
+            if y <= 33 then
+                -1
+
+            else if y > 33 && y <= 66 then
+                0
+
+            else
+                1
+
+        enemy_ =
+            move ( xscaled, yscaled ) model enemy
+    in
+    { model
+        | enemies = Dict.insert enemy.id enemy_ model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
+        , pseudoRandomIntsPool = newprandInts
+    }
 
 
 
@@ -1154,6 +1202,13 @@ reveal model =
             List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc GameModel.Visible imodel) intermediateModel (GameModel.visible model)
     in
     newModel
+
+
+inList : a -> List a -> Bool
+inList a_val la =
+    List.filter (\elem -> elem == a_val) la
+        |> List.length
+        |> (\x -> x > 0)
 
 
 

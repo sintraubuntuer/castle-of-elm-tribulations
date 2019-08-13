@@ -43,8 +43,8 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> Enemy
-initialEnemy enemyid =
+initialEnemy : EnemyId -> Int -> Enemy
+initialEnemy enemyid floorId =
     let
         elem =
             "e" ++ String.fromInt enemyid
@@ -54,7 +54,7 @@ initialEnemy enemyid =
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid)
+    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) floorId
 
 
 
@@ -68,10 +68,10 @@ initialModelFunc =
             initialPlayer
 
         enemy =
-            initialEnemy 1
+            initialEnemy 1 caverns_floor_id
 
         enemy2 =
-            initialEnemy 2
+            initialEnemy 2 groundFloor_id
 
         levers =
             Dict.empty
@@ -86,8 +86,8 @@ initialModelFunc =
     ( { player = { player | location = { x = 60, y = 36 } }
       , enemies =
             Dict.fromList
-                [ ( 1, enemy )
-                , ( 2, enemy2 )
+                [ ( enemy.id, enemy )
+                , ( enemy2.id, enemy2 )
                 ]
       , otherCharacters = Dict.empty
       , level = GroundFloor.gridGroundFloor -- Grid.Grid Tile
@@ -118,12 +118,12 @@ initialModelFunc =
 
 common_window_width : Int
 common_window_width =
-    11
+    14
 
 
 common_window_height : Int
 common_window_height =
-    11
+    14
 
 
 dStore : Dict Int GameModel.FloorStore

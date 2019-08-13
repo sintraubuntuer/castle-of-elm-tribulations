@@ -1,37 +1,39 @@
-module GameView exposing
-    ( acid
-    , acidOverlay
-    , display
-    , door
-    , doorOverlay
-    , enemy
-    , floor
-    , floorOverlay
-    , floor_
-    , fog
-    , fogT
-    , gridToHtmlList
-    , guy
-    , halfFog
-    , lever
-    , mainScreen
-    , noForm
-    , notileyet
-    , notileyetOverlay
-    , player
-    , sidebar
-    , tile
-    , tileOverlay
-    , view
-    , viewDebugEnemies
-    , viewDebugGrid
-    , viewDebugPlayer
-    , wall
-    , wallOverlay
-    , xScale
-    , yScale
-    )
+module GameView exposing (view)
 
+{- }
+   ( acid
+   , acidOverlay
+   , display
+   , door
+   , doorOverlay
+   , enemy
+   , floor
+   , floorOverlay
+   , floor_
+   , fog
+   , fogT
+   , gridToHtmlList
+   , guy
+   , halfFog
+   , lever
+   , mainScreen
+   , noForm
+   , notileyet
+   , notileyetOverlay
+   , player
+   , sidebar
+   , tile
+   , tileOverlay
+   , view
+   , viewDebugEnemies
+   , viewDebugGrid
+   , viewDebugPlayer
+   , wall
+   , wallOverlay
+   , xScale
+   , yScale
+   )
+-}
 --import Element exposing (..)
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
@@ -607,7 +609,7 @@ mainScreen model =
         enemy_ =
             let
                 relevantEnemiesDict =
-                    Dict.filter (\enId enem -> (enem.location.x >= model.x_display_anchor && enem.location.x - model.x_display_anchor < model.window_width) && (enem.location.y >= model.y_display_anchor && enem.location.y - model.y_display_anchor < model.window_height)) model.enemies
+                    Dict.filter (\enId enem -> (enem.floorId == model.currentFloorId) && (enem.location.x >= model.x_display_anchor && enem.location.x - model.x_display_anchor < model.window_width) && (enem.location.y >= model.y_display_anchor && enem.location.y - model.y_display_anchor < model.window_height)) model.enemies
 
                 mkEnemy enid anenemy =
                     --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)

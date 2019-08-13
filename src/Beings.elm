@@ -49,10 +49,12 @@ type alias Player =
 
 type alias Enemy =
     { location : Location
+    , floorId : Int
     , id : EnemyId
     , textAvatar : String --Element.Element
     , name : String
     , health : Int
+    , indexOfLight : Int
     , mana : Int
     , inventory : Inventory
     , stealth : Int
@@ -61,6 +63,10 @@ type alias Enemy =
     , coordination : Int
     , power : Int
     , initiative : Int
+    , attacksUsingGameOfThorns : Bool
+    , indexOfLightMax : Int
+    , disappearsWhenHealthIsZero : Bool
+    , disappearsWhenIndexOfLightMax : Bool
     , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn : Int
     , placed : Bool
@@ -69,6 +75,7 @@ type alias Enemy =
 
 type alias OtherCharacter =
     { location : Location
+    , floorId : Int
     , id : CharacterId
     , textAvatar : String --Element.Element
     , name : String
@@ -118,13 +125,15 @@ playerCreationFunc elem pname =
     }
 
 
-enemyCreationFunc : String -> EnemyId -> String -> Enemy
-enemyCreationFunc elem enemyid ename =
+enemyCreationFunc : String -> EnemyId -> String -> Int -> Enemy
+enemyCreationFunc elem enemyid ename floor_id =
     { location = Grid.Coordinate 14 4
+    , floorId = floor_id
     , id = enemyid
     , textAvatar = elem
     , name = ename
     , health = 10
+    , indexOfLight = 1
     , mana = 100
     , inventory = Dict.empty
     , stealth = 20
@@ -133,7 +142,11 @@ enemyCreationFunc elem enemyid ename =
     , coordination = 100
     , power = 2
     , initiative = 1 -- this will be altered by generating a random int between 1 and 100
-    , maxNrEnemyMovesPerTurn = 10 -- to prevent possible infinite recursion in ai
+    , attacksUsingGameOfThorns = True
+    , indexOfLightMax = 11
+    , disappearsWhenHealthIsZero = False
+    , disappearsWhenIndexOfLightMax = False
+    , maxNrEnemyMovesPerTurn = 2 -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn = 0
     , placed = False
     }

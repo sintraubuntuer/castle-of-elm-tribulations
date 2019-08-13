@@ -30,8 +30,8 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> Enemy
-initialEnemy enemyid =
+initialEnemy : EnemyId -> Int -> Enemy
+initialEnemy enemyid floorId =
     let
         elem =
             "e" ++ String.fromInt enemyid
@@ -41,7 +41,7 @@ initialEnemy enemyid =
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid)
+    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) floorId
 
 
 dimensions : ( Int, Int )
@@ -56,10 +56,10 @@ initialModelFunc =
             initialPlayer
 
         enemy =
-            initialEnemy 1
+            initialEnemy 1 theFloorId
 
         enemy2 =
-            initialEnemy 2
+            initialEnemy 2 theFloorId
 
         levers =
             Dict.empty
@@ -79,6 +79,9 @@ initialModelFunc =
 
         firstExplored =
             setAllAsUnexplored firstMap
+
+        theFloorId =
+            1
 
         randomlyPositionPlayer =
             True
@@ -112,7 +115,7 @@ initialModelFunc =
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = roomsInfo --  RoomsInfo
       , floorDict = Dict.empty
-      , currentFloorId = 1
+      , currentFloorId = theFloorId
       , started = True
       }
     , createRandomMap
