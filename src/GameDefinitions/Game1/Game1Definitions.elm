@@ -41,7 +41,7 @@ initialEnemy enemyid floorId =
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) floorId
+    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) "ghost" floorId
 
 
 dimensions : ( Int, Int )
@@ -112,6 +112,7 @@ initialModelFunc =
       , window_height = 12
       , total_width = Tuple.first dimensions
       , total_height = Tuple.second dimensions
+      , displayInventory = False
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = roomsInfo --  RoomsInfo
       , floorDict = Dict.empty

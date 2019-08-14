@@ -1,43 +1,10 @@
 module GameView exposing (view)
 
-{- }
-   ( acid
-   , acidOverlay
-   , display
-   , door
-   , doorOverlay
-   , enemy
-   , floor
-   , floorOverlay
-   , floor_
-   , fog
-   , fogT
-   , gridToHtmlList
-   , guy
-   , halfFog
-   , lever
-   , mainScreen
-   , noForm
-   , notileyet
-   , notileyetOverlay
-   , player
-   , sidebar
-   , tile
-   , tileOverlay
-   , view
-   , viewDebugEnemies
-   , viewDebugGrid
-   , viewDebugPlayer
-   , wall
-   , wallOverlay
-   , xScale
-   , yScale
-   )
--}
 --import Element exposing (..)
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Collage exposing (..)
+import Collage.Events
 import Collage.Layout exposing (..)
 import Collage.Render exposing (svg)
 import Collage.Text as Text
@@ -45,13 +12,13 @@ import Color exposing (..)
 import Debug
 import Dict exposing (Dict)
 import GameModel
-import GameUpdate
+import GameUpdate exposing (Msg(..))
 import Grid
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Item exposing (Item(..), KeyInfo)
-import Thorns.Types exposing (Msg(..))
+import Thorns.Types
 import Thorns.View as ThornsView
 
 
@@ -71,7 +38,7 @@ yScale =
 --Form
 
 
-noForm : Collage msg
+noForm : Collage Msg
 noForm =
     --toForm empty
     Collage.circle 0 |> filled (uniform red)
@@ -79,7 +46,7 @@ noForm =
 
 floor_ :
     GameModel.FloorInfo
-    -> Collage msg --Form
+    -> Collage Msg --Form
 floor_ floorinfo =
     --rect (toFloat xScale) (toFloat yScale) |> filled black
     let
@@ -95,7 +62,7 @@ floor_ floorinfo =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-floor : GameModel.FloorInfo -> Collage msg
+floor : GameModel.FloorInfo -> Collage Msg
 floor floorinfo =
     {- }
        let
@@ -110,7 +77,7 @@ floor floorinfo =
 --|> gradient theGradient
 
 
-floorOverlay : String -> Collage msg
+floorOverlay : String -> Collage Msg
 floorOverlay elemStr =
     --guy { avatar = "." |> Text.fromString |> Text.monospace |> Text.color white |> centered } GameModel.Visible
     if elemStr == "ash" then
@@ -126,7 +93,7 @@ floorOverlay elemStr =
         noForm
 
 
-stairs : String -> Collage msg
+stairs : String -> Collage Msg
 stairs upOrDownStr =
     let
         fileStr =
@@ -139,7 +106,7 @@ stairs upOrDownStr =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-hole : Collage msg
+hole : Collage Msg
 hole =
     let
         fileStr =
@@ -148,7 +115,7 @@ hole =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-wall : String -> Collage msg
+wall : String -> Collage Msg
 wall orientationStr =
     --rect (toFloat xScale) (toFloat yScale) |> filled grey
     let
@@ -209,7 +176,7 @@ wall orientationStr =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-wallOverlay : GameModel.WallInfo -> Collage msg
+wallOverlay : GameModel.WallInfo -> Collage Msg
 wallOverlay wallinfo =
     --guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } GameModel.Visible
     case wallinfo.mbTeleporterObject of
@@ -228,13 +195,51 @@ wallOverlay wallinfo =
             noForm
 
 
-door : GameModel.DoorInfo -> Collage msg
+door : GameModel.DoorInfo -> Collage Msg
 door doorinfo =
-    if doorinfo.isOpen then
-        rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform white)
+    let
+        mbFileStr =
+            if doorinfo.isOpen && (doorinfo.orientation == GameModel.DoorToUp || doorinfo.orientation == GameModel.DoorToDown) then
+                --rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform white)
+                Just "img/doors/doorUp_open_floorBg.png"
 
-    else
-        rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (doorinfo.color |> Maybe.withDefault "white" |> stringToColor))
+            else if doorinfo.isOpen && doorinfo.orientation == GameModel.DoorToTheLeft then
+                Just "img/doors/doorLeft_open_floorBg.png"
+
+            else if doorinfo.isOpen && doorinfo.orientation == GameModel.DoorToTheRight then
+                Just "img/doors/doorRight_open_floorBg.png"
+
+            else if doorinfo.isOpen then
+                Just "img/floor/floor_01.png"
+
+            else if doorinfo.color == Just "blue" then
+                Just "img/doors/blueDoorClosed_floorBg.png"
+
+            else if doorinfo.color == Just "green" then
+                Just "img/doors/greenDoorClosed_floorBg.png"
+
+            else if doorinfo.color == Just "red" then
+                Just "img/doors/redDoorClosed_floorBg.png"
+
+            else if doorinfo.color == Just "yellow" then
+                Just "img/doors/yellowDoorClosed_floorBg.png"
+
+            else if doorinfo.color == Just "black" then
+                Just "img/doors/blackDoorClosed_floorBg.png"
+
+            else
+                Just "img/doors/doorClosed_floorBg.png"
+    in
+    case mbFileStr of
+        Just fileStr ->
+            Collage.image ( toFloat xScale, toFloat yScale ) fileStr
+
+        Nothing ->
+            noForm
+
+
+
+--rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (doorinfo.color |> Maybe.withDefault "white" |> stringToColor))
 
 
 stringToColor : String -> Color
@@ -258,12 +263,12 @@ stringToColor theColorStr =
         white
 
 
-doorOverlay : Collage msg
-doorOverlay =
+doorOverlay : GameModel.DoorInfo -> Collage Msg
+doorOverlay doorInfo =
     noForm
 
 
-lever : String -> Collage msg
+lever : String -> Collage Msg
 lever onOffStr =
     let
         fileStr =
@@ -276,17 +281,17 @@ lever onOffStr =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-acid : Collage msg
+acid : Collage Msg
 acid =
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform darkGreen)
 
 
-acidOverlay : Collage msg
+acidOverlay : Collage Msg
 acidOverlay =
     noForm
 
 
-notileyet : Collage msg
+notileyet : Collage Msg
 notileyet =
     --rect (toFloat xScale) (toFloat yScale) |> filled blue
     --gradient : Gradient -> Shape -> Form
@@ -303,22 +308,22 @@ notileyet =
 --|> gradient theGradient
 
 
-notileyetOverlay : Collage msg
+notileyetOverlay : Collage Msg
 notileyetOverlay =
     noForm
 
 
-fog : Collage msg
+fog : Collage Msg
 fog =
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (rgba 0 0 0 1))
 
 
-halfFog : Collage msg
+halfFog : Collage Msg
 halfFog =
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (rgba 0 0 0 0.6))
 
 
-tile : Int -> GameModel.Tile -> Collage msg
+tile : Int -> GameModel.Tile -> Collage Msg
 tile currentFloorId t =
     case t of
         GameModel.Floor floorinfo ->
@@ -410,7 +415,7 @@ tile currentFloorId t =
             notileyet
 
 
-grass : GameModel.GrassInfo -> Collage msg
+grass : GameModel.GrassInfo -> Collage Msg
 grass grassinfo =
     let
         fileStr =
@@ -423,7 +428,7 @@ grass grassinfo =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-water : GameModel.WaterInfo -> Collage msg
+water : GameModel.WaterInfo -> Collage Msg
 water waterinfo =
     let
         fileStr =
@@ -439,7 +444,7 @@ water waterinfo =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-tileOverlay : GameModel.Tile -> Collage msg
+tileOverlay : GameModel.Tile -> Collage Msg
 tileOverlay t =
     case t of
         GameModel.Floor floorinfo ->
@@ -463,7 +468,7 @@ tileOverlay t =
             wallOverlay wallinfo
 
         GameModel.Door doorinfo ->
-            doorOverlay
+            doorOverlay doorinfo
 
         GameModel.NoTileYet ->
             notileyetOverlay
@@ -472,7 +477,7 @@ tileOverlay t =
             notileyetOverlay
 
 
-fogT : GameModel.Visibility -> Collage msg
+fogT : GameModel.Visibility -> Collage Msg
 fogT visibility =
     case visibility of
         GameModel.Visible ->
@@ -485,17 +490,17 @@ fogT visibility =
             fog
 
 
-player : Collage msg
+player : Collage Msg
 player =
     Collage.circle (toFloat xScale / 2) |> filled (uniform red)
 
 
-enemy : Collage msg
+enemy : Collage Msg
 enemy =
     Collage.circle (toFloat xScale / 2) |> filled (uniform green)
 
 
-tCollageFromStr : String -> Collage msg
+tCollageFromStr : String -> Collage Msg
 tCollageFromStr elemStr =
     elemStr
         |> Text.fromString
@@ -508,7 +513,47 @@ tCollageFromStr elemStr =
 --|> centered
 
 
-guy : { r | textAvatar : String } -> GameModel.Visibility -> Collage msg
+playerImg : Player -> GameModel.Visibility -> Collage Msg
+playerImg player_ visibility =
+    case visibility of
+        GameModel.Visible ->
+            let
+                fileStr =
+                    case player_.direction of
+                        Beings.Left ->
+                            "img/pc/left.png"
+
+                        Beings.Right ->
+                            "img/pc/right.png"
+
+                        Beings.Up ->
+                            "img/pc/up.png"
+
+                        Beings.Down ->
+                            "img/pc/down.png"
+            in
+            Collage.image ( toFloat xScale, toFloat yScale ) fileStr
+
+        _ ->
+            noForm
+
+
+enemyImg : Beings.Enemy -> GameModel.Visibility -> Collage Msg
+enemyImg enem visibility =
+    case visibility of
+        GameModel.Visible ->
+            let
+                fileStr =
+                    "img/characters/" ++ String.toLower enem.species ++ ".png"
+            in
+            Collage.image ( toFloat xScale, toFloat yScale ) fileStr
+                |> Collage.Events.onMouseOver (GameUpdate.LogEnemyHealth enem)
+
+        _ ->
+            noForm
+
+
+guy : { r | textAvatar : String } -> GameModel.Visibility -> Collage Msg
 guy r visibility =
     case visibility of
         GameModel.Visible ->
@@ -537,13 +582,13 @@ guy r visibility =
 
 
 {- }
-   text : String -> Collage msg
+   text : String -> Collage Msg
    text =
        Text.fromString >> Text.monospace >> Text.color white >> centered
 -}
 
 
-mainScreen : GameModel.Model -> Collage msg
+mainScreen : GameModel.Model -> Collage Msg
 mainScreen model =
     let
         ( subgrid, txtmsg ) =
@@ -580,7 +625,7 @@ mainScreen model =
         location r =
             ( xOffset r.location.x, 0 - yOffset (r.location.y + 1) )
 
-        mkLayer : List (List a) -> (( Int, List a ) -> List (Collage msg)) -> Collage msg
+        mkLayer : List (List a) -> (( Int, List a ) -> List (Collage Msg)) -> Collage Msg
         mkLayer agrid mapRow =
             let
                 rows =
@@ -592,7 +637,7 @@ mainScreen model =
             --collage (w + xScale) (h + yScale) forms
             Collage.group forms
 
-        row : (a -> Collage msg) -> ( Int, List a ) -> List (Collage msg)
+        row : (a -> Collage Msg) -> ( Int, List a ) -> List (Collage Msg)
         row mkTile ( n, tiles ) =
             let
                 tiles_ =
@@ -604,7 +649,9 @@ mainScreen model =
             List.map makeTile tiles_
 
         player_ =
-            guy model.player GameModel.Visible |> shift (location model.player)
+            --guy model.player GameModel.Visible |> shift (location model.player)
+            playerImg model.player GameModel.Visible
+                |> shift (location model.player)
 
         enemy_ =
             let
@@ -613,14 +660,15 @@ mainScreen model =
 
                 mkEnemy enid anenemy =
                     --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
-                    guy anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
+                    --guy anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
+                    enemyImg anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
                         |> shift (location anenemy)
             in
             group <| (Dict.map mkEnemy relevantEnemiesDict |> Dict.values)
 
         --grid =
         --Grid.toList model.level
-        bg : Collage msg
+        bg : Collage Msg
         bg =
             --background model.level model
             --background subgrid model
@@ -731,7 +779,7 @@ inViewRange enemy_ =
 -}
 
 
-sidebar : GameModel.Model -> ( Float, Float ) -> Collage msg
+sidebar : GameModel.Model -> ( Float, Float ) -> Collage Msg
 sidebar model pos =
     let
         x =
@@ -761,16 +809,44 @@ sidebar model pos =
             , "current_player_y : " ++ String.fromInt model.player.location.y |> Text.fromString |> theColor |> Collage.rendered
             , "wall percentage : " ++ String.fromFloat (model.wallPercentage |> Maybe.withDefault 0) |> Text.fromString |> theColor |> Collage.rendered
             ]
-                |> List.indexedMap (\i elem -> shift ( -400, 200 - toFloat i * 25 ) elem)
+                |> List.indexedMap (\i elem -> shift ( -100, 200 - toFloat i * 25 ) elem)
                 |> Collage.group
     in
     --container (widthOf bar + 20) (heightOf bar) midTop bar
     bar
 
 
+viewItem : Item.Item -> Collage Msg
+viewItem item =
+    case item of
+        Key { keyColor } ->
+            Collage.image ( toFloat xScale, toFloat yScale ) ("img/items/key_" ++ String.toLower keyColor ++ ".png")
+
+        _ ->
+            noForm
+
+
+viewInventory : GameModel.Model -> Collage Msg
+viewInventory model =
+    let
+        theColor =
+            Text.color white
+
+        top =
+            [ "You have currently in your inventory : " |> Text.fromString |> theColor |> Collage.rendered |> shift ( 0, 70 ) ]
+
+        forms =
+            List.map (\it -> viewItem it) (Dict.values model.player.inventory)
+
+        topAndForms =
+            List.indexedMap (\i item -> item |> shift ( 0, 1 * (0 + toFloat i * 50) )) (top ++ forms)
+    in
+    Collage.group topAndForms
+
+
 display :
     GameModel.Model
-    -> Collage msg --Element
+    -> Collage Msg --Element
 display model =
     let
         pos =
@@ -781,7 +857,12 @@ display model =
     in
     --flow right [ sidebar model, mainScreen model ] |> color black
     Collage.group
-        [ sidebar model pos
+        [ if model.displayInventory then
+            viewInventory model |> shift ( 0, 0 )
+
+          else
+            noForm
+        , sidebar model pos
 
         --|> shift ( -model.x_display_anchor * xScale |> toFloat >> (\x -> x * 0.5), model.y_display_anchor * yScale |> toFloat )
         , mainScreen model
@@ -794,7 +875,7 @@ display model =
 --|> color black
 
 
-gridToHtmlList : Grid.Grid a -> List (Html msg)
+gridToHtmlList : Grid.Grid a -> List (Html Msg)
 gridToHtmlList grid =
     let
         lofls =
@@ -810,7 +891,7 @@ gridToHtmlList grid =
     List.map (\astr -> Html.h1 [] [ Html.text astr ]) lofstrs
 
 
-viewDebugGrid : Grid.Grid a -> GameModel.Model -> List (Html msg)
+viewDebugGrid : Grid.Grid a -> GameModel.Model -> List (Html Msg)
 viewDebugGrid grid model =
     let
         --_ =
@@ -828,7 +909,7 @@ viewDebugGrid grid model =
     ]
 
 
-viewDebugPlayer : GameModel.Model -> Html msg
+viewDebugPlayer : GameModel.Model -> Html Msg
 viewDebugPlayer model =
     Html.h2 []
         [ Html.text
@@ -844,7 +925,7 @@ viewDebugPlayer model =
         ]
 
 
-viewDebugEnemies : GameModel.Model -> List (Html msg)
+viewDebugEnemies : GameModel.Model -> List (Html Msg)
 viewDebugEnemies model =
     let
         enemyToHtmlFunc enemy_ enemyId =

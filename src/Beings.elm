@@ -1,5 +1,6 @@
 module Beings exposing
     ( CharacterId
+    , Direction(..)
     , Enemy
     , EnemyId
     , Inventory
@@ -32,6 +33,7 @@ type alias Player =
     { location : Location
     , textAvatar : String --Element.Element
     , name : String
+    , direction : Direction
     , health : Int
     , energy : Int
     , mana : Int
@@ -47,12 +49,21 @@ type alias Player =
     }
 
 
+type Direction
+    = Up
+    | Down
+    | Left
+    | Right
+
+
 type alias Enemy =
     { location : Location
     , floorId : Int
     , id : EnemyId
     , textAvatar : String --Element.Element
     , name : String
+    , direction : Direction
+    , species : String
     , health : Int
     , indexOfLight : Int
     , mana : Int
@@ -79,6 +90,7 @@ type alias OtherCharacter =
     , id : CharacterId
     , textAvatar : String --Element.Element
     , name : String
+    , species : String
     , health : Int
     , mana : Int
     , inventory : Inventory
@@ -110,6 +122,7 @@ playerCreationFunc elem pname =
     { location = Grid.Coordinate 10 10
     , textAvatar = elem
     , name = pname
+    , direction = Down
     , health = 10
     , energy = 10
     , mana = 100
@@ -125,13 +138,15 @@ playerCreationFunc elem pname =
     }
 
 
-enemyCreationFunc : String -> EnemyId -> String -> Int -> Enemy
-enemyCreationFunc elem enemyid ename floor_id =
+enemyCreationFunc : String -> EnemyId -> String -> String -> Int -> Enemy
+enemyCreationFunc elem enemyid ename species_ floor_id =
     { location = Grid.Coordinate 14 4
     , floorId = floor_id
     , id = enemyid
     , textAvatar = elem
     , name = ename
+    , direction = Down
+    , species = species_
     , health = 10
     , indexOfLight = 1
     , mana = 100

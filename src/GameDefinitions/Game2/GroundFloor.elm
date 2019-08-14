@@ -269,7 +269,7 @@ groundFloorStairsTunnelWithOptions =
 
     --
     , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
-      , { left = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToTheRight)
+      , { left = GameModel.UseDoor (GameModel.defaultBlackDoorInfo GameModel.DoorToTheRight)
 
         --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
         , top = GameModel.NoDoorNoWall

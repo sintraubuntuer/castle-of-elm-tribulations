@@ -43,8 +43,8 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> Int -> Enemy
-initialEnemy enemyid floorId =
+initialEnemy : EnemyId -> String -> Int -> Enemy
+initialEnemy enemyid species floorId =
     let
         elem =
             "e" ++ String.fromInt enemyid
@@ -54,7 +54,7 @@ initialEnemy enemyid floorId =
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) floorId
+    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) species floorId
 
 
 
@@ -67,11 +67,23 @@ initialModelFunc =
         player =
             initialPlayer
 
-        enemy =
-            initialEnemy 1 caverns_floor_id
+        enemy1 =
+            initialEnemy 1 "ghost" caverns_floor_id
 
         enemy2 =
-            initialEnemy 2 groundFloor_id
+            initialEnemy 2 "snake" caverns_floor_id
+
+        enemy3 =
+            initialEnemy 3 "bat" basement_floor_id
+
+        enemy4 =
+            initialEnemy 4 "slime" basement_floor_id
+
+        enemy5 =
+            initialEnemy 5 "small_worm" groundFloor_id
+
+        enemy6 =
+            initialEnemy 6 "pumpking" groundFloor_id
 
         levers =
             Dict.empty
@@ -86,8 +98,12 @@ initialModelFunc =
     ( { player = { player | location = { x = 60, y = 36 } }
       , enemies =
             Dict.fromList
-                [ ( enemy.id, enemy )
+                [ ( enemy1.id, enemy1 )
                 , ( enemy2.id, enemy2 )
+                , ( enemy3.id, enemy3 )
+                , ( enemy4.id, enemy4 )
+                , ( enemy5.id, enemy5 )
+                , ( enemy6.id, enemy6 )
                 ]
       , otherCharacters = Dict.empty
       , level = GroundFloor.gridGroundFloor -- Grid.Grid Tile
@@ -105,6 +121,7 @@ initialModelFunc =
       , window_height = common_window_height
       , total_width = get_total_width config_params 7
       , total_height = get_total_height config_params 9
+      , displayInventory = False
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = dStore

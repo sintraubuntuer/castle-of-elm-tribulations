@@ -26,8 +26,10 @@ module GameUpdate exposing
 
 --import Generator
 --import Collage
+--import Collage.Layout
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
@@ -72,12 +74,20 @@ type Msg
     | NewRandomIntsAddToPool (List Int)
     | NewRandomIntsAddToPoolAndGenerateRandomMap (List Int)
     | ThornsMsg Thorns.Types.Msg
+    | LogEnemyHealth Beings.Enemy Collage.Point
 
 
 update : Msg -> GameModel.Model -> ( GameModel.Model, Cmd Msg )
 update msg model =
     case msg of
         Noop ->
+            ( model, Cmd.none )
+
+        LogEnemyHealth enemy pt ->
+            let
+                _ =
+                    Debug.log "enemy health is : " enemy.health
+            in
             ( model, Cmd.none )
 
         ThornsMsg tmsg ->
@@ -191,7 +201,7 @@ update msg model =
                             _ =
                                 Debug.log "player inventory : " (Dict.keys model.player.inventory)
                         in
-                        ( model, Cmd.none )
+                        ( { model | displayInventory = not model.displayInventory }, Cmd.none )
 
                     GameModel.FloorUp ->
                         update (ChangeFloorTo (model.currentFloorId + 1) ( model.player.location.x, model.player.location.y )) model
@@ -272,31 +282,29 @@ update msg model =
                         enemy :: es ->
                             Just enemy
 
-                newModel2 =
+                ( newModel2, themsg ) =
                     case mbEnemy of
                         Just enemy ->
-                            newModel
+                            if enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax then
+                                ( newModel, StartOpponentInteraction enemy )
+
+                            else
+                                ( newModel, CleanUpAndEnemyLogic )
 
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
-                                { newModel | player = move ( x_, y_ ) newModel newModel.player }
+                                ( { newModel | player = move ( x_, y_ ) newModel newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
+                                    |> openDoorIfPlayerStandingOnDoorAndClosed
                                     --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
+                                , CleanUpAndEnemyLogic
+                                )
 
                             else
-                                newModel
+                                ( newModel, CleanUpAndEnemyLogic )
             in
-            case mbEnemy of
-                Just enemy ->
-                    if enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax then
-                        update (StartOpponentInteraction enemy) newModel2
-
-                    else
-                        update CleanUpAndEnemyLogic newModel2
-
-                Nothing ->
-                    update CleanUpAndEnemyLogic newModel2
+            update themsg newModel2
 
         CleanUpAndEnemyLogic ->
             let
@@ -900,7 +908,7 @@ cmdGenFloatsForRandomCave w h =
     Random.generate NewRandomFloatsForGenCave (Random.list nrFloats (Random.float 0 1))
 
 
-move : ( Int, Int ) -> GameModel.Model -> { a | location : GameModel.Location, initiative : Int } -> { a | location : GameModel.Location, initiative : Int }
+move : ( Int, Int ) -> GameModel.Model -> { a | location : GameModel.Location, direction : Beings.Direction, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, initiative : Int }
 move ( x, y ) model a =
     let
         location =
@@ -917,7 +925,41 @@ move ( x, y ) model a =
             { a
                 | location = location
                 , initiative = initiative
+                , direction =
+                    if x > 0 then
+                        Beings.Right
+
+                    else if x < 0 then
+                        Beings.Left
+
+                    else if y > 0 then
+                        Beings.Down
+
+                    else
+                        Beings.Up
             }
+
+
+openDoorIfPlayerStandingOnDoorAndClosed : GameModel.Model -> GameModel.Model
+openDoorIfPlayerStandingOnDoorAndClosed model =
+    let
+        newGrid =
+            case Grid.get model.player.location model.level of
+                Just (GameModel.Door doorinfo) ->
+                    if not doorinfo.isOpen then
+                        let
+                            newDoorInfo =
+                                { doorinfo | isOpen = True }
+                        in
+                        Grid.set model.player.location (GameModel.Door newDoorInfo) model.level
+
+                    else
+                        model.level
+
+                _ ->
+                    model.level
+    in
+    { model | level = newGrid }
 
 
 attack :
@@ -1139,7 +1181,7 @@ attackIfClose enemy model =
 enemyMove : Enemy -> GameModel.Model -> GameModel.Model
 enemyMove enemy model =
     let
-        ( x, y, newprandInts ) =
+        ( xrand, yrand, newprandInts ) =
             ( List.head model.pseudoRandomIntsPool |> Maybe.withDefault 0
             , List.drop 1 model.pseudoRandomIntsPool
                 |> List.head
@@ -1147,22 +1189,57 @@ enemyMove enemy model =
             , List.drop 2 model.pseudoRandomIntsPool
             )
 
+        x_delta_toPlayer =
+            model.player.location.x - enemy.location.x
+
+        y_delta_toPlayer =
+            model.player.location.y - enemy.location.y
+
         xscaled =
-            if x <= 33 then
-                -- 1/3 probability
+            if x_delta_toPlayer > 0 then
+                if xrand <= 66 then
+                    -- 1/3 probability
+                    1
+
+                else
+                    -1
+
+            else if x_delta_toPlayer < 0 then
+                if xrand <= 66 then
+                    -- 1/3 probability
+                    -1
+
+                else
+                    1
+
+            else if xrand <= 33 then
                 -1
 
-            else if x > 33 && x <= 66 then
+            else if xrand > 33 && xrand <= 66 then
                 0
 
             else
                 1
 
         yscaled =
-            if y <= 33 then
+            if y_delta_toPlayer > 0 then
+                if yrand <= 66 then
+                    1
+
+                else
+                    -1
+
+            else if y_delta_toPlayer < 0 then
+                if yrand <= 66 then
+                    1
+
+                else
+                    -1
+
+            else if yrand <= 33 then
                 -1
 
-            else if y > 33 && y <= 66 then
+            else if yrand > 33 && yrand <= 66 then
                 0
 
             else

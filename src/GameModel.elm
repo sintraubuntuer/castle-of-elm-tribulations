@@ -94,7 +94,16 @@ module GameModel exposing
     , visible
     )
 
-import Beings exposing (CharacterId, Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), OtherCharacter, Player)
+import Beings
+    exposing
+        ( CharacterId
+        , Direction(..)
+        , Enemy
+        , EnemyId
+        , OPPONENT_INTERACTION_OPTIONS(..)
+        , OtherCharacter
+        , Player
+        )
 import Collage.Text as Text
 import Dict exposing (Dict)
 import Grid
@@ -147,6 +156,7 @@ type alias Model =
     , window_height : Int
     , total_width : Int
     , total_height : Int
+    , displayInventory : Bool
     , wallPercentage : Maybe Float
     , roomsInfo : Maybe RoomsInfo
     , floorDict : Dict Int FloorStore

@@ -96,8 +96,8 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> Int -> Enemy
-initialEnemy enemyid floor_id =
+initialEnemy : EnemyId -> String -> Int -> Enemy
+initialEnemy enemyid species floor_id =
     let
         elem =
             "e" ++ String.fromInt enemyid
@@ -107,7 +107,7 @@ initialEnemy enemyid floor_id =
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) floor_id
+    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) species floor_id
 
 
 dimensions : ( Int, Int )
@@ -122,10 +122,10 @@ initialModelFunc =
             initialPlayer
 
         enemy =
-            initialEnemy 1 theFloorId
+            initialEnemy 1 "ghost" theFloorId
 
         enemy2 =
-            initialEnemy 2 theFloorId
+            initialEnemy 2 "ghost" theFloorId
 
         levers =
             Dict.empty
@@ -167,6 +167,7 @@ initialModelFunc =
       , window_height = 10
       , total_width = Tuple.first dimensions
       , total_height = Tuple.second dimensions
+      , displayInventory = False
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = Dict.empty
