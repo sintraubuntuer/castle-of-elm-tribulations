@@ -456,6 +456,19 @@ tileOverlay t =
                     --floorOverlay ( "key_" ++ floorinfo.item.color )
                     floorOverlay ("key_" ++ keyinfo.keyColor)
 
+                Just Box ->
+                    Collage.image ( toFloat xScale, toFloat yScale ) "img/items/box.png"
+
+                Just (Paper paperinfo) ->
+                    if paperinfo.id == 1 then
+                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part1.png"
+
+                    else if paperinfo.id == 2 then
+                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part2.png"
+
+                    else
+                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part3.png"
+
                 _ ->
                     case floorinfo.floorDrawing of
                         Just (GameModel.LandingTargetDrawing nr) ->
@@ -821,6 +834,19 @@ viewItem item =
     case item of
         Key { keyColor } ->
             Collage.image ( toFloat xScale, toFloat yScale ) ("img/items/key_" ++ String.toLower keyColor ++ ".png")
+
+        Box ->
+            Collage.image ( toFloat xScale, toFloat yScale ) "img/items/box.png"
+
+        Paper paperinfo ->
+            if paperinfo.id == 1 then
+                Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part1.png"
+
+            else if paperinfo.id == 2 then
+                Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part2.png"
+
+            else
+                Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part3.png"
 
         _ ->
             noForm

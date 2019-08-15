@@ -93,7 +93,7 @@ init flags =
         gBounds =
             Grid.getGridBoundsToPlacePlayer initModel.level
     in
-    ( initModel, Cmd.none )
+    ( initModel, GameUpdate.cmdFillRandomIntsPool initModel )
 
 
 main : Program Flags GameModel.Model GameUpdate.Msg

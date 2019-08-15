@@ -69,6 +69,7 @@ import GameModel
         , defaultWaterInfo
         )
 import Grid
+import Item
 import MapGen
 
 
@@ -269,7 +270,7 @@ groundFloorStairsTunnelWithOptions =
 
     --
     , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
-      , { left = GameModel.UseDoor (GameModel.defaultBlackDoorInfo GameModel.DoorToTheRight)
+      , { left = GameModel.UseDoor (customBlackDoorInfo GameModel.DoorToTheRight)
 
         --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
         , top = GameModel.NoDoorNoWall
@@ -279,6 +280,21 @@ groundFloorStairsTunnelWithOptions =
       )
     ]
         |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))
+
+
+customBlackDoorInfo : GameModel.DoorOrientation -> GameModel.DoorInfo
+customBlackDoorInfo dorientation =
+    { isOpen = False
+    , color = Just "black"
+    , orientation = dorientation
+    , requiresToOpen =
+        [ Item.Paper (Item.PaperInfo 1 "" "" "")
+        , Item.Paper (Item.PaperInfo 2 "" "" "")
+        , Item.Paper (Item.PaperInfo 3 "" "" "")
+        ]
+    , isExplored = False
+    , visibility = GameModel.Unexplored
+    }
 
 
 groundFloorStairsTunnel : List TunnelRectangle

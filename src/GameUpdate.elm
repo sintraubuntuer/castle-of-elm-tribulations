@@ -138,7 +138,7 @@ update msg model =
                             GameDefinitions.Game1.Game1Definitions.initialModelFunc
 
                         2 ->
-                            GameDefinitions.Game2.Game2Definitions.initialModelFunc
+                            GameDefinitions.Game2.Game2Definitions.initialModelFunc model.pseudoRandomIntsPool
 
                         _ ->
                             ( model, False, False )
@@ -196,7 +196,6 @@ update msg model =
                         update TryAddToPlayerInventory model
 
                     GameModel.ViewInventory ->
-                        -- for the time being
                         let
                             _ =
                                 Debug.log "player inventory : " (Dict.keys model.player.inventory)
@@ -226,9 +225,16 @@ update msg model =
                         Just (GameModel.Floor floorinfo) ->
                             case floorinfo.item of
                                 Just item ->
-                                    ( Dict.update (GameModel.itemToString item) (\_ -> Just item) model.player.inventory
-                                    , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
-                                    )
+                                    case item of
+                                        Paper paperinfo ->
+                                            ( Dict.update ("paper_" ++ String.fromInt paperinfo.id) (\_ -> Just item) model.player.inventory
+                                            , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            )
+
+                                        _ ->
+                                            ( Dict.update (GameModel.itemToString item) (\_ -> Just item) model.player.inventory
+                                            , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            )
 
                                 _ ->
                                     ( model.player.inventory, model.level )

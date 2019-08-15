@@ -363,6 +363,9 @@ itemToString item =
         Ash ->
             "ash"
 
+        Paper paperinfo ->
+            "a piece of paper : " ++ paperinfo.description ++ " , with some written text : " ++ paperinfo.text
+
 
 type FloorDrawing
     = LandingTargetDrawing Int
@@ -457,7 +460,7 @@ type alias DoorInfo =
     { isOpen : Bool
     , color : Maybe String
     , orientation : DoorOrientation
-    , requiresToOpen : Maybe Item
+    , requiresToOpen : List Item
     , isExplored : Bool
     , visibility : Visibility
     }
@@ -465,37 +468,37 @@ type alias DoorInfo =
 
 defaultDoorInfo : DoorOrientation -> DoorInfo
 defaultDoorInfo dorientation =
-    { isOpen = False, color = Nothing, orientation = dorientation, requiresToOpen = Nothing, isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Nothing, orientation = dorientation, requiresToOpen = [], isExplored = False, visibility = Unexplored }
 
 
 defaultOpenDoorInfo : DoorOrientation -> DoorInfo
 defaultOpenDoorInfo dorientation =
-    { isOpen = True, color = Nothing, orientation = dorientation, requiresToOpen = Nothing, isExplored = False, visibility = Unexplored }
+    { isOpen = True, color = Nothing, orientation = dorientation, requiresToOpen = [], isExplored = False, visibility = Unexplored }
 
 
 defaultBlueDoorInfo : DoorOrientation -> DoorInfo
 defaultBlueDoorInfo dorientation =
-    { isOpen = False, color = Just "blue", orientation = dorientation, requiresToOpen = Just (Key { keyColor = "blue" }), isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "blue", orientation = dorientation, requiresToOpen = [ Key { keyColor = "blue" } ], isExplored = False, visibility = Unexplored }
 
 
 defaultBlackDoorInfo : DoorOrientation -> DoorInfo
 defaultBlackDoorInfo dorientation =
-    { isOpen = False, color = Just "black", orientation = dorientation, requiresToOpen = Just (Key { keyColor = "black" }), isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "black", orientation = dorientation, requiresToOpen = [ Key { keyColor = "black" } ], isExplored = False, visibility = Unexplored }
 
 
 defaultRedDoorInfo : DoorOrientation -> DoorInfo
 defaultRedDoorInfo dorientation =
-    { isOpen = False, color = Just "red", orientation = dorientation, requiresToOpen = Just (Key { keyColor = "red" }), isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "red", orientation = dorientation, requiresToOpen = [ Key { keyColor = "red" } ], isExplored = False, visibility = Unexplored }
 
 
 defaultYellowDoorInfo : DoorOrientation -> DoorInfo
 defaultYellowDoorInfo dorientation =
-    { isOpen = False, color = Just "yellow", orientation = dorientation, requiresToOpen = Just (Key { keyColor = "yellow" }), isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "yellow", orientation = dorientation, requiresToOpen = [ Key { keyColor = "yellow" } ], isExplored = False, visibility = Unexplored }
 
 
 defaultGreenDoorInfo : DoorOrientation -> DoorInfo
 defaultGreenDoorInfo dorientation =
-    { isOpen = False, color = Just "green", orientation = dorientation, requiresToOpen = Just (Key { keyColor = "green" }), isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "green", orientation = dorientation, requiresToOpen = [ Key { keyColor = "green" } ], isExplored = False, visibility = Unexplored }
 
 
 type alias LeverInfo =
@@ -780,14 +783,7 @@ isTileWalkable player_ tile =
 
         Door doorinfo ->
             --doorinfo.isOpen || List.contains doorinfo.requiresToOpen (Dict.values player.inventory)
-            case doorinfo.requiresToOpen of
-                Nothing ->
-                    True
-
-                Just item ->
-                    List.filter (\it -> it == item) (Dict.values player_.inventory)
-                        |> List.head
-                        |> (\x -> x /= Nothing)
+            List.foldl (\it bacc -> inList it (Dict.values player_.inventory) && bacc) True doorinfo.requiresToOpen
 
         Lever leverInfo ->
             False
@@ -1193,3 +1189,10 @@ visibility : Model -> Location -> Visibility
 visibility model location_ =
     --Grid.getWithDefault Unexplored location model.explored
     getModelTileVisibility location_ model
+
+
+inList : a -> List a -> Bool
+inList a_val la =
+    List.filter (\elem -> elem == a_val) la
+        |> List.length
+        |> (\x -> x > 0)

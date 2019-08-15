@@ -1,6 +1,7 @@
 module Item exposing
     ( Item(..)
     , KeyInfo
+    , PaperInfo
     )
 
 
@@ -15,8 +16,17 @@ type Item
     | Money
     | Box
     | Ash
+    | Paper PaperInfo
 
 
 type alias KeyInfo =
     { keyColor : String
+    }
+
+
+type alias PaperInfo =
+    { id : Int
+    , imageStr : String
+    , description : String
+    , text : String
     }

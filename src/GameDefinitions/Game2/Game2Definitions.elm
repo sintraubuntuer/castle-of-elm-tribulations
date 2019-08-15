@@ -61,8 +61,8 @@ initialEnemy enemyid species floorId =
 --( 92, 60 )
 
 
-initialModelFunc : ( GameModel.Model, Bool, Bool )
-initialModelFunc =
+initialModelFunc : List Int -> ( GameModel.Model, Bool, Bool )
+initialModelFunc lrandints =
     let
         player =
             initialPlayer
@@ -88,6 +88,12 @@ initialModelFunc =
         levers =
             Dict.empty
 
+        ( storeDictWithPlacedPapers, lrands ) =
+            place_three_pieces_of_paper ( dStore, lrandints )
+
+        _ =
+            Debug.log " size of lrands after placing pieces of paper is  " (List.length lrands)
+
         randomlyPositionPlayer =
             False
 
@@ -106,7 +112,7 @@ initialModelFunc =
                 , ( enemy6.id, enemy6 )
                 ]
       , otherCharacters = Dict.empty
-      , level = GroundFloor.gridGroundFloor -- Grid.Grid Tile
+      , level = Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .level |> Maybe.withDefault GroundFloor.gridGroundFloor -- Grid.Grid Tile
 
       --, levers = levers --Dict LeverId LeverInfo
       , explored = setAllAsUnexplored GroundFloor.gridGroundFloor -- Grid.Grid Visibility
@@ -124,7 +130,7 @@ initialModelFunc =
       , displayInventory = False
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
-      , floorDict = dStore
+      , floorDict = storeDictWithPlacedPapers
       , currentFloorId = 2
       , started = True
       }
@@ -201,3 +207,167 @@ dStore =
             }
           )
         ]
+
+
+generate_three_random_nrs_between_zero_and_four : List Int -> ( List Int, List Int )
+generate_three_random_nrs_between_zero_and_four lrandints =
+    let
+        getRand maxnr ( lexisting, lrand_ints, try_nr ) =
+            let
+                _ =
+                    Debug.log "getRand in generate_three_random_nrs_between_zero_and_four called. try_nr =  " try_nr
+
+                nr =
+                    getRandIntNr_ZeroTo maxnr lrand_ints
+            in
+            if List.length lexisting >= maxnr || try_nr > 100 then
+                ( lexisting, lrand_ints )
+
+            else if not (inList nr lexisting) then
+                ( nr :: lexisting, List.drop 1 lrand_ints )
+
+            else
+                getRand maxnr ( lexisting, List.drop 1 lrand_ints, try_nr + 1 )
+
+        ( l1, lrands1 ) =
+            getRand 4 ( [], lrandints, 1 )
+
+        ( l2, lrands2 ) =
+            getRand 4 ( l1, lrands1, 1 )
+
+        ( l3, lrands3 ) =
+            getRand 4 ( l2, lrands2, 1 )
+    in
+    ( l3, lrands3 )
+
+
+place_one_piece_of_paper : Int -> Int -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
+place_one_piece_of_paper floorId paperid ( storedict, lrandints ) =
+    let
+        --grid1 =
+        --    Grid.get floorId
+        auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec floorid ( storeDict, lrands, try_nr ) =
+            if try_nr > 100 then
+                ( storeDict, lrands )
+
+            else
+                let
+                    _ =
+                        Debug.log "auxFuncCheckIfEmptyAndPlaceOrRepeat called for floorId " floorid
+
+                    lcoords =
+                        Grid.toCoordinates floorRec.level
+
+                    ( index_nr, lrem_rands ) =
+                        ( getRandIntNr_ZeroTo (List.length lcoords - 1) lrands, List.drop 1 lrands )
+
+                    thelevel =
+                        floorRec.level
+
+                    mbcoords =
+                        lcoords |> List.drop index_nr |> List.head
+
+                    mbNewLevel =
+                        case mbcoords of
+                            Nothing ->
+                                Nothing
+
+                            Just coords ->
+                                thelevel
+                                    |> Grid.get coords
+                                    |> (\mbtile ->
+                                            case mbtile of
+                                                Nothing ->
+                                                    --tryAgainWithNewCoords
+                                                    --auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec ( storeDict, lrem_rands, try_nr + 1 )
+                                                    Nothing
+
+                                                Just atile ->
+                                                    case atile of
+                                                        GameModel.Floor finfo ->
+                                                            let
+                                                                newItem =
+                                                                    Item.Paper (Item.PaperInfo paperid "" "" "")
+
+                                                                tileWithItem =
+                                                                    GameModel.Floor { finfo | item = Just newItem }
+                                                            in
+                                                            case finfo.item of
+                                                                Nothing ->
+                                                                    let
+                                                                        _ =
+                                                                            Debug.log ("going to place one of the three items in floorId " ++ String.fromInt floorid ++ " and coords : ") coords
+                                                                    in
+                                                                    Just (Grid.set coords tileWithItem thelevel)
+
+                                                                Just it ->
+                                                                    Nothing
+
+                                                        _ ->
+                                                            --tryAgainWithNewCoords
+                                                            --auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec ( storeDict, lrem_rands, try_nr + 1 )
+                                                            Nothing
+                                       )
+
+                    mbNewFloor =
+                        case mbNewLevel of
+                            Nothing ->
+                                Nothing
+
+                            Just newLevel ->
+                                Just { floorRec | level = newLevel }
+                in
+                case mbNewFloor of
+                    Nothing ->
+                        auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec floorid ( storeDict, lrem_rands, try_nr + 1 )
+
+                    Just newFloor ->
+                        ( Dict.update floorid (\_ -> Just newFloor) storeDict, lrem_rands )
+
+        -- or  auxFuncCheckIfEmptyAndPlaceOrRepeat floorid coords (storeDict , try_nr + 1 )
+        floorInfo =
+            Dict.get floorId storedict
+
+        ( newStore, remainingRands ) =
+            case floorInfo of
+                Just afloorinfo ->
+                    auxFuncCheckIfEmptyAndPlaceOrRepeat afloorinfo floorId ( storedict, lrandints, 1 )
+
+                Nothing ->
+                    ( storedict, lrandints )
+    in
+    ( newStore, remainingRands )
+
+
+place_three_pieces_of_paper : ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
+place_three_pieces_of_paper ( storedict, lrands ) =
+    let
+        ( lfloornr_paperIdTuples, lremainingrands ) =
+            generate_three_random_nrs_between_zero_and_four lrands
+                |> (\( lx, ly ) -> ( List.indexedMap (\i fnr -> ( fnr, i + 1 )) lx, ly ))
+
+        _ =
+            Debug.log "going to place three pieces of paper on floors " lfloornr_paperIdTuples
+    in
+    List.foldl (\( fid, paperid ) ( storeacc, lrand ) -> place_one_piece_of_paper fid paperid ( storeacc, lrand )) ( storedict, lremainingrands ) lfloornr_paperIdTuples
+
+
+
+-- get a random place from lcoords and make sure its an empty  floor tile . Install piece of paper
+
+
+getRandIntNr_ZeroTo : Int -> List Int -> Int
+getRandIntNr_ZeroTo maxnr lrandints =
+    -- lrandints is a list of random integer nrs between 1 and 100 ( inclusive  ) , maxnr also included
+    lrandints
+        |> List.head
+        |> Maybe.map (\x -> toFloat x * toFloat (maxnr + 1) / 100.0 |> Basics.ceiling)
+        |> Maybe.withDefault 1
+        |> (\x -> x - 1)
+
+
+inList : a -> List a -> Bool
+inList a_val la =
+    List.filter (\elem -> elem == a_val) la
+        |> List.length
+        |> (\x -> x > 0)
