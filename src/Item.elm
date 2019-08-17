@@ -9,6 +9,10 @@ type alias Size =
     Int
 
 
+type alias FoodDescription =
+    String
+
+
 type Item
     = Chest Size
     | Skull
@@ -17,6 +21,7 @@ type Item
     | Box
     | Ash
     | Paper PaperInfo
+    | Food FoodDescription
 
 
 type alias KeyInfo =

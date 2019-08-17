@@ -179,20 +179,24 @@ wall orientationStr =
 wallOverlay : GameModel.WallInfo -> Collage Msg
 wallOverlay wallinfo =
     --guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } GameModel.Visible
-    case wallinfo.mbTeleporterObject of
-        Just tinfo ->
-            case tinfo.teleporterType of
-                GameModel.Barrel ->
-                    Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_barrel_up.png"
+    let
+        woverlay =
+            case wallinfo.mbTeleporterObject of
+                Just tinfo ->
+                    case tinfo.teleporterType of
+                        GameModel.Barrel ->
+                            Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_barrel_up.png"
 
-                GameModel.BookCase ->
-                    Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_bookcase_up.png"
+                        GameModel.BookCase ->
+                            Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_bookcase_up.png"
 
-                GameModel.Clock ->
-                    Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_clock_up.png"
+                        GameModel.Clock ->
+                            Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_clock_up.png"
 
-        _ ->
-            noForm
+                _ ->
+                    noForm
+    in
+    woverlay
 
 
 door : GameModel.DoorInfo -> Collage Msg
@@ -337,6 +341,9 @@ tile currentFloorId t =
             else
                 stairs "down"
 
+        GameModel.Tree treeinfo ->
+            tree treeinfo
+
         GameModel.Hole hinfo ->
             hole
 
@@ -411,6 +418,9 @@ tile currentFloorId t =
         GameModel.Grass grassinfo ->
             grass grassinfo
 
+        GameModel.ConverterTile it ct ->
+            tile currentFloorId it
+
         _ ->
             notileyet
 
@@ -424,6 +434,19 @@ grass grassinfo =
 
             else
                 "img/grass/grass.png"
+    in
+    Collage.image ( toFloat xScale, toFloat yScale ) fileStr
+
+
+tree : GameModel.TreeInfo -> Collage Msg
+tree treeinfo =
+    let
+        fileStr =
+            if treeinfo.treeType == "pinetree" then
+                "img/trees/treetopPineTree_bg.png"
+
+            else
+                "img/trees/treetopRoundTree_bg.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -469,6 +492,13 @@ tileOverlay t =
                     else
                         Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part3.png"
 
+                Just (Food fdescription) ->
+                    if String.toLower fdescription == "bread" then
+                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/health_item.png"
+
+                    else
+                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/box.png"
+
                 _ ->
                     case floorinfo.floorDrawing of
                         Just (GameModel.LandingTargetDrawing nr) ->
@@ -482,6 +512,9 @@ tileOverlay t =
 
         GameModel.Door doorinfo ->
             doorOverlay doorinfo
+
+        GameModel.ConverterTile it ct ->
+            tileOverlay it
 
         GameModel.NoTileYet ->
             notileyetOverlay
@@ -551,16 +584,25 @@ playerImg player_ visibility =
             noForm
 
 
-enemyImg : Beings.Enemy -> GameModel.Visibility -> Collage Msg
-enemyImg enem visibility =
+enemyView : Beings.Enemy -> Bool -> GameModel.Visibility -> Collage Msg
+enemyView enem showBlood visibility =
     case visibility of
         GameModel.Visible ->
             let
                 fileStr =
-                    "img/characters/" ++ String.toLower enem.species ++ ".png"
+                    if enem.indexOfLight >= enem.indexOfLightMax then
+                        "img/characters/" ++ String.toLower enem.species ++ "_enlightened.png"
+
+                    else if enem.health > 0 then
+                        "img/characters/" ++ String.toLower enem.species ++ ".png"
+
+                    else if enem.health <= 0 && showBlood then
+                        "img/characters/" ++ String.toLower enem.species ++ "_dead_blood.png"
+
+                    else
+                        "img/characters/" ++ String.toLower enem.species ++ "_dead.png"
             in
             Collage.image ( toFloat xScale, toFloat yScale ) fileStr
-                |> Collage.Events.onMouseOver (GameUpdate.LogEnemyHealth enem)
 
         _ ->
             noForm
@@ -674,7 +716,7 @@ mainScreen model =
                 mkEnemy enid anenemy =
                     --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
                     --guy anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
-                    enemyImg anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
+                    enemyView anenemy model.showBlood (GameModel.getGridTileVisibility anenemy.location model.level)
                         |> shift (location anenemy)
             in
             group <| (Dict.map mkEnemy relevantEnemiesDict |> Dict.values)
@@ -809,6 +851,7 @@ sidebar model pos =
             [ model.player.textAvatar ++ " : " ++ model.player.name |> Text.fromString |> theColor |> Collage.rendered
             , "Health: " ++ String.fromInt model.player.health |> Text.fromString |> theColor |> Collage.rendered
             , "Energy: " ++ String.fromInt model.player.energy |> Text.fromString |> theColor |> Collage.rendered
+            , "mana: " ++ String.fromInt model.player.mana |> Text.fromString |> theColor |> Collage.rendered
             , "Hunger: " ++ String.fromInt model.player.hunger |> Text.fromString |> theColor |> Collage.rendered
             , "Stealth: " ++ String.fromInt model.player.stealth ++ "%" |> Text.fromString |> theColor |> Collage.rendered
             , "Armor: " ++ String.fromInt model.player.armor |> Text.fromString |> theColor |> Collage.rendered
@@ -888,7 +931,11 @@ display model =
 
           else
             noForm
-        , sidebar model pos
+        , if model.displayStatsOverlay then
+            sidebar model pos
+
+          else
+            noForm
 
         --|> shift ( -model.x_display_anchor * xScale |> toFloat >> (\x -> x * 0.5), model.y_display_anchor * yScale |> toFloat )
         , mainScreen model
@@ -972,23 +1019,34 @@ viewDebugEnemies model =
         |> Dict.values
 
 
+viewOpponentReport : GameModel.Model -> Html GameUpdate.Msg
+viewOpponentReport model =
+    Html.div []
+        (Dict.values model.enemies |> List.concatMap (\enem -> [ Html.text ("enemy.name : " ++ enem.name ++ " , enemyHealth : " ++ String.fromInt enem.health ++ " ,  enemyIndexOfLight : " ++ String.fromInt enem.indexOfLight), Html.br [] [] ]))
+
+
 view : GameModel.Model -> Html GameUpdate.Msg
 view model =
     case model.started of
         True ->
             Html.div []
-                [ if not model.gameOfThornsModeisOn then
-                    Html.div []
-                        ([ display model
-                            |> svg
-                         ]
-                         --++ [ viewDebugPlayer model ]
-                         --  ++ viewDebugEnemies model
-                         --  ++ viewDebugGrid model.level model
-                        )
+                [ case model.currentDisplay of
+                    GameModel.DisplayGameOfThorns ->
+                        viewGameOfThorns model
 
-                  else
-                    viewGameOfThorns model
+                    --else if model.viewOpponentReportMode then
+                    GameModel.DisplayOpponentReport ->
+                        viewOpponentReport model
+
+                    _ ->
+                        Html.div []
+                            ([ display model
+                                |> svg
+                             ]
+                             --++ [ viewDebugPlayer model ]
+                             --  ++ viewDebugEnemies model
+                             --  ++ viewDebugGrid model.level model
+                            )
                 ]
 
         False ->

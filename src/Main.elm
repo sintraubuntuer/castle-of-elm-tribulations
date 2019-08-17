@@ -76,8 +76,15 @@ fromCode keyCode =
         73 ->
             GameModel.ViewInventory
 
+        83 ->
+            GameModel.ViewStatsOverlay
+
+        69 ->
+            GameModel.ViewOpponentReport
+
         _ ->
             GameModel.Nop
+                |> Debug.log ("keyCode is " ++ String.fromInt keyCode)
 
 
 type alias Flags =

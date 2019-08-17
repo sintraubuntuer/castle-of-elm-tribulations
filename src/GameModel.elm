@@ -1,5 +1,6 @@
 module GameModel exposing
     ( ColumnInfo
+    , CurrentDisplay(..)
     , DoorInfo
     , DoorOrientation(..)
     , DoorWallOption(..)
@@ -23,6 +24,7 @@ module GameModel exposing
     , TeleporterInfo
     , TeleporterType(..)
     , Tile(..)
+    , TreeInfo
     , TunnelRectangle
     , Visibility(..)
     , WallInfo
@@ -42,7 +44,9 @@ module GameModel exposing
     , defaultLeverInfo
     , defaultOpenDoorInfo
     , defaultOrangeFloorInfo
+    , defaultPineTreeInfo
     , defaultRedDoorInfo
+    , defaultRoundTreeInfo
     , defaultWallInfo
     , defaultWallUpInfo
     , defaultWaterInfo
@@ -59,6 +63,7 @@ module GameModel exposing
     , getRoomRightX
     , getRoomTopY
     , getTileVisibility
+    , isConverterTile
     , isFloor
     , isHorizontalWall
     , isMbTileHorizontalToTheLeft
@@ -127,7 +132,16 @@ type Tile
     | Column ColumnInfo
     | Water WaterInfo
     | Grass GrassInfo
+    | Tree TreeInfo
+    | ConverterTile Tile Tile
     | NoTileYet
+
+
+type alias TreeInfo =
+    { treeType : String
+    , isExplored : Bool
+    , visibility : Visibility
+    }
 
 
 type alias GrassInfo =
@@ -137,6 +151,14 @@ type alias GrassInfo =
     , isExplored : Bool
     , visibility : Visibility
     }
+
+
+type CurrentDisplay
+    = DisplayRegularGame
+    | DisplayGameOfThorns
+    | DisplayOpponentReport
+    | DisplayHelpScreen
+    | DisplayInventory
 
 
 type alias Model =
@@ -156,7 +178,10 @@ type alias Model =
     , window_height : Int
     , total_width : Int
     , total_height : Int
+    , currentDisplay : CurrentDisplay
     , displayInventory : Bool
+    , displayStatsOverlay : Bool
+    , showBlood : Bool
     , wallPercentage : Maybe Float
     , roomsInfo : Maybe RoomsInfo
     , floorDict : Dict Int FloorStore
@@ -366,6 +391,9 @@ itemToString item =
         Paper paperinfo ->
             "a piece of paper : " ++ paperinfo.description ++ " , with some written text : " ++ paperinfo.text
 
+        Food fdescription ->
+            "a piece of food : " ++ fdescription
+
 
 type FloorDrawing
     = LandingTargetDrawing Int
@@ -433,6 +461,16 @@ defaultGrassWithDirtInfo =
 defaultGrassInfo : GrassInfo
 defaultGrassInfo =
     { description = "grass", isTransparent = False, isWalkable = True, isExplored = False, visibility = Unexplored }
+
+
+defaultPineTreeInfo : TreeInfo
+defaultPineTreeInfo =
+    { treeType = "pinetree", isExplored = False, visibility = Unexplored }
+
+
+defaultRoundTreeInfo : TreeInfo
+defaultRoundTreeInfo =
+    { treeType = "roundtree", isExplored = False, visibility = Unexplored }
 
 
 type DoorWallOption
@@ -503,6 +541,7 @@ defaultGreenDoorInfo dorientation =
 
 type alias LeverInfo =
     { isUp : Bool
+    , modelChangerFuncs : List (Grid.Coordinate -> Model -> Model)
     , isTransparent : Bool
     , isExplored : Bool
     , visibility : Visibility
@@ -511,7 +550,7 @@ type alias LeverInfo =
 
 defaultLeverInfo : LeverInfo
 defaultLeverInfo =
-    { isUp = False, isTransparent = False, isExplored = False, visibility = Unexplored }
+    { isUp = False, modelChangerFuncs = [], isTransparent = False, isExplored = False, visibility = Unexplored }
 
 
 type alias FlagInfo =
@@ -546,6 +585,7 @@ defaultColumnInfo =
 type alias WaterInfo =
     { description : String
     , isTransparent : Bool
+    , isWalkable : Bool
     , isExplored : Bool
     , visibility : Visibility
     }
@@ -553,17 +593,17 @@ type alias WaterInfo =
 
 defaultWaterWallUpInfo : WaterInfo
 defaultWaterWallUpInfo =
-    { description = "water_wall_up", isTransparent = False, isExplored = False, visibility = Unexplored }
+    { description = "water_wall_up", isTransparent = False, isWalkable = False, isExplored = False, visibility = Unexplored }
 
 
 defaultWaterWallLeftInfo : WaterInfo
 defaultWaterWallLeftInfo =
-    { description = "water_wall_left", isTransparent = False, isExplored = False, visibility = Unexplored }
+    { description = "water_wall_left", isTransparent = False, isWalkable = False, isExplored = False, visibility = Unexplored }
 
 
 defaultWaterInfo : WaterInfo
 defaultWaterInfo =
-    { description = "just_water", isTransparent = False, isExplored = False, visibility = Unexplored }
+    { description = "just_water", isTransparent = False, isWalkable = False, isExplored = False, visibility = Unexplored }
 
 
 type WallJunction
@@ -590,6 +630,8 @@ type Input
     | FloorDown
     | PickUpItem
     | ViewInventory
+    | ViewStatsOverlay
+    | ViewOpponentReport
     | Nop
 
 
@@ -637,6 +679,26 @@ isGrass : Tile -> Bool
 isGrass tile =
     case tile of
         Grass _ ->
+            True
+
+        _ ->
+            False
+
+
+isTree : Tile -> Bool
+isTree tile =
+    case tile of
+        Tree _ ->
+            True
+
+        _ ->
+            False
+
+
+isConverterTile : Tile -> Bool
+isConverterTile tile =
+    case tile of
+        ConverterTile _ _ ->
             True
 
         _ ->
@@ -743,26 +805,17 @@ isNoTileYet tile =
             False
 
 
-
---  = Floor FloorInfo
---  | Wall WallInfo
---  | WallOver WallOverInfo
---  | Door DoorInfo
---  | Lever LeverInfo
---  | Flag FlagInfo
---  | Column ColumnInfo
---  | Water WaterInfo
---  | NoTileYet
-
-
-isTileWalkable : Player -> Tile -> Bool
-isTileWalkable player_ tile =
+isTileWalkable : { a | inventory : Inventory } -> Tile -> Bool
+isTileWalkable being tile =
     case tile of
         Floor floorinfo ->
             floorinfo.isWalkable
 
         Grass grassinfo ->
             grassinfo.isWalkable
+
+        Tree treeInfo ->
+            False
 
         Stairs sinfo ->
             True
@@ -783,7 +836,7 @@ isTileWalkable player_ tile =
 
         Door doorinfo ->
             --doorinfo.isOpen || List.contains doorinfo.requiresToOpen (Dict.values player.inventory)
-            List.foldl (\it bacc -> inList it (Dict.values player_.inventory) && bacc) True doorinfo.requiresToOpen
+            List.foldl (\it bacc -> inList it (Dict.values being.inventory) && bacc) True doorinfo.requiresToOpen
 
         Lever leverInfo ->
             False
@@ -795,16 +848,19 @@ isTileWalkable player_ tile =
             False
 
         Water waterInfo ->
+            waterInfo.isWalkable
+
+        ConverterTile it ct ->
             False
 
         NoTileYet ->
             False
 
 
-isModelTileWalkable : Location -> Model -> Bool
-isModelTileWalkable location_ model =
+isModelTileWalkable : Location -> { a | inventory : Inventory } -> Model -> Bool
+isModelTileWalkable location_ being model =
     Grid.get location_ model.level
-        |> Maybe.map (isTileWalkable model.player)
+        |> Maybe.map (isTileWalkable being)
         |> Maybe.withDefault False
 
 
@@ -816,6 +872,9 @@ isTileTransparent tile =
 
         Grass grassinfo ->
             grassinfo.isTransparent
+
+        Tree treeInfo ->
+            False
 
         Stairs sinfo ->
             False
@@ -844,6 +903,9 @@ isTileTransparent tile =
         Water waterInfo ->
             waterInfo.isTransparent
 
+        ConverterTile it ct ->
+            False
+
         NoTileYet ->
             False
 
@@ -863,6 +925,9 @@ isTileExplored tile =
 
         Grass ginfo ->
             ginfo.isExplored
+
+        Tree tinfo ->
+            False
 
         Stairs sinfo ->
             sinfo.isExplored
@@ -891,6 +956,9 @@ isTileExplored tile =
         Water waterInfo ->
             waterInfo.isExplored
 
+        ConverterTile it ct ->
+            False
+
         NoTileYet ->
             False
 
@@ -910,6 +978,9 @@ setTileAsExplored tile =
 
         Grass grassinfo ->
             Grass { grassinfo | isExplored = True }
+
+        Tree treeinfo ->
+            Tree { treeinfo | isExplored = True }
 
         Stairs sinfo ->
             Stairs { sinfo | isExplored = True }
@@ -938,6 +1009,9 @@ setTileAsExplored tile =
         Water waterinfo ->
             Water { waterinfo | isExplored = True }
 
+        ConverterTile it ct ->
+            ConverterTile it ct
+
         NoTileYet ->
             NoTileYet
 
@@ -964,6 +1038,9 @@ getTileVisibility tile =
 
         Grass grassinfo ->
             grassinfo.visibility
+
+        Tree treeinfo ->
+            treeinfo.visibility
 
         Stairs sinfo ->
             sinfo.visibility
@@ -992,6 +1069,9 @@ getTileVisibility tile =
         Water waterInfo ->
             waterInfo.visibility
 
+        ConverterTile it ct ->
+            Visible
+
         NoTileYet ->
             Unexplored
 
@@ -1019,6 +1099,9 @@ setTileVisibility visibility_ tile =
         Grass grassinfo ->
             Grass { grassinfo | visibility = visibility_ }
 
+        Tree treeInfo ->
+            Tree { treeInfo | visibility = visibility_ }
+
         Stairs sinfo ->
             Stairs { sinfo | visibility = visibility_ }
 
@@ -1045,6 +1128,9 @@ setTileVisibility visibility_ tile =
 
         Water waterInfo ->
             Water { waterInfo | visibility = visibility_ }
+
+        ConverterTile it ct ->
+            ConverterTile it ct
 
         NoTileYet ->
             NoTileYet
@@ -1150,6 +1236,9 @@ showTile tile =
                 Grass ginfo ->
                     "g"
 
+                Tree treeinfo ->
+                    "t"
+
                 Stairs sinfo ->
                     "/"
 
@@ -1164,6 +1253,9 @@ showTile tile =
 
                 Door doorinfo ->
                     "+"
+
+                ConverterTile it ct ->
+                    "c"
 
                 NoTileYet ->
                     "n"

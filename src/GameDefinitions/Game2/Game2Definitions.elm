@@ -90,6 +90,7 @@ initialModelFunc lrandints =
 
         ( storeDictWithPlacedPapers, lrands ) =
             place_three_pieces_of_paper ( dStore, lrandints )
+                |> place_all_health_food_items 5
 
         _ =
             Debug.log " size of lrands after placing pieces of paper is  " (List.length lrands)
@@ -127,7 +128,10 @@ initialModelFunc lrandints =
       , window_height = common_window_height
       , total_width = get_total_width config_params 7
       , total_height = get_total_height config_params 9
+      , currentDisplay = GameModel.DisplayRegularGame
       , displayInventory = False
+      , displayStatsOverlay = False
+      , showBlood = True
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = storeDictWithPlacedPapers
@@ -214,9 +218,6 @@ generate_three_random_nrs_between_zero_and_four lrandints =
     let
         getRand maxnr ( lexisting, lrand_ints, try_nr ) =
             let
-                _ =
-                    Debug.log "getRand in generate_three_random_nrs_between_zero_and_four called. try_nr =  " try_nr
-
                 nr =
                     getRandIntNr_ZeroTo maxnr lrand_ints
             in
@@ -241,8 +242,8 @@ generate_three_random_nrs_between_zero_and_four lrandints =
     ( l3, lrands3 )
 
 
-place_one_piece_of_paper : Int -> Int -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
-place_one_piece_of_paper floorId paperid ( storedict, lrandints ) =
+place_one_item_in_random_coords : Int -> Item.Item -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
+place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
     let
         --grid1 =
         --    Grid.get floorId
@@ -252,9 +253,6 @@ place_one_piece_of_paper floorId paperid ( storedict, lrandints ) =
 
             else
                 let
-                    _ =
-                        Debug.log "auxFuncCheckIfEmptyAndPlaceOrRepeat called for floorId " floorid
-
                     lcoords =
                         Grid.toCoordinates floorRec.level
 
@@ -286,18 +284,13 @@ place_one_piece_of_paper floorId paperid ( storedict, lrandints ) =
                                                     case atile of
                                                         GameModel.Floor finfo ->
                                                             let
-                                                                newItem =
-                                                                    Item.Paper (Item.PaperInfo paperid "" "" "")
-
+                                                                --newItem =
+                                                                --    Item.Paper (Item.PaperInfo paperid "" "" "")
                                                                 tileWithItem =
                                                                     GameModel.Floor { finfo | item = Just newItem }
                                                             in
                                                             case finfo.item of
                                                                 Nothing ->
-                                                                    let
-                                                                        _ =
-                                                                            Debug.log ("going to place one of the three items in floorId " ++ String.fromInt floorid ++ " and coords : ") coords
-                                                                    in
                                                                     Just (Grid.set coords tileWithItem thelevel)
 
                                                                 Just it ->
@@ -342,14 +335,36 @@ place_one_piece_of_paper floorId paperid ( storedict, lrandints ) =
 place_three_pieces_of_paper : ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
 place_three_pieces_of_paper ( storedict, lrands ) =
     let
-        ( lfloornr_paperIdTuples, lremainingrands ) =
-            generate_three_random_nrs_between_zero_and_four lrands
-                |> (\( lx, ly ) -> ( List.indexedMap (\i fnr -> ( fnr, i + 1 )) lx, ly ))
+        newPaper pidx =
+            Item.Paper (Item.PaperInfo pidx "" "" "")
 
-        _ =
-            Debug.log "going to place three pieces of paper on floors " lfloornr_paperIdTuples
+        ( lfloornr_paperItemTuples, lremainingrands ) =
+            generate_three_random_nrs_between_zero_and_four lrands
+                |> (\( lx, ly ) -> ( List.indexedMap (\i fnr -> ( fnr, newPaper (i + 1) )) lx, ly ))
     in
-    List.foldl (\( fid, paperid ) ( storeacc, lrand ) -> place_one_piece_of_paper fid paperid ( storeacc, lrand )) ( storedict, lremainingrands ) lfloornr_paperIdTuples
+    List.foldl (\( fid, paperitem ) ( storeacc, lrand ) -> place_one_item_in_random_coords fid paperitem ( storeacc, lrand )) ( storedict, lremainingrands ) lfloornr_paperItemTuples
+
+
+place_health_food_items_in_random_coords : Int -> Int -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
+place_health_food_items_in_random_coords floorid nrItems ( storedict, lrands ) =
+    let
+        newFoodItem =
+            Item.Food "bread"
+
+        lfloornr_foodItemTuples =
+            --List.range 1 5 |> List.map ( ( floorid , newFoodItem)  )
+            List.repeat nrItems ( floorid, newFoodItem )
+    in
+    List.foldl (\( flid, fooditem ) ( storeacc, lrand ) -> place_one_item_in_random_coords flid fooditem ( storeacc, lrand )) ( storedict, lrands ) lfloornr_foodItemTuples
+
+
+place_all_health_food_items : Int -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
+place_all_health_food_items nrItemsPerFloor ( storedict, lrands ) =
+    let
+        lfloorids =
+            [ caverns_floor_id, basement_floor_id, groundFloor_id, firstFloor_id, theAttic_id ]
+    in
+    List.foldl (\flid ( storeacc, lrand ) -> place_health_food_items_in_random_coords flid nrItemsPerFloor ( storeacc, lrand )) ( storedict, lrands ) lfloorids
 
 
 

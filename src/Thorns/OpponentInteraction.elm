@@ -80,11 +80,11 @@ do_activate_and_calc_opponents coords mbSegment grid player opponent =
 
 
 calcOpponentStatsAfterInteraction :
-    { rec | mana : Int, health : Int, inventory : Dict String Item, power : Int, protection : Int, armor : Int }
-    -> { rec2 | mana : Int, health : Int, inventory : Dict String Item, power : Int, protection : Int, armor : Int }
+    { rec | mana : Int, health : Int, indexOfLight : Int, enlSpellEffect : Beings.EnlightenmentSpellEffect, inventory : Dict String Item, power : Int, protection : Int, armor : Int, indexOfLightMax : Int }
+    -> { rec2 | mana : Int, health : Int, indexOfLight : Int, enlSpellEffect : Beings.EnlightenmentSpellEffect, inventory : Dict String Item, power : Int, protection : Int, armor : Int, indexOfLightMax : Int }
     -> Int
     -> Beings.OPPONENT_INTERACTION_OPTIONS
-    -> ( { rec | mana : Int, health : Int, inventory : Dict String Item, power : Int, protection : Int, armor : Int }, { rec2 | mana : Int, health : Int, inventory : Dict String Item, power : Int, protection : Int, armor : Int }, String )
+    -> ( { rec | mana : Int, health : Int, indexOfLight : Int, enlSpellEffect : Beings.EnlightenmentSpellEffect, inventory : Dict String Item, power : Int, protection : Int, armor : Int, indexOfLightMax : Int }, { rec2 | mana : Int, health : Int, indexOfLight : Int, enlSpellEffect : Beings.EnlightenmentSpellEffect, inventory : Dict String Item, power : Int, protection : Int, armor : Int, indexOfLightMax : Int }, String )
 calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interaction_chosen_option =
     let
         get_defender_after_attack attacker_ defender_ power_ opp_interaction_chosen_option_ =
@@ -95,17 +95,28 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
                 defense_power_value =
                     get_defense_value defender_ opp_interaction_chosen_option_
 
-                damage =
+                variation =
                     (attack_power_value - defense_power_value)
                         |> (\x -> Basics.max 1 x)
                         |> Debug.log "damage caused is equal to : "
 
-                defender_hp_after_attack =
-                    Basics.max 0 (defender_.health - damage)
-                        |> Debug.log "defender final health is : "
+                ( defender_hp_after_attack, defender_index_of_light_after_attack ) =
+                    if opp_interaction_chosen_option_ == Beings.ENLIGHTENMENT_SPELL || opp_interaction_chosen_option_ == Beings.OPPONENT_ENLIGHTENMENT_SPELL then
+                        case attacker_.enlSpellEffect of
+                            Beings.DecreaseHealth ->
+                                ( Basics.max 0 (defender_.health - variation), defender_.indexOfLight )
+
+                            Beings.IncreaseIndexOfLight ->
+                                ( defender_.health, Basics.min (defender_.indexOfLight + variation) defender_.indexOfLightMax )
+
+                            Beings.DecreaseIndexOfLight ->
+                                ( defender_.health, Basics.max 0 (defender_.indexOfLight - variation) )
+
+                    else
+                        ( Basics.max 0 (defender_.health - variation), defender_.indexOfLight )
 
                 new_defender =
-                    { defender_ | health = defender_hp_after_attack }
+                    { defender_ | health = defender_hp_after_attack, indexOfLight = defender_index_of_light_after_attack }
 
                 txt_msg =
                     ""
@@ -117,7 +128,7 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
                 Beings.CHICANE_ATTACK ->
                     let
                         ( def, txtm ) =
-                            get_defender_after_attack intervenient1 intervenient2 power opp_interaction_chosen_option
+                            get_defender_after_attack intervenient1 intervenient2 power Beings.CHICANE_ATTACK
                     in
                     ( intervenient1, def, "you initiate a chicane with your opponent. power of the chicane is : " ++ String.fromInt power ++ " , " ++ txtm )
 
@@ -125,7 +136,7 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
                     if intervenient1.mana > power then
                         let
                             ( def, txtm ) =
-                                get_defender_after_attack intervenient1 intervenient2 power opp_interaction_chosen_option
+                                get_defender_after_attack intervenient1 intervenient2 power Beings.ENLIGHTENMENT_SPELL
                         in
                         ( { intervenient1 | mana = intervenient1.mana - power }, def, "you enlighten your opponent with a light power of  : " ++ String.fromInt power ++ " , " ++ txtm )
 
@@ -135,7 +146,7 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
                 Beings.OPPONENT_CHICANE_ATTACK ->
                     let
                         ( def, txtm ) =
-                            get_defender_after_attack intervenient2 intervenient1 power opp_interaction_chosen_option
+                            get_defender_after_attack intervenient2 intervenient1 power Beings.OPPONENT_CHICANE_ATTACK
                     in
                     ( def, intervenient2, "your opponent initiates a chicane with you . power of the chicane is : " ++ String.fromInt power ++ " , " ++ txtm )
 
@@ -146,7 +157,7 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
                     else
                         let
                             ( def, txtm ) =
-                                get_defender_after_attack intervenient2 intervenient1 power opp_interaction_chosen_option
+                                get_defender_after_attack intervenient2 intervenient1 power Beings.OPPONENT_ENLIGHTENMENT_SPELL
                         in
                         ( def, { intervenient2 | mana = intervenient2.mana - power }, "your opponent tries to enlighten you with a light power of : " ++ String.fromInt power ++ " , " ++ txtm )
     in

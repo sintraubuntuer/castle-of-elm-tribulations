@@ -785,13 +785,6 @@ dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
         bottom_y =
             roomrect.top_left_y + roomrect.height - 1
 
-        _ =
-            if right_x - left_x == 0 && top_y - bottom_y <= -1 then
-                Debug.log "creating vertical tunnel with doorWallOptions " doorWallOptions
-
-            else
-                doorWallOptions
-
         lx =
             List.range left_x right_x
 
@@ -829,25 +822,9 @@ dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
 
             else if yval == bottom_y then
                 getDoorWallOrFloor doorWallOptions.bottom
-                    |> (\x ->
-                            case x of
-                                GameModel.Door dinfo ->
-                                    Debug.log "going to install door at the bottom ... " x
-
-                                _ ->
-                                    x
-                       )
 
             else if yval == top_y then
                 getDoorWallOrFloor doorWallOptions.top
-                    |> (\x ->
-                            case x of
-                                GameModel.Door dinfo ->
-                                    Debug.log "going to install door at the top ... " x
-
-                                _ ->
-                                    x
-                       )
 
             else
                 GameModel.Floor defaultFloorInfoWithColor

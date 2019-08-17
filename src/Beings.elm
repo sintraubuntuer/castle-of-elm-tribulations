@@ -3,6 +3,7 @@ module Beings exposing
     , Direction(..)
     , Enemy
     , EnemyId
+    , EnlightenmentSpellEffect(..)
     , Inventory
     , Location
     , OPPONENT_INTERACTION_OPTIONS(..)
@@ -29,14 +30,22 @@ type alias CharacterId =
     Int
 
 
+type EnlightenmentSpellEffect
+    = DecreaseHealth
+    | IncreaseIndexOfLight
+    | DecreaseIndexOfLight
+
+
 type alias Player =
     { location : Location
     , textAvatar : String --Element.Element
     , name : String
     , direction : Direction
     , health : Int
+    , indexOfLight : Int
     , energy : Int
     , mana : Int
+    , enlSpellEffect : EnlightenmentSpellEffect
     , inventory : Inventory
     , hunger : Int
     , stealth : Int
@@ -45,6 +54,7 @@ type alias Player =
     , coordination : Int
     , power : Int
     , initiative : Int
+    , indexOfLightMax : Int
     , placed : Bool
     }
 
@@ -67,6 +77,7 @@ type alias Enemy =
     , health : Int
     , indexOfLight : Int
     , mana : Int
+    , enlSpellEffect : EnlightenmentSpellEffect
     , inventory : Inventory
     , stealth : Int
     , armor : Int
@@ -77,6 +88,7 @@ type alias Enemy =
     , attacksUsingGameOfThorns : Bool
     , indexOfLightMax : Int
     , disappearsWhenHealthIsZero : Bool
+    , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
     , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn : Int
@@ -92,6 +104,7 @@ type alias OtherCharacter =
     , name : String
     , species : String
     , health : Int
+    , indexOfLight : Int
     , mana : Int
     , inventory : Inventory
     , stealth : Int
@@ -100,6 +113,7 @@ type alias OtherCharacter =
     , coordination : Int
     , power : Int
     , initiative : Int
+    , indexOfLightMax : Int
     , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn : Int
     , placed : Bool
@@ -124,8 +138,10 @@ playerCreationFunc elem pname =
     , name = pname
     , direction = Down
     , health = 10
+    , indexOfLight = 10
     , energy = 10
     , mana = 100
+    , enlSpellEffect = IncreaseIndexOfLight
     , inventory = Dict.empty
     , hunger = 10
     , stealth = 20
@@ -134,6 +150,7 @@ playerCreationFunc elem pname =
     , coordination = 100
     , power = 2
     , initiative = 2 -- this will be altered by generating a random int between 1 and 100
+    , indexOfLightMax = 20
     , placed = False
     }
 
@@ -150,6 +167,7 @@ enemyCreationFunc elem enemyid ename species_ floor_id =
     , health = 10
     , indexOfLight = 1
     , mana = 100
+    , enlSpellEffect = DecreaseHealth
     , inventory = Dict.empty
     , stealth = 20
     , armor = 1
@@ -160,6 +178,7 @@ enemyCreationFunc elem enemyid ename species_ floor_id =
     , attacksUsingGameOfThorns = True
     , indexOfLightMax = 11
     , disappearsWhenHealthIsZero = False
+    , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False
     , maxNrEnemyMovesPerTurn = 2 -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn = 0

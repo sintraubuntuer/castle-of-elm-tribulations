@@ -74,20 +74,12 @@ type Msg
     | NewRandomIntsAddToPool (List Int)
     | NewRandomIntsAddToPoolAndGenerateRandomMap (List Int)
     | ThornsMsg Thorns.Types.Msg
-    | LogEnemyHealth Beings.Enemy Collage.Point
 
 
 update : Msg -> GameModel.Model -> ( GameModel.Model, Cmd Msg )
 update msg model =
     case msg of
         Noop ->
-            ( model, Cmd.none )
-
-        LogEnemyHealth enemy pt ->
-            let
-                _ =
-                    Debug.log "enemy health is : " enemy.health
-            in
             ( model, Cmd.none )
 
         ThornsMsg tmsg ->
@@ -114,19 +106,30 @@ update msg model =
 
                                     Nothing ->
                                         ( model.enemies, model.otherCharacters, model.player )
+
+                            newDisplay =
+                                --model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
+                                if model.currentDisplay == GameModel.DisplayGameOfThorns && not newThornsModel.interactionHasFinished then
+                                    GameModel.DisplayGameOfThorns
+
+                                else if model.currentDisplay == GameModel.DisplayGameOfThorns && newThornsModel.interactionHasFinished then
+                                    GameModel.DisplayRegularGame
+
+                                else
+                                    model.currentDisplay
                         in
                         { model
                             | enemies = newEnemies
                             , otherCharacters = newOtherCharacters
                             , player = newPlayer
                             , gameOfThornsModel = newThornsModel
-                            , gameOfThornsModeisOn = model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
+                            , currentDisplay = newDisplay
                             , listeningToKeyInput = True
                         }
                             |> cleanup
 
                     else
-                        { model | gameOfThornsModel = newThornsModel, gameOfThornsModeisOn = model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished }
+                        { model | gameOfThornsModel = newThornsModel }
             in
             ( newModel, Cmd.map ThornsMsg thorns_cmds )
 
@@ -153,7 +156,6 @@ update msg model =
             , Cmd.batch
                 ([ if createRandomMap then
                     cmdFillRandomIntsPoolAndGenerateRandomMap initModel
-                    --|> Debug.log "trying to create a random map"
 
                    else
                     cmdFillRandomIntsPool initModel
@@ -195,11 +197,22 @@ update msg model =
                     GameModel.PickUpItem ->
                         update TryAddToPlayerInventory model
 
+                    GameModel.ViewStatsOverlay ->
+                        ( { model | displayStatsOverlay = not model.displayStatsOverlay }, Cmd.none )
+
+                    GameModel.ViewOpponentReport ->
+                        ( { model
+                            | currentDisplay =
+                                if model.currentDisplay == GameModel.DisplayOpponentReport then
+                                    GameModel.DisplayRegularGame
+
+                                else
+                                    GameModel.DisplayOpponentReport
+                          }
+                        , Cmd.none
+                        )
+
                     GameModel.ViewInventory ->
-                        let
-                            _ =
-                                Debug.log "player inventory : " (Dict.keys model.player.inventory)
-                        in
                         ( { model | displayInventory = not model.displayInventory }, Cmd.none )
 
                     GameModel.FloorUp ->
@@ -220,7 +233,7 @@ update msg model =
                     model.player.location
 
                 --checkIfTheresAnItemLocatedAt pcoords
-                ( updatedInventory, newGrid ) =
+                ( updatedInventory, newGrid, newHealth ) =
                     case Grid.get pcoords model.level of
                         Just (GameModel.Floor floorinfo) ->
                             case floorinfo.item of
@@ -229,21 +242,30 @@ update msg model =
                                         Paper paperinfo ->
                                             ( Dict.update ("paper_" ++ String.fromInt paperinfo.id) (\_ -> Just item) model.player.inventory
                                             , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            , model.player.health
+                                            )
+
+                                        Food fdescription ->
+                                            -- consume imediatly the item which adds to the player health
+                                            ( model.player.inventory
+                                            , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            , model.player.health + 4
                                             )
 
                                         _ ->
                                             ( Dict.update (GameModel.itemToString item) (\_ -> Just item) model.player.inventory
                                             , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            , model.player.health
                                             )
 
                                 _ ->
-                                    ( model.player.inventory, model.level )
+                                    ( model.player.inventory, model.level, model.player.health )
 
                         _ ->
-                            ( model.player.inventory, model.level )
+                            ( model.player.inventory, model.level, model.player.health )
 
                 newPlayer =
-                    { player_ | inventory = updatedInventory }
+                    { player_ | inventory = updatedInventory, health = newHealth }
             in
             ( { model | player = newPlayer, level = newGrid }, Cmd.none )
 
@@ -274,11 +296,20 @@ update msg model =
 
                             else
                                 { model | level = Grid.set (GameModel.location x2 y2) (GameModel.Lever { leverinfo | isUp = True }) model.level }
-                                    |> turnNeighbourWallCellstoAshes (GameModel.location x2 y2)
+                                    |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2) modacc) xmodel leverinfo.modelChangerFuncs)
 
+                        --|> turnNeighbourWallCellstoAshes (GameModel.location x2 y2)
                         --  |> Debug.log " you just interacted with a down lever "
                         _ ->
                             model
+                                |> (\model_ ->
+                                        case Grid.get (GameModel.location x2 y2) model_.level of
+                                            Just (GameModel.ConverterTile initialTile newTile) ->
+                                                { model_ | level = Grid.set (GameModel.location x2 y2) newTile model_.level }
+
+                                            _ ->
+                                                model_
+                                   )
 
                 mbEnemy =
                     case Dict.filter (\enemyid enemy -> enemy.floorId == model.currentFloorId && enemy.location == GameModel.location x2 y2) model.enemies |> Dict.values of
@@ -293,6 +324,15 @@ update msg model =
                         Just enemy ->
                             if enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax then
                                 ( newModel, StartOpponentInteraction enemy )
+
+                            else if enemy.health <= 0 && enemy.playerCanWalkOverIfDead && (x_ /= 0 || y_ /= 0) then
+                                ( { newModel | player = move ( x_, y_ ) newModel newModel.player }
+                                    |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
+                                    |> openDoorIfPlayerStandingOnDoorAndClosed
+                                    --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
+                                    |> checkAndAlterDisplayAnchorIfNecessary
+                                , CleanUpAndEnemyLogic
+                                )
 
                             else
                                 ( newModel, CleanUpAndEnemyLogic )
@@ -344,7 +384,7 @@ update msg model =
                 -}
                 newModel =
                     { model
-                        | gameOfThornsModeisOn = True
+                        | currentDisplay = GameModel.DisplayGameOfThorns --gameOfThornsModeisOn = True
                         , gameOfThornsModel = newThornsModel
                         , listeningToKeyInput = False
                     }
@@ -385,7 +425,7 @@ update msg model =
                 --_ =
                 --    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation model)
             in
-            case GameModel.isModelTileWalkable newLocation model of
+            case GameModel.isModelTileWalkable newLocation newPlayer model of
                 True ->
                     ( { model
                         | player = newPlayer
@@ -423,7 +463,7 @@ update msg model =
                     ( model, Cmd.none )
 
                 Just actualEnemy ->
-                    case GameModel.isModelTileWalkable newLocation model of
+                    case GameModel.isModelTileWalkable newLocation actualEnemy model of
                         True ->
                             ( { model | enemies = GameModel.placeExistingEnemy enemyId newLocation model.enemies }, Cmd.none )
 
@@ -914,7 +954,7 @@ cmdGenFloatsForRandomCave w h =
     Random.generate NewRandomFloatsForGenCave (Random.list nrFloats (Random.float 0 1))
 
 
-move : ( Int, Int ) -> GameModel.Model -> { a | location : GameModel.Location, direction : Beings.Direction, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, initiative : Int }
+move : ( Int, Int ) -> GameModel.Model -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int }
 move ( x, y ) model a =
     let
         location =
@@ -923,7 +963,7 @@ move ( x, y ) model a =
         initiative =
             a.initiative + 100
     in
-    case GameModel.isModelTileWalkable location model of
+    case GameModel.isModelTileWalkable location a model of
         False ->
             a
 
@@ -1118,7 +1158,8 @@ enemy_AI model =
         --|> List.head
         ai_helper_func : EnemyId -> ( GameModel.Model, List Enemy ) -> ( GameModel.Model, List Enemy )
         ai_helper_func enemyid ( model_, lmbe ) =
-            if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model_.gameOfThornsModeisOn then
+            if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model.currentDisplay == GameModel.DisplayGameOfThorns then
+                -- model_.gameOfThornsModeisOn then
                 ( model_, lmbe )
 
             else
@@ -1132,7 +1173,7 @@ enemy_AI model =
                                 ( model_, Nothing )
 
                             Just enemy ->
-                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && not model_.gameOfThornsModeisOn then
+                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && model.currentDisplay /= GameModel.DisplayGameOfThorns then
                                     attackIfClose enemy model_
                                         -- prevent possible infinite recursion
                                         |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))
@@ -1203,7 +1244,7 @@ enemyMove enemy model =
 
         xscaled =
             if x_delta_toPlayer > 0 then
-                if xrand <= 66 then
+                if xrand <= 85 then
                     -- 1/3 probability
                     1
 
@@ -1211,7 +1252,7 @@ enemyMove enemy model =
                     -1
 
             else if x_delta_toPlayer < 0 then
-                if xrand <= 66 then
+                if xrand <= 85 then
                     -- 1/3 probability
                     -1
 
@@ -1229,18 +1270,18 @@ enemyMove enemy model =
 
         yscaled =
             if y_delta_toPlayer > 0 then
-                if yrand <= 66 then
+                if yrand <= 85 then
                     1
 
                 else
                     -1
 
             else if y_delta_toPlayer < 0 then
-                if yrand <= 66 then
-                    1
+                if yrand <= 85 then
+                    -1
 
                 else
-                    -1
+                    1
 
             else if yrand <= 33 then
                 -1
@@ -1253,6 +1294,13 @@ enemyMove enemy model =
 
         enemy_ =
             move ( xscaled, yscaled ) model enemy
+                |> (\en ->
+                        if en.location == model.player.location then
+                            enemy
+
+                        else
+                            en
+                   )
     in
     { model
         | enemies = Dict.insert enemy.id enemy_ model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies

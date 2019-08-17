@@ -101,7 +101,7 @@ update msg model =
                                 |> ThornGrid.checkSegments info_rec.player
 
                         interactionHasFinished_ =
-                            info_rec.opponent.health <= 0
+                            info_rec.opponent.health <= 0 || info_rec.opponent.indexOfLight >= info_rec.opponent.indexOfLightMax
 
                         newModel =
                             { model | gridInteractionOptions = newGrid, previousGrid = Just previous_grid, currentSegment = [], player = info_rec.player, opponent = Just (Types.Enemy info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_ }
