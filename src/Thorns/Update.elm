@@ -57,20 +57,32 @@ update msg model =
                 rowColStr =
                     String.fromInt rownr ++ " , " ++ String.fromInt colnr
 
+                thorn =
+                    Grid.get (Grid.Coordinate colnr rownr) model.gridInteractionOptions |> Maybe.withDefault Nothing
+
                 currentSegment =
                     ThornGrid.findSegment (Grid.Coordinate colnr rownr) model.gridInteractionOptions
                         |> Maybe.withDefault []
+
+                segmentLength =
+                    List.length currentSegment
             in
-            ( { model | currentSegment = currentSegment }, Cmd.none )
+            ( { model
+                | currentSegment = currentSegment
+                , helpStr = thornToHelpStr thorn segmentLength
+              }
+            , Cmd.none
+            )
 
         MouseOut rownr colnr ->
-            ( { model | currentSegment = [] }, Cmd.none )
+            ( { model
+                | currentSegment = []
+                , helpStr = Nothing
+              }
+            , Cmd.none
+            )
 
         DoActivate rownr colnr ->
-            let
-                _ =
-                    Debug.log "DoActivate called with model.opponent of " model.opponent
-            in
             case model.opponent of
                 Nothing ->
                     ( model, Cmd.none )
@@ -80,9 +92,6 @@ update msg model =
 
                 Just (Types.Enemy opponent) ->
                     let
-                        _ =
-                            Debug.log ("DoActivate called with rownr colnr " ++ String.fromInt rownr) colnr
-
                         coords =
                             Grid.Coordinate colnr rownr
 
@@ -101,13 +110,13 @@ update msg model =
                                 |> ThornGrid.checkSegments info_rec.player
 
                         interactionHasFinished_ =
-                            info_rec.opponent.health <= 0 || info_rec.opponent.indexOfLight >= info_rec.opponent.indexOfLightMax
+                            info_rec.player.health <= 0 || info_rec.opponent.health <= 0 || info_rec.opponent.indexOfLight >= info_rec.opponent.indexOfLightMax
 
                         newModel =
                             { model | gridInteractionOptions = newGrid, previousGrid = Just previous_grid, currentSegment = [], player = info_rec.player, opponent = Just (Types.Enemy info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_ }
 
-                        _ =
-                            Debug.log "message : " info_rec.txtmsg
+                        --_ =
+                        --    Debug.log "message : " info_rec.txtmsg
                     in
                     ( newModel, cmdFillRandomIntsPool False newModel )
 
@@ -145,6 +154,29 @@ update msg model =
                     { model | gridInteractionOptions = newGrid, pseudoRandomIntsPool = newlrandints }
             in
             ( newModel, cmdFillRandomIntsPool False newModel )
+
+
+thornToHelpStr : Maybe ThornGrid.Thorn -> Int -> Maybe String
+thornToHelpStr mbthorn segmentLength =
+    if segmentLength < 2 then
+        Nothing
+
+    else
+        case mbthorn of
+            Just Beings.COMMON_ATTACK ->
+                Just <| "click for a common attack (power of " ++ String.fromInt segmentLength ++ ")"
+
+            Just Beings.ENLIGHTENMENT_SPELL ->
+                Just <| "click to throw an enlightenment spell (power of " ++ String.fromInt segmentLength ++ ")"
+
+            Just Beings.OPPONENT_COMMON_ATTACK ->
+                Just <| "click for your opponent  common attack (power of " ++ String.fromInt segmentLength ++ ")"
+
+            Just Beings.OPPONENT_ENLIGHTENMENT_SPELL ->
+                Just <| "click for your opponent to throw an enlightenment spell (power of " ++ String.fromInt segmentLength ++ ")"
+
+            Nothing ->
+                Nothing
 
 
 cmdFillRandomIntsPool : Bool -> Model -> Cmd Msg

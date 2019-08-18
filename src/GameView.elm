@@ -15,7 +15,7 @@ import GameModel
 import GameUpdate exposing (Msg(..))
 import Grid
 import Html exposing (Html)
-import Html.Attributes
+import Html.Attributes as Attr
 import Html.Events
 import Item exposing (Item(..), KeyInfo)
 import Thorns.Types
@@ -25,13 +25,13 @@ import Thorns.View as ThornsView
 xScale : Int
 xScale =
     --15 * 3
-    64
+    40
 
 
 yScale : Int
 yScale =
     --20 * 3
-    64
+    40
 
 
 
@@ -608,6 +608,35 @@ enemyView enem showBlood visibility =
             noForm
 
 
+otherCharacterView : Beings.OtherCharacter -> Bool -> GameModel.Visibility -> Collage Msg
+otherCharacterView character showBlood visibility =
+    case visibility of
+        GameModel.Visible ->
+            let
+                fileStr =
+                    "img/pc/right.png"
+
+                {-
+                     if character.indexOfLight >= character.indexOfLightMax then
+                         "img/characters/" ++ String.toLower enem.species ++ "_enlightened.png"
+
+                     else if character.health > 0 then
+                         "img/characters/" ++ String.toLower enem.species ++ ".png"
+
+                     else if character.health <= 0 && showBlood then
+                         "img/characters/" ++ String.toLower enem.species ++ "_dead_blood.png"
+
+                     else
+                         "img/characters/" ++ String.toLower enem.species ++ "_dead.png"
+                   -
+                -}
+            in
+            Collage.image ( toFloat xScale, toFloat yScale ) fileStr
+
+        _ ->
+            noForm
+
+
 guy : { r | textAvatar : String } -> GameModel.Visibility -> Collage Msg
 guy r visibility =
     case visibility of
@@ -721,6 +750,19 @@ mainScreen model =
             in
             group <| (Dict.map mkEnemy relevantEnemiesDict |> Dict.values)
 
+        otherCharacters_ =
+            let
+                relevantOtherCharsDict =
+                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.x_display_anchor && char.location.x - model.x_display_anchor < model.window_width) && (char.location.y >= model.y_display_anchor && char.location.y - model.y_display_anchor < model.window_height)) model.otherCharacters
+
+                mkOtherChar ch_id achar =
+                    --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
+                    --guy anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
+                    otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level)
+                        |> shift (location achar)
+            in
+            group <| (Dict.map mkOtherChar relevantOtherCharsDict |> Dict.values)
+
         --grid =
         --Grid.toList model.level
         bg : Collage Msg
@@ -751,6 +793,10 @@ mainScreen model =
             Collage.group
                 [ enemy_ ]
 
+        ocg =
+            Collage.group
+                [ otherCharacters_ ]
+
         emptyg =
             Collage.group
                 []
@@ -767,6 +813,7 @@ mainScreen model =
            fogger
          , pg |> shift ( 0, 0 )
          , eg
+         , ocg
          , bg
 
          --, fogger
@@ -850,6 +897,15 @@ sidebar model pos =
             --flow down
             [ model.player.textAvatar ++ " : " ++ model.player.name |> Text.fromString |> theColor |> Collage.rendered
             , "Health: " ++ String.fromInt model.player.health |> Text.fromString |> theColor |> Collage.rendered
+            , "mana: " ++ String.fromInt model.player.mana |> Text.fromString |> theColor |> Collage.rendered
+            ]
+                |> List.indexedMap (\i elem -> shift ( -100, 200 - toFloat i * 25 ) elem)
+                |> Collage.group
+
+        barDebugMode =
+            --flow down
+            [ model.player.textAvatar ++ " : " ++ model.player.name |> Text.fromString |> theColor |> Collage.rendered
+            , "Health: " ++ String.fromInt model.player.health |> Text.fromString |> theColor |> Collage.rendered
             , "Energy: " ++ String.fromInt model.player.energy |> Text.fromString |> theColor |> Collage.rendered
             , "mana: " ++ String.fromInt model.player.mana |> Text.fromString |> theColor |> Collage.rendered
             , "Hunger: " ++ String.fromInt model.player.hunger |> Text.fromString |> theColor |> Collage.rendered
@@ -869,7 +925,35 @@ sidebar model pos =
                 |> Collage.group
     in
     --container (widthOf bar + 20) (heightOf bar) midTop bar
-    bar
+    if model.debugMode then
+        barDebugMode
+
+    else
+        bar
+
+
+viewGameOverOverlay : Bool -> Collage Msg
+viewGameOverOverlay completed =
+    let
+        theColor =
+            Text.color white
+
+        theColor2 =
+            Text.color red
+
+        completionMsg =
+            if completed then
+                "You have completed all your quests and have become an enlightened version of yourself "
+
+            else
+                ""
+    in
+    --flow down
+    [ "GAME OVER" |> Text.fromString |> theColor |> Collage.rendered
+    , completionMsg |> Text.fromString |> theColor |> Collage.rendered
+    ]
+        |> List.indexedMap (\i elem -> shift ( -100, 200 - toFloat i * 25 ) elem)
+        |> Collage.group
 
 
 viewItem : Item.Item -> Collage Msg
@@ -895,8 +979,8 @@ viewItem item =
             noForm
 
 
-viewInventory : GameModel.Model -> Collage Msg
-viewInventory model =
+viewInventoryOverlay : GameModel.Model -> Collage Msg
+viewInventoryOverlay model =
     let
         theColor =
             Text.color white
@@ -913,6 +997,28 @@ viewInventory model =
     Collage.group topAndForms
 
 
+viewInventory : GameModel.Model -> Html Msg
+viewInventory model =
+    let
+        theColor =
+            Text.color white
+
+        top =
+            Html.h3 [] [ Html.text "Inventory : " ]
+
+        thelist =
+            Html.div []
+                (List.concatMap (\it -> [ Html.a [] [ Html.img [ Attr.size 640, Attr.src (Item.itemToImgSrc it) ] [] ], Html.br [] [] ]) (Dict.values model.player.inventory))
+    in
+    Html.div [ Attr.align "center" ]
+        [ top
+        , thelist
+        , Html.br [] []
+        , Html.br [] []
+        , Html.text "Press I to leave Inventory"
+        ]
+
+
 display :
     GameModel.Model
     -> Collage Msg --Element
@@ -927,12 +1033,20 @@ display model =
     --flow right [ sidebar model, mainScreen model ] |> color black
     Collage.group
         [ if model.displayInventory then
-            viewInventory model |> shift ( 0, 0 )
+            viewInventoryOverlay model |> shift ( 0, 0 )
 
           else
             noForm
         , if model.displayStatsOverlay then
             sidebar model pos
+
+          else
+            noForm
+        , if model.currentDisplay == GameModel.DisplayGameOver then
+            viewGameOverOverlay False
+
+          else if model.currentDisplay == GameModel.DisplayGameCompleted then
+            viewGameOverOverlay True
 
           else
             noForm
@@ -1021,8 +1135,43 @@ viewDebugEnemies model =
 
 viewOpponentReport : GameModel.Model -> Html GameUpdate.Msg
 viewOpponentReport model =
-    Html.div []
-        (Dict.values model.enemies |> List.concatMap (\enem -> [ Html.text ("enemy.name : " ++ enem.name ++ " , enemyHealth : " ++ String.fromInt enem.health ++ " ,  enemyIndexOfLight : " ++ String.fromInt enem.indexOfLight), Html.br [] [] ]))
+    Html.div [ Attr.align "center" ]
+        [ Html.h3 [] [ Html.text "Opponent Report :" ]
+        , Html.br [] []
+        , Html.div
+            []
+            (Dict.values model.enemies |> List.concatMap (\enem -> [ Html.text ("enemy.name : " ++ enem.name ++ " , enemyHealth : " ++ String.fromInt enem.health ++ " ,  enemyIndexOfLight : " ++ String.fromInt enem.indexOfLight), Html.br [] [], Html.br [] [], Html.br [] [] ]))
+        , Html.br [] []
+        , Html.br [] []
+        , Html.text "Press E to leave Opponent Report"
+        ]
+
+
+viewHelpMode : GameModel.Model -> Html GameUpdate.Msg
+viewHelpMode model =
+    Html.div [ Attr.align "center" ]
+        [ Html.h3 [] [ Html.text "Help Screen" ]
+        , Html.text "Castle of Elm is a minimalistic Rogue like game , inspired by Castle of Elm , Atic Atac , Sleeping Beauty's Game of Thorns , ... "
+        , Html.br [] []
+        , Html.text "Find your way through the Caverns, Basement , The Ground Floor , First Floor and the Attic , pick up the three pieces of paper with the codes to unlock the black door and move towards enlightenment !!!"
+        , Html.br [] []
+        , Html.br [] []
+        , Html.br [] []
+        , Html.text "Use Arrow keys to move "
+        , Html.br [] []
+        , Html.text "U to pick up items"
+        , Html.br [] []
+        , Html.text "I for inventory"
+        , Html.br [] []
+        , Html.text "S for Stats"
+        , Html.br [] []
+        , Html.text "E for Opponent Report "
+        , Html.br [] []
+        , Html.text "and H for Help"
+        , Html.br [] []
+        , Html.br [] []
+        , Html.text "Press H to leave Help Screen"
+        ]
 
 
 view : GameModel.Model -> Html GameUpdate.Msg
@@ -1037,6 +1186,12 @@ view model =
                     --else if model.viewOpponentReportMode then
                     GameModel.DisplayOpponentReport ->
                         viewOpponentReport model
+
+                    GameModel.DisplayInventory ->
+                        viewInventory model
+
+                    GameModel.DisplayHelpScreen ->
+                        viewHelpMode model
 
                     _ ->
                         Html.div []
@@ -1061,15 +1216,23 @@ viewGameOfThorns model =
 viewStartMenuChoices : GameModel.Model -> Html GameUpdate.Msg
 viewStartMenuChoices model =
     Html.div []
-        [ Html.div []
+        [ {-
+                Html.div []
+                 [ Html.h3 []
+                     [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
+                     ]
+                 ]
+             , Html.br [] []
+          -}
+          Html.div [ Attr.align "center" ]
             [ Html.h3 []
-                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
-                ]
-            ]
-        , Html.br [] []
-        , Html.div []
-            [ Html.h3 []
-                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 2) ] [ Html.text "Start Game 2 - Atic Atac Style  Dungeon " ]
+                [ Html.a
+                    [ Html.Events.onClick (GameUpdate.StartGameNr 2) ]
+                    [ Html.text "Start - Castle of Elm Tribulations" ]
+                , Html.br [] []
+                , Html.a
+                    [ Html.Events.onClick (GameUpdate.StartGameNr 2) ]
+                    [ Html.img [ Attr.src "img/game/casteleOfElmTribulations_.png" ] [] ]
                 ]
             ]
         ]

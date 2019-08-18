@@ -60,6 +60,7 @@ modelChangerFuncs =
                     Grid.set (Grid.Coordinate 15 2) (GameModel.Floor GameModel.defaultFloorInfo) model.level
                         |> Grid.set (Grid.Coordinate 16 2) (GameModel.Water walkableWaterInfo)
                         |> Grid.set (Grid.Coordinate 17 2) (GameModel.Water walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 20 13) (GameModel.Grass defaultGrassInfo)
             }
 
         else

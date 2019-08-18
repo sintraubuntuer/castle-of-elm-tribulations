@@ -37,6 +37,7 @@ type alias Model =
     , opponent : Maybe Opponent
     , interactionHasFinished : Bool
     , pseudoRandomIntsPool : List Int
+    , helpStr : Maybe String
     , previousPseudoRandomIntsPool : List Int
     }
 
@@ -50,5 +51,6 @@ initialModel player mbenemy =
     , opponent = mbenemy |> Maybe.map (\x -> Enemy x)
     , interactionHasFinished = False
     , pseudoRandomIntsPool = []
+    , helpStr = Nothing
     , previousPseudoRandomIntsPool = []
     }

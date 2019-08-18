@@ -120,7 +120,9 @@ initialModelFunc =
       , roomsInfo = roomsInfo --  RoomsInfo
       , floorDict = Dict.empty
       , currentFloorId = theFloorId
+      , gameCompletionFunc = \fid coords -> False
       , started = True
+      , debugMode = False
       }
     , createRandomMap
     , randomlyPositionPlayer

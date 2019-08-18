@@ -155,6 +155,8 @@ type alias GrassInfo =
 
 type CurrentDisplay
     = DisplayRegularGame
+    | DisplayGameOver
+    | DisplayGameCompleted
     | DisplayGameOfThorns
     | DisplayOpponentReport
     | DisplayHelpScreen
@@ -186,7 +188,9 @@ type alias Model =
     , roomsInfo : Maybe RoomsInfo
     , floorDict : Dict Int FloorStore
     , currentFloorId : Int
+    , gameCompletionFunc : Int -> Grid.Coordinate -> Bool
     , started : Bool
+    , debugMode : Bool
     }
 
 
@@ -626,12 +630,11 @@ type Input
     | Down
     | Left
     | Right
-    | FloorUp
-    | FloorDown
     | PickUpItem
     | ViewInventory
     | ViewStatsOverlay
     | ViewOpponentReport
+    | ViewHelpMode
     | Nop
 
 

@@ -98,7 +98,6 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
                 variation =
                     (attack_power_value - defense_power_value)
                         |> (\x -> Basics.max 1 x)
-                        |> Debug.log "damage caused is equal to : "
 
                 ( defender_hp_after_attack, defender_index_of_light_after_attack ) =
                     if opp_interaction_chosen_option_ == Beings.ENLIGHTENMENT_SPELL || opp_interaction_chosen_option_ == Beings.OPPONENT_ENLIGHTENMENT_SPELL then
@@ -125,12 +124,12 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
 
         ( intervenient1_f, intervenient2_f, ftxt_msg ) =
             case opp_interaction_chosen_option of
-                Beings.CHICANE_ATTACK ->
+                Beings.COMMON_ATTACK ->
                     let
                         ( def, txtm ) =
-                            get_defender_after_attack intervenient1 intervenient2 power Beings.CHICANE_ATTACK
+                            get_defender_after_attack intervenient1 intervenient2 power Beings.COMMON_ATTACK
                     in
-                    ( intervenient1, def, "you initiate a chicane with your opponent. power of the chicane is : " ++ String.fromInt power ++ " , " ++ txtm )
+                    ( intervenient1, def, "you initiate an attack . power of the attack is : " ++ String.fromInt power ++ " , " ++ txtm )
 
                 Beings.ENLIGHTENMENT_SPELL ->
                     if intervenient1.mana > power then
@@ -143,12 +142,12 @@ calcOpponentStatsAfterInteraction intervenient1 intervenient2 power opp_interact
                     else
                         ( intervenient1, intervenient2, "" )
 
-                Beings.OPPONENT_CHICANE_ATTACK ->
+                Beings.OPPONENT_COMMON_ATTACK ->
                     let
                         ( def, txtm ) =
-                            get_defender_after_attack intervenient2 intervenient1 power Beings.OPPONENT_CHICANE_ATTACK
+                            get_defender_after_attack intervenient2 intervenient1 power Beings.OPPONENT_COMMON_ATTACK
                     in
-                    ( def, intervenient2, "your opponent initiates a chicane with you . power of the chicane is : " ++ String.fromInt power ++ " , " ++ txtm )
+                    ( def, intervenient2, "your opponent initiates a fight with you . power of the attack is : " ++ String.fromInt power ++ " , " ++ txtm )
 
                 Beings.OPPONENT_ENLIGHTENMENT_SPELL ->
                     if intervenient2.mana < power then
@@ -190,8 +189,8 @@ get_interaction_options : List RandomVal -> Player -> ( Maybe Beings.OPPONENT_IN
 get_interaction_options lrandints player =
     let
         lopt =
-            --  [ Beings.CHICANE_ATTACK, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_CHICANE_ATTACK, Beings.OPPONENT_ENLIGHTENMENT_SPELL ]
-            [ Beings.CHICANE_ATTACK, Beings.OPPONENT_CHICANE_ATTACK, Beings.CHICANE_ATTACK, Beings.OPPONENT_CHICANE_ATTACK, Beings.CHICANE_ATTACK, Beings.OPPONENT_CHICANE_ATTACK, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_ENLIGHTENMENT_SPELL, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_ENLIGHTENMENT_SPELL ]
+            --  [ Beings.COMMON_ATTACK, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_COMMON_ATTACK, Beings.OPPONENT_ENLIGHTENMENT_SPELL ]
+            [ Beings.COMMON_ATTACK, Beings.OPPONENT_COMMON_ATTACK, Beings.COMMON_ATTACK, Beings.OPPONENT_COMMON_ATTACK, Beings.COMMON_ATTACK, Beings.OPPONENT_COMMON_ATTACK, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_ENLIGHTENMENT_SPELL, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_ENLIGHTENMENT_SPELL ]
 
         litems =
             Dict.values player.inventory

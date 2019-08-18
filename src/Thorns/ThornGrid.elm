@@ -22,10 +22,10 @@ type alias Thorn =
 thornToString : Thorn -> String
 thornToString thorn =
     case thorn of
-        CHICANE_ATTACK ->
+        COMMON_ATTACK ->
             "+ "
 
-        OPPONENT_CHICANE_ATTACK ->
+        OPPONENT_COMMON_ATTACK ->
             "- "
 
         ENLIGHTENMENT_SPELL ->

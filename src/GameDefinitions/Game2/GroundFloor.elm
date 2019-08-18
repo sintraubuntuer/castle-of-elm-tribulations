@@ -270,15 +270,14 @@ groundFloorStairsTunnelWithOptions =
 
     --
     , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
-      , defaultNoDoorOptions
-        {- }{ left = GameModel.UseDoor (customBlackDoorInfo GameModel.DoorToTheRight)
+        --, defaultNoDoorOptions
+      , { left = GameModel.UseDoor (customBlackDoorInfo GameModel.DoorToTheRight)
 
-           --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
-           , top = GameModel.NoDoorNoWall
-           , right = GameModel.NoDoorNoWall
-           , bottom = GameModel.NoDoorNoWall
-           }
-        -}
+        --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
+        , top = GameModel.NoDoorNoWall
+        , right = GameModel.NoDoorNoWall
+        , bottom = GameModel.NoDoorNoWall
+        }
       )
     ]
         |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))

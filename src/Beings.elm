@@ -10,6 +10,7 @@ module Beings exposing
     , OtherCharacter
     , Player
     , enemyCreationFunc
+    , otherCharacterCreationFunc
     , playerCreationFunc
     )
 
@@ -120,13 +121,38 @@ type alias OtherCharacter =
     }
 
 
+otherCharacterCreationFunc : Int -> String -> Int -> OtherCharacter
+otherCharacterCreationFunc id_ ename floor_id_ =
+    { location = Grid.Coordinate 9 9
+    , floorId = floor_id_
+    , id = id_
+    , textAvatar = "" --Element.Element
+    , name = ename
+    , species = "otherYou"
+    , health = 30
+    , indexOfLight = 8
+    , mana = 100
+    , inventory = Dict.empty
+    , stealth = 20
+    , armor = 1
+    , protection = 5
+    , coordination = 20
+    , power = 10
+    , initiative = 100
+    , indexOfLightMax = 30
+    , maxNrEnemyMovesPerTurn = 1 -- to prevent possible infinite recursion in ai
+    , nrMovesInCurrentTurn = 0
+    , placed = True
+    }
+
+
 type alias Inventory =
     Dict String Item
 
 
 type OPPONENT_INTERACTION_OPTIONS
-    = CHICANE_ATTACK
-    | OPPONENT_CHICANE_ATTACK
+    = COMMON_ATTACK
+    | OPPONENT_COMMON_ATTACK
     | ENLIGHTENMENT_SPELL
     | OPPONENT_ENLIGHTENMENT_SPELL
 
@@ -137,7 +163,7 @@ playerCreationFunc elem pname =
     , textAvatar = elem
     , name = pname
     , direction = Down
-    , health = 10
+    , health = 30
     , indexOfLight = 10
     , energy = 10
     , mana = 100
@@ -146,7 +172,7 @@ playerCreationFunc elem pname =
     , hunger = 10
     , stealth = 20
     , armor = 1
-    , protection = 50
+    , protection = 5
     , coordination = 100
     , power = 2
     , initiative = 2 -- this will be altered by generating a random int between 1 and 100
@@ -171,7 +197,7 @@ enemyCreationFunc elem enemyid ename species_ floor_id =
     , inventory = Dict.empty
     , stealth = 20
     , armor = 1
-    , protection = 50
+    , protection = 5
     , coordination = 100
     , power = 2
     , initiative = 1 -- this will be altered by generating a random int between 1 and 100

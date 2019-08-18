@@ -25,11 +25,10 @@ view model =
     div [ Attr.align "center" ]
         [ div []
             [ h3 [] [ text "How about a nice game of thorns ?" ]
-            , br [] []
             , div []
                 (List.indexedMap
                     (\rownr row ->
-                        div [ Attr.style "padding" "1em", Attr.style "font-family" "monospace", Attr.style "font-size" "2em" ]
+                        div [ Attr.style "padding" "1em", Attr.style "font-family" "monospace", Attr.style "font-size" "1em" ]
                             (rowToListStringIndex row
                                 |> List.map
                                     (\( str, colnr ) ->
@@ -48,17 +47,23 @@ view model =
                     lrows
                 )
             ]
-        , br [] []
-        , br [] []
+        , viewSuggestion model
         , viewHealthReport model
         , br [] []
         , br [] []
-        , if model.previousGrid /= Nothing then
-            div [] [ a [ onClick UndoLastInteraction ] [ text "Undo" ] ]
 
-          else
-            div [] []
+        {- }
+           , if model.previousGrid /= Nothing then
+               div [] [ a [ onClick UndoLastInteraction ] [ text "Undo" ] ]
+
+             else
+               div [] []
+        -}
         ]
+
+
+viewSuggestion model =
+    div [] [ model.helpStr |> Maybe.withDefault "" |> text ]
 
 
 viewHealthReport : Model -> Html Msg

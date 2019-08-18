@@ -113,7 +113,11 @@ update msg model =
                                     GameModel.DisplayGameOfThorns
 
                                 else if model.currentDisplay == GameModel.DisplayGameOfThorns && newThornsModel.interactionHasFinished then
-                                    GameModel.DisplayRegularGame
+                                    if newPlayer.health <= 0 then
+                                        GameModel.DisplayGameOver
+
+                                    else
+                                        GameModel.DisplayRegularGame
 
                                 else
                                     model.currentDisplay
@@ -145,9 +149,6 @@ update msg model =
 
                         _ ->
                             ( model, False, False )
-
-                test =
-                    ThornGrid.thornToString Beings.CHICANE_ATTACK
 
                 gBounds =
                     Grid.getGridBoundsToPlacePlayer initModel.level
@@ -200,6 +201,18 @@ update msg model =
                     GameModel.ViewStatsOverlay ->
                         ( { model | displayStatsOverlay = not model.displayStatsOverlay }, Cmd.none )
 
+                    GameModel.ViewHelpMode ->
+                        ( { model
+                            | currentDisplay =
+                                if model.currentDisplay == GameModel.DisplayHelpScreen then
+                                    GameModel.DisplayRegularGame
+
+                                else
+                                    GameModel.DisplayHelpScreen
+                          }
+                        , Cmd.none
+                        )
+
                     GameModel.ViewOpponentReport ->
                         ( { model
                             | currentDisplay =
@@ -213,13 +226,17 @@ update msg model =
                         )
 
                     GameModel.ViewInventory ->
-                        ( { model | displayInventory = not model.displayInventory }, Cmd.none )
+                        --( { model | displayInventory = not model.displayInventory }, Cmd.none )
+                        ( { model
+                            | currentDisplay =
+                                if model.currentDisplay == GameModel.DisplayInventory then
+                                    GameModel.DisplayRegularGame
 
-                    GameModel.FloorUp ->
-                        update (ChangeFloorTo (model.currentFloorId + 1) ( model.player.location.x, model.player.location.y )) model
-
-                    GameModel.FloorDown ->
-                        update (ChangeFloorTo (model.currentFloorId - 1) ( model.player.location.x, model.player.location.y )) model
+                                else
+                                    GameModel.DisplayInventory
+                          }
+                        , Cmd.none
+                        )
 
                     GameModel.Nop ->
                         ( model, Cmd.none )
@@ -322,7 +339,7 @@ update msg model =
                 ( newModel2, themsg ) =
                     case mbEnemy of
                         Just enemy ->
-                            if enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax then
+                            if enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax && newModel.player.health > 0 then
                                 ( newModel, StartOpponentInteraction enemy )
 
                             else if enemy.health <= 0 && enemy.playerCanWalkOverIfDead && (x_ /= 0 || y_ /= 0) then
@@ -355,14 +372,37 @@ update msg model =
         CleanUpAndEnemyLogic ->
             let
                 ( newModel, lenemies ) =
-                    model |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI
-            in
-            case lenemies |> List.head of
-                Just enemy_ ->
-                    update (StartOpponentInteraction enemy_) newModel
+                    model
+                        |> cleanup
+                        |> resetEnemyMovesCurrentTurn
+                        |> enemy_AI
+                        |> (\( modl, le ) ->
+                                if modl.currentDisplay == GameModel.DisplayGameOver then
+                                    ( { modl | listeningToKeyInput = False }, le )
 
-                Nothing ->
-                    ( newModel |> reveal, cmdFillRandomIntsPool newModel )
+                                else
+                                    ( modl, le )
+                           )
+
+                isGameCompleted =
+                    checkGameCompletion model
+            in
+            if isGameCompleted then
+                ( { newModel
+                    | currentDisplay = GameModel.DisplayGameCompleted
+                    , enemies = Dict.empty
+                    , otherCharacters = Dict.empty
+                  }
+                , Cmd.none
+                )
+
+            else
+                case lenemies |> List.head of
+                    Just enemy_ ->
+                        update (StartOpponentInteraction enemy_) newModel
+
+                    Nothing ->
+                        ( newModel |> reveal, cmdFillRandomIntsPool newModel )
 
         StartOpponentInteraction enemy ->
             let
@@ -538,6 +578,11 @@ update msg model =
                     }
             in
             ( newmodel, cmdFillRandomIntsPool newmodel )
+
+
+checkGameCompletion : GameModel.Model -> Bool
+checkGameCompletion model =
+    model.gameCompletionFunc model.currentFloorId model.player.location
 
 
 isPlayerStandingOnStairs : GameModel.Model -> Bool
@@ -1173,7 +1218,7 @@ enemy_AI model =
                                 ( model_, Nothing )
 
                             Just enemy ->
-                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && model.currentDisplay /= GameModel.DisplayGameOfThorns then
+                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && model.player.health > 0 && model.currentDisplay /= GameModel.DisplayGameOfThorns then
                                     attackIfClose enemy model_
                                         -- prevent possible infinite recursion
                                         |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))

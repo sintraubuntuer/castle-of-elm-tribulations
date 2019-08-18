@@ -64,12 +64,6 @@ fromCode keyCode =
         65 ->
             GameModel.Down
 
-        49 ->
-            GameModel.FloorDown
-
-        50 ->
-            GameModel.FloorUp
-
         85 ->
             GameModel.PickUpItem
 
@@ -82,9 +76,15 @@ fromCode keyCode =
         69 ->
             GameModel.ViewOpponentReport
 
+        72 ->
+            GameModel.ViewHelpMode
+
         _ ->
             GameModel.Nop
-                |> Debug.log ("keyCode is " ++ String.fromInt keyCode)
+
+
+
+--|> Debug.log ("keyCode is " ++ String.fromInt keyCode)
 
 
 type alias Flags =

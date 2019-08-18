@@ -15,6 +15,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
         , holesDict
         , itemCreationDict
         , landingTargetsDict
+        , lastFloor_id
         , teleporterInfoDict
         , theAttic_id
         )
@@ -57,8 +58,17 @@ initialEnemy enemyid species floorId =
     Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) species floorId
 
 
+otherCharacterFunc =
+    Beings.otherCharacterCreationFunc 1 "otherYou" lastFloor_id
+
+
 
 --( 92, 60 )
+
+
+customGameCompletionFunc : Int -> Grid.Coordinate -> Bool
+customGameCompletionFunc floorid coords =
+    floorid == lastFloor_id && coords.x < 12 && coords.y >= 5
 
 
 initialModelFunc : List Int -> ( GameModel.Model, Bool, Bool )
@@ -85,6 +95,18 @@ initialModelFunc lrandints =
         enemy6 =
             initialEnemy 6 "pumpking" groundFloor_id
 
+        enemy7 =
+            initialEnemy 7 "ghost" firstFloor_id
+
+        enemy8 =
+            initialEnemy 8 "pumpking" firstFloor_id
+
+        enemy9 =
+            initialEnemy 9 "ghost" theAttic_id
+
+        enemy10 =
+            initialEnemy 10 "bat" theAttic_id
+
         levers =
             Dict.empty
 
@@ -92,9 +114,11 @@ initialModelFunc lrandints =
             place_three_pieces_of_paper ( dStore, lrandints )
                 |> place_all_health_food_items 5
 
-        _ =
-            Debug.log " size of lrands after placing pieces of paper is  " (List.length lrands)
+        otherCharacter =
+            otherCharacterFunc
 
+        --_ =
+        --    Debug.log " size of lrands after placing pieces of paper is  " (List.length lrands)
         randomlyPositionPlayer =
             False
 
@@ -102,7 +126,7 @@ initialModelFunc lrandints =
             False
     in
     -- GameModel.Model
-    ( { player = { player | location = { x = 60, y = 36 } }
+    ( { player = { player | location = { x = 67, y = 36 } }
       , enemies =
             Dict.fromList
                 [ ( enemy1.id, enemy1 )
@@ -111,8 +135,15 @@ initialModelFunc lrandints =
                 , ( enemy4.id, enemy4 )
                 , ( enemy5.id, enemy5 )
                 , ( enemy6.id, enemy6 )
+                , ( enemy7.id, enemy7 )
+                , ( enemy8.id, enemy8 )
+                , ( enemy9.id, enemy9 )
+                , ( enemy10.id, enemy10 )
                 ]
-      , otherCharacters = Dict.empty
+      , otherCharacters =
+            Dict.fromList
+                [ ( 1, otherCharacter )
+                ]
       , level = Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .level |> Maybe.withDefault GroundFloor.gridGroundFloor -- Grid.Grid Tile
 
       --, levers = levers --Dict LeverId LeverInfo
@@ -136,7 +167,9 @@ initialModelFunc lrandints =
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = storeDictWithPlacedPapers
       , currentFloorId = 2
+      , gameCompletionFunc = customGameCompletionFunc
       , started = True
+      , debugMode = False
       }
     , createRandomMap
     , randomlyPositionPlayer
@@ -145,12 +178,12 @@ initialModelFunc lrandints =
 
 common_window_width : Int
 common_window_width =
-    14
+    11
 
 
 common_window_height : Int
 common_window_height =
-    14
+    11
 
 
 dStore : Dict Int GameModel.FloorStore

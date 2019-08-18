@@ -175,7 +175,9 @@ initialModelFunc =
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = Dict.empty
       , currentFloorId = theFloorId
+      , gameCompletionFunc = \fid coords -> False
       , started = False
+      , debugMode = False
       }
     , createRandomMap
     )
