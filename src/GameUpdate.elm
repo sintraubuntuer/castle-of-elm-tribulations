@@ -33,7 +33,7 @@ import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
-import GameModel
+import GameModel exposing (Model)
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
@@ -43,7 +43,7 @@ import Thorns.Types
 import Thorns.Update as ThornsUpdate
 
 
-log : String -> GameModel.Model -> GameModel.Model
+log : String -> Model -> Model
 log s model =
     { model | log = s :: model.log }
 
@@ -76,7 +76,7 @@ type Msg
     | ThornsMsg Thorns.Types.Msg
 
 
-update : Msg -> GameModel.Model -> ( GameModel.Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Noop ->
@@ -580,14 +580,13 @@ update msg model =
             ( newmodel, cmdFillRandomIntsPool newmodel )
 
 
-checkGameCompletion : GameModel.Model -> Bool
+checkGameCompletion : Model -> Bool
 checkGameCompletion model =
     model.gameCompletionFunc model.currentFloorId model.player.location
 
 
-isPlayerStandingOnStairs : GameModel.Model -> Bool
+isPlayerStandingOnStairs : Model -> Bool
 isPlayerStandingOnStairs model =
-    --False
     let
         mbTile =
             Grid.get model.player.location model.level
@@ -600,7 +599,7 @@ isPlayerStandingOnStairs model =
             False
 
 
-checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor : GameModel.Model -> GameModel.Model
+checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor : Model -> Model
 checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
     let
         mbTile =
@@ -671,7 +670,7 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
             model
 
 
-searchFloorForTeleporterId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int, Int )
+searchFloorForTeleporterId : Int -> Int -> Model -> Maybe ( Int, Int, Int )
 searchFloorForTeleporterId fid target_id_ model =
     let
         mbFloorGrid =
@@ -703,7 +702,7 @@ searchFloorForTeleporterId fid target_id_ model =
             Nothing
 
 
-searchFloorForTargetId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int, Int )
+searchFloorForTargetId : Int -> Int -> Model -> Maybe ( Int, Int, Int )
 searchFloorForTargetId fid target_id model =
     let
         mbFloorGrid =
@@ -735,7 +734,7 @@ searchFloorForTargetId fid target_id model =
             Nothing
 
 
-searchFloorForStairsId : Int -> Int -> GameModel.Model -> Maybe ( Int, Int )
+searchFloorForStairsId : Int -> Int -> Model -> Maybe ( Int, Int )
 searchFloorForStairsId floorId stairsId model =
     let
         mbFloorGrid =
@@ -762,7 +761,7 @@ searchFloorForStairsId floorId stairsId model =
             Nothing
 
 
-changeFloorTo : GameModel.Model -> Int -> ( Int, Int ) -> GameModel.Model
+changeFloorTo : Model -> Int -> ( Int, Int ) -> Model
 changeFloorTo model floorId locTuple =
     let
         newModel =
@@ -813,7 +812,7 @@ changeFloorTo model floorId locTuple =
         |> reveal
 
 
-position_display_anchor_in_order_to_center_player : GameModel.Model -> GameModel.Model
+position_display_anchor_in_order_to_center_player : Model -> Model
 position_display_anchor_in_order_to_center_player model =
     { model
         | x_display_anchor = max 0 (model.player.location.x - round (toFloat model.window_width / 2.0))
@@ -822,7 +821,7 @@ position_display_anchor_in_order_to_center_player model =
         |> reveal
 
 
-turnNeighbourWallCellstoAshes : Grid.Coordinate -> GameModel.Model -> GameModel.Model
+turnNeighbourWallCellstoAshes : Grid.Coordinate -> Model -> Model
 turnNeighbourWallCellstoAshes { x, y } model =
     let
         upCell =
@@ -857,7 +856,7 @@ turnNeighbourWallCellstoAshes { x, y } model =
         |> updateWallPercentageValue
 
 
-updateWallPercentageValue : GameModel.Model -> GameModel.Model
+updateWallPercentageValue : Model -> Model
 updateWallPercentageValue model =
     let
         thegrid =
@@ -892,7 +891,7 @@ getWallPercentage gridAsList =
         |> (\tup -> (Tuple.first tup |> toFloat) / (Tuple.second tup |> toFloat))
 
 
-checkAndAlterDisplayAnchorIfNecessary : GameModel.Model -> GameModel.Model
+checkAndAlterDisplayAnchorIfNecessary : Model -> Model
 checkAndAlterDisplayAnchorIfNecessary model =
     let
         p_x_dist =
@@ -949,7 +948,7 @@ cmdGenerateRandomInitiativeValue strCharacter mbCharacterId minval maxval =
     Random.generate (RandomInitiativeValue strCharacter mbCharacterId) (Random.int minval maxval)
 
 
-cmdFillRandomIntsPool : GameModel.Model -> Cmd Msg
+cmdFillRandomIntsPool : Model -> Cmd Msg
 cmdFillRandomIntsPool model =
     let
         nrToAdd =
@@ -962,7 +961,7 @@ cmdFillRandomIntsPool model =
         Cmd.none
 
 
-cmdFillRandomIntsPoolAndGenerateRandomMap : GameModel.Model -> Cmd Msg
+cmdFillRandomIntsPoolAndGenerateRandomMap : Model -> Cmd Msg
 cmdFillRandomIntsPoolAndGenerateRandomMap model =
     let
         nrToAdd =
@@ -999,11 +998,11 @@ cmdGenFloatsForRandomCave w h =
     Random.generate NewRandomFloatsForGenCave (Random.list nrFloats (Random.float 0 1))
 
 
-move : ( Int, Int ) -> GameModel.Model -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int }
-move ( x, y ) model a =
+move : ( Int, Int ) -> Model -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int }
+move ( x_shift, y_shift ) model a =
     let
         location =
-            GameModel.location (a.location.x + x) (a.location.y + y)
+            GameModel.location (a.location.x + x_shift) (a.location.y + y_shift)
 
         initiative =
             a.initiative + 100
@@ -1017,13 +1016,13 @@ move ( x, y ) model a =
                 | location = location
                 , initiative = initiative
                 , direction =
-                    if x > 0 then
+                    if x_shift > 0 then
                         Beings.Right
 
-                    else if x < 0 then
+                    else if x_shift < 0 then
                         Beings.Left
 
-                    else if y > 0 then
+                    else if y_shift > 0 then
                         Beings.Down
 
                     else
@@ -1031,7 +1030,7 @@ move ( x, y ) model a =
             }
 
 
-openDoorIfPlayerStandingOnDoorAndClosed : GameModel.Model -> GameModel.Model
+openDoorIfPlayerStandingOnDoorAndClosed : Model -> Model
 openDoorIfPlayerStandingOnDoorAndClosed model =
     let
         newGrid =
@@ -1120,7 +1119,7 @@ attack dude1 dude2 lprandInts =
     { dudeA = { dude1 | initiative = dude1.initiative + 100 }, dudeB = { dude2 | health = result }, textMsg = msg, randInts = newprandInts2 }
 
 
-resetEnemyMovesCurrentTurn : GameModel.Model -> GameModel.Model
+resetEnemyMovesCurrentTurn : Model -> Model
 resetEnemyMovesCurrentTurn model =
     let
         newEnemies =
@@ -1129,7 +1128,7 @@ resetEnemyMovesCurrentTurn model =
     { model | enemies = newEnemies }
 
 
-increseNrOfEnemyMovesInCurrentTurn : EnemyId -> GameModel.Model -> GameModel.Model
+increseNrOfEnemyMovesInCurrentTurn : EnemyId -> Model -> Model
 increseNrOfEnemyMovesInCurrentTurn enemyid model =
     let
         newEnemies =
@@ -1138,7 +1137,7 @@ increseNrOfEnemyMovesInCurrentTurn enemyid model =
     { model | enemies = newEnemies }
 
 
-cleanup : GameModel.Model -> GameModel.Model
+cleanup : Model -> Model
 cleanup model =
     let
         dead_and_disappears =
@@ -1178,7 +1177,7 @@ cleanup model =
             log m newModel
 
 
-enemyExceedsNrMovesInCurrentTurn : EnemyId -> GameModel.Model -> Bool
+enemyExceedsNrMovesInCurrentTurn : EnemyId -> Model -> Bool
 enemyExceedsNrMovesInCurrentTurn enemyid model =
     let
         mbEnemy =
@@ -1192,7 +1191,7 @@ enemyExceedsNrMovesInCurrentTurn enemyid model =
             enemy.nrMovesInCurrentTurn >= enemy.maxNrEnemyMovesPerTurn
 
 
-enemy_AI : GameModel.Model -> ( GameModel.Model, List Enemy )
+enemy_AI : Model -> ( Model, List Enemy )
 enemy_AI model =
     let
         enemyIdEnemyPairList =
@@ -1201,7 +1200,7 @@ enemy_AI model =
 
         --&& enemy.initiative <= model.player.initiative
         --|> List.head
-        ai_helper_func : EnemyId -> ( GameModel.Model, List Enemy ) -> ( GameModel.Model, List Enemy )
+        ai_helper_func : EnemyId -> ( Model, List Enemy ) -> ( Model, List Enemy )
         ai_helper_func enemyid ( model_, lmbe ) =
             if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model.currentDisplay == GameModel.DisplayGameOfThorns then
                 -- model_.gameOfThornsModeisOn then
@@ -1240,7 +1239,7 @@ enemy_AI model =
     List.foldl (\enpair ( modelacc, lmbenemies ) -> ai_helper_func (Tuple.first enpair) ( modelacc, lmbenemies )) ( model, [] ) enemyIdEnemyPairList
 
 
-attackIfClose : Enemy -> GameModel.Model -> ( GameModel.Model, Maybe Enemy )
+attackIfClose : Enemy -> Model -> ( Model, Maybe Enemy )
 attackIfClose enemy model =
     if enemy.floorId /= model.currentFloorId && enemy.health > 0 then
         ( enemyMove enemy model, Nothing )
@@ -1270,7 +1269,7 @@ attackIfClose enemy model =
                 ( enemyMove enemy model, Nothing )
 
 
-enemyMove : Enemy -> GameModel.Model -> GameModel.Model
+enemyMove : Enemy -> Model -> Model
 enemyMove enemy model =
     let
         ( xrand, yrand, newprandInts ) =
@@ -1357,7 +1356,7 @@ enemyMove enemy model =
 -- Right now this just reveals a box around the player
 
 
-reveal : GameModel.Model -> GameModel.Model
+reveal : Model -> Model
 reveal model =
     let
         intermediateModelGrid =
@@ -1392,7 +1391,7 @@ inList a_val la =
    -- Right now this just reveals a box around the player
 
 
-   reveal : GameModel.Model -> GameModel.Model
+   reveal : Model -> Model
    reveal model =
        let
            exploredAcc =

@@ -87,7 +87,6 @@ addGroundFloorCustomRoomsAndTunnels grid =
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc groundFloorStairsTunnelWithOptions
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc groundFloorInitialVerticalTunnelRectanglesWithOptions
         |> MapGen.createWallBoundaries (groundFloorInitialRoomRectangles ++ groundFloorCustomRoomRectangles ++ groundFloorInitialHorizontalTunnelRectangles ++ groundFloorStairsTunnel ++ groundFloorInitialVerticalTunnelRectangles)
-        --|> make sure if cell with x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
         |> addGroundFloorStairs
         |> setHolesInGrid groundFloorHoles
         |> setLandingTargetsInGrid groundFloorLandingTargets

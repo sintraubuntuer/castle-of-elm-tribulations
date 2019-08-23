@@ -64,12 +64,13 @@ module GameModel exposing
     , getRoomTopY
     , getTileVisibility
     , isConverterTile
-    , isFloor
-    , isHorizontalWall
-    , isMbTileHorizontalToTheLeft
-    , isMbTileHorizontalToTheRight
-    , isMbTileHorizontalWall
-    , isMbTileVerticalWall
+    ,  isFloor
+       -- , isHorizontalWall
+       --, isMbTileHorizontalToTheLeft
+       --, isMbTileHorizontalToTheRight
+       --, isMbTileHorizontalWall
+       --, isMbTileVerticalWall
+
     , isMbTileWall
     , isModelTileExplored
     , isModelTileTransparent
@@ -77,8 +78,9 @@ module GameModel exposing
     , isNoTileYet
     , isTileExplored
     , isTileTransparent
-    , isTileWalkable
-    , isVerticalWall
+    ,  isTileWalkable
+       -- , isVerticalWall
+
     , isWall
     , itemToString
     , location
@@ -307,54 +309,8 @@ type alias TeleporterInfo =
     }
 
 
-
--- RoomsInfo [] 20 13 8
--- 20 13 8
-{- }
-
-   type alias Player =
-       { location : Location
-       , textAvatar : String --Element.Element
-       , name : String
-       , health : Int
-       , energy : Int
-       , inventory : Inventory
-       , hunger : Int
-       , stealth : Int
-       , armor : Int
-       , protection : Int
-       , coordination : Int
-       , power : Int
-       , initiative : Int
-       , placed : Bool
-       }
--}
-
-
 type alias Inventory =
     Dict String Item
-
-
-
-{- }
-
-   type alias Enemy =
-       { location : Location
-       , id : EnemyId
-       , textAvatar : String --Element.Element
-       , name : String
-       , health : Int
-       , stealth : Int
-       , armor : Int
-       , protection : Int
-       , coordination : Int
-       , power : Int
-       , initiative : Int
-       , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
-       , nrMovesInCurrentTurn : Int
-       , placed : Bool
-       }
--}
 
 
 type alias Location =
@@ -728,64 +684,67 @@ isMbTileWall mbtile =
             False
 
 
-isHorizontalWall : Tile -> Bool
-isHorizontalWall tile =
-    case tile of
-        Wall infoRec ->
-            infoRec.orientation == "horizontal"
 
-        _ ->
-            False
+{- }
+   isHorizontalWall : Tile -> Bool
+   isHorizontalWall tile =
+       case tile of
+           Wall infoRec ->
+               infoRec.orientation == "horizontal"
 
-
-isMbTileHorizontalWall : Maybe Tile -> Bool
-isMbTileHorizontalWall mbTile =
-    case mbTile of
-        Just (Wall infoRec) ->
-            infoRec.orientation == "horizontal"
-
-        _ ->
-            False
+           _ ->
+               False
 
 
-isMbTileHorizontalToTheLeft : Maybe Tile -> Bool
-isMbTileHorizontalToTheLeft mbTile =
-    case mbTile of
-        Just (Wall infoRec) ->
-            infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_right_corner" || infoRec.orientation == "top_right_corner"
+   isMbTileHorizontalWall : Maybe Tile -> Bool
+   isMbTileHorizontalWall mbTile =
+       case mbTile of
+           Just (Wall infoRec) ->
+               infoRec.orientation == "horizontal"
 
-        _ ->
-            False
-
-
-isMbTileHorizontalToTheRight : Maybe Tile -> Bool
-isMbTileHorizontalToTheRight mbTile =
-    case mbTile of
-        Just (Wall infoRec) ->
-            infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_left_corner" || infoRec.orientation == "top_left_corner"
-
-        _ ->
-            False
+           _ ->
+               False
 
 
-isVerticalWall : Tile -> Bool
-isVerticalWall tile =
-    case tile of
-        Wall infoRec ->
-            infoRec.orientation == "up"
+   isMbTileHorizontalToTheLeft : Maybe Tile -> Bool
+   isMbTileHorizontalToTheLeft mbTile =
+       case mbTile of
+           Just (Wall infoRec) ->
+               infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_right_corner" || infoRec.orientation == "top_right_corner"
 
-        _ ->
-            False
+           _ ->
+               False
 
 
-isMbTileVerticalWall : Maybe Tile -> Bool
-isMbTileVerticalWall mbTile =
-    case mbTile of
-        Just (Wall infoRec) ->
-            infoRec.orientation == "up"
+   isMbTileHorizontalToTheRight : Maybe Tile -> Bool
+   isMbTileHorizontalToTheRight mbTile =
+       case mbTile of
+           Just (Wall infoRec) ->
+               infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_left_corner" || infoRec.orientation == "top_left_corner"
 
-        _ ->
-            False
+           _ ->
+               False
+
+
+   isVerticalWall : Tile -> Bool
+   isVerticalWall tile =
+       case tile of
+           Wall infoRec ->
+               infoRec.orientation == "up"
+
+           _ ->
+               False
+
+
+   isMbTileVerticalWall : Maybe Tile -> Bool
+   isMbTileVerticalWall mbTile =
+       case mbTile of
+           Just (Wall infoRec) ->
+               infoRec.orientation == "up"
+
+           _ ->
+               False
+-}
 
 
 setWallTileOrientation : String -> Tile -> Tile

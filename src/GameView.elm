@@ -11,7 +11,7 @@ import Collage.Text as Text
 import Color exposing (..)
 import Debug
 import Dict exposing (Dict)
-import GameModel
+import GameModel exposing (Model)
 import GameUpdate exposing (Msg(..))
 import Grid
 import Html exposing (Html)
@@ -672,7 +672,7 @@ guy r visibility =
 -}
 
 
-mainScreen : GameModel.Model -> Collage Msg
+mainScreen : Model -> Collage Msg
 mainScreen model =
     let
         ( subgrid, txtmsg ) =
@@ -832,7 +832,7 @@ inViewRange enemy_ =
 
 
 {-
-   background : Grid.Grid GameModel.Tile -> GameModel.Model -> Element
+   background : Grid.Grid GameModel.Tile -> Model -> Element
    background subgrid model =
        let
            grid =
@@ -881,7 +881,7 @@ inViewRange enemy_ =
 -}
 
 
-sidebar : GameModel.Model -> ( Float, Float ) -> Collage Msg
+sidebar : Model -> ( Float, Float ) -> Collage Msg
 sidebar model pos =
     let
         x =
@@ -979,7 +979,7 @@ viewItem item =
             noForm
 
 
-viewInventoryOverlay : GameModel.Model -> Collage Msg
+viewInventoryOverlay : Model -> Collage Msg
 viewInventoryOverlay model =
     let
         theColor =
@@ -997,7 +997,7 @@ viewInventoryOverlay model =
     Collage.group topAndForms
 
 
-viewInventory : GameModel.Model -> Html Msg
+viewInventory : Model -> Html Msg
 viewInventory model =
     let
         theColor =
@@ -1020,7 +1020,7 @@ viewInventory model =
 
 
 display :
-    GameModel.Model
+    Model
     -> Collage Msg --Element
 display model =
     let
@@ -1078,7 +1078,7 @@ gridToHtmlList grid =
     List.map (\astr -> Html.h1 [] [ Html.text astr ]) lofstrs
 
 
-viewDebugGrid : Grid.Grid a -> GameModel.Model -> List (Html Msg)
+viewDebugGrid : Grid.Grid a -> Model -> List (Html Msg)
 viewDebugGrid grid model =
     let
         --_ =
@@ -1096,7 +1096,7 @@ viewDebugGrid grid model =
     ]
 
 
-viewDebugPlayer : GameModel.Model -> Html Msg
+viewDebugPlayer : Model -> Html Msg
 viewDebugPlayer model =
     Html.h2 []
         [ Html.text
@@ -1112,7 +1112,7 @@ viewDebugPlayer model =
         ]
 
 
-viewDebugEnemies : GameModel.Model -> List (Html Msg)
+viewDebugEnemies : Model -> List (Html Msg)
 viewDebugEnemies model =
     let
         enemyToHtmlFunc enemy_ enemyId =
@@ -1133,25 +1133,25 @@ viewDebugEnemies model =
         |> Dict.values
 
 
-viewOpponentReport : GameModel.Model -> Html GameUpdate.Msg
+viewOpponentReport : Model -> Html GameUpdate.Msg
 viewOpponentReport model =
     Html.div [ Attr.align "center" ]
         [ Html.h3 [] [ Html.text "Opponent Report :" ]
         , Html.br [] []
         , Html.div
             []
-            (Dict.values model.enemies |> List.concatMap (\enem -> [ Html.text ("enemy.name : " ++ enem.name ++ " , enemyHealth : " ++ String.fromInt enem.health ++ " ,  enemyIndexOfLight : " ++ String.fromInt enem.indexOfLight), Html.br [] [], Html.br [] [], Html.br [] [] ]))
+            (Dict.values model.enemies |> List.concatMap (\enem -> [ Html.text ("name : " ++ enem.name ++ " , health : " ++ String.fromInt enem.health ++ " ,  IndexOfLight : " ++ String.fromInt enem.indexOfLight), Html.br [] [], Html.br [] [], Html.br [] [] ]))
         , Html.br [] []
         , Html.br [] []
         , Html.text "Press E to leave Opponent Report"
         ]
 
 
-viewHelpMode : GameModel.Model -> Html GameUpdate.Msg
+viewHelpMode : Model -> Html GameUpdate.Msg
 viewHelpMode model =
     Html.div [ Attr.align "center" ]
         [ Html.h3 [] [ Html.text "Help Screen" ]
-        , Html.text "Castle of Elm is a minimalistic Rogue like game , inspired by Castle of Elm , Atic Atac , Sleeping Beauty's Game of Thorns , ... "
+        , Html.text "Castle of Elm is a minimalistic Rogue like game , inspired by Castle of Elm , Atic Atac , Roguelike in Elm , Sleeping Beauty's Game of Thorns , ... "
         , Html.br [] []
         , Html.text "Find your way through the Caverns, Basement , The Ground Floor , First Floor and the Attic , pick up the three pieces of paper with the codes to unlock the black door and move towards enlightenment !!!"
         , Html.br [] []
@@ -1174,7 +1174,7 @@ viewHelpMode model =
         ]
 
 
-view : GameModel.Model -> Html GameUpdate.Msg
+view : Model -> Html GameUpdate.Msg
 view model =
     case model.started of
         True ->
@@ -1208,12 +1208,12 @@ view model =
             viewStartMenuChoices model
 
 
-viewGameOfThorns : GameModel.Model -> Html GameUpdate.Msg
+viewGameOfThorns : Model -> Html GameUpdate.Msg
 viewGameOfThorns model =
     Html.div [] [ Html.map GameUpdate.ThornsMsg (ThornsView.view model.gameOfThornsModel) ]
 
 
-viewStartMenuChoices : GameModel.Model -> Html GameUpdate.Msg
+viewStartMenuChoices : Model -> Html GameUpdate.Msg
 viewStartMenuChoices model =
     Html.div []
         [ {-

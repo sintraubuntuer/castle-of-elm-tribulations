@@ -149,17 +149,8 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
-
-    --, Wall defaultWallUpInfo
-    --, Water defaultWaterWallLeftInfo
-    --, Water defaultWaterInfo
-    --, Floor defaultFloorInfo
     , Wall defaultWallUpInfo
-
-    --, Floor defaultFloorInfo
     , Water defaultWaterWallLeftInfo
-
-    --  , Floor defaultFloorInfo
     , Water defaultWaterInfo
     , Grass defaultGrassInfo
     , Grass defaultGrassInfo

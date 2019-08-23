@@ -166,7 +166,7 @@ initialModelFunc lrandints =
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = storeDictWithPlacedPapers
-      , currentFloorId = 2
+      , currentFloorId = groundFloor_id
       , gameCompletionFunc = customGameCompletionFunc
       , started = True
       , debugMode = False
@@ -178,12 +178,12 @@ initialModelFunc lrandints =
 
 common_window_width : Int
 common_window_width =
-    11
+    12
 
 
 common_window_height : Int
 common_window_height =
-    11
+    12
 
 
 dStore : Dict Int GameModel.FloorStore

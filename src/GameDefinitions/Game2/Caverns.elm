@@ -85,7 +85,6 @@ addCavernsCustomRoomsAndTunnels grid =
         |> MapGen.listTunnelRectangleToGridFunc cavernsStairsTunnel
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc cavernsInitialVerticalTunnelRectanglesWithOptions
         |> MapGen.createWallBoundaries (cavernsInitialHorizontalTunnelRectangles ++ cavernsStairsTunnel ++ cavernsInitialRoomRectangles ++ cavernsInitialVerticalTunnelRectangles)
-        --|> make sure if cell width x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
         |> addCavernsStairs
         |> setLandingTargetsInGrid cavernsLandingTargets
         |> setTeleportersInGrid config_params cavernsTeleporters

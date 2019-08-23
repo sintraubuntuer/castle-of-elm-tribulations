@@ -85,7 +85,6 @@ addBasementCustomRoomsAndTunnels grid =
         |> MapGen.listTunnelRectangleToGridFunc basementStairsTunnel
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc (basementInitialVerticalTunnelRectanglesWithOptions ++ basementCustomVerticalTunnelRectanglesWithOptions)
         |> MapGen.createWallBoundaries (basementInitialRoomRectangles ++ basementCustomRoomRectangles ++ basementInitialHorizontalTunnelRectangles ++ basementStairsTunnel ++ basementInitialVerticalTunnelRectangles ++ basementCustomVerticalTunnelRectangles)
-        --|> make sure if cell with x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
         |> addBasementStairs
         |> setHolesInGrid basementHoles
         |> setLandingTargetsInGrid basementLandingTargets

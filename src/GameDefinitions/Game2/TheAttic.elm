@@ -82,7 +82,6 @@ addTheAtticCustomRoomsAndTunnels grid =
         |> MapGen.listTunnelRectangleToGridFunc theAtticStairsTunnel
         |> MapGen.listTunnelRectangleWithOptionsToGridFunc theAtticInitialVerticalTunnelRectanglesWithOptions
         |> MapGen.createWallBoundaries (theAtticInitialRoomRectangles ++ theAtticCustomRoomRectangles ++ theAtticInitialHorizontalTunnelRectangles ++ theAtticStairsTunnel ++ theAtticInitialVerticalTunnelRectangles)
-        --|> make sure if cell with x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
         |> addTheAtticFloorStairs
         |> setHolesInGrid theAtticHoles
         |> setLandingTargetsInGrid theAtticLandingTargets
