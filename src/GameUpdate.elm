@@ -33,7 +33,11 @@ import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
-import GameModel exposing (Model)
+import GameModel
+    exposing
+        ( Model
+        , defaultGrassInfo
+        )
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
@@ -41,6 +45,7 @@ import Random
 import Thorns.ThornGrid as ThornGrid
 import Thorns.Types
 import Thorns.Update as ThornsUpdate
+import Tile exposing (Tile(..), Visibility(..))
 
 
 log : String -> Model -> Model
@@ -74,6 +79,55 @@ type Msg
     | NewRandomIntsAddToPool (List Int)
     | NewRandomIntsAddToPoolAndGenerateRandomMap (List Int)
     | ThornsMsg Thorns.Types.Msg
+
+
+modelChangerFuncsByGameIdAndLeverId : Int -> Int -> List (Grid.Coordinate -> GameModel.Model -> GameModel.Model)
+modelChangerFuncsByGameIdAndLeverId gId lId =
+    if gId == 2 && lId == 1 then
+        modelChangerFuncsForGame1Level1
+
+    else
+        []
+
+
+customLeverInfo : Tile.LeverInfo
+customLeverInfo =
+    { isUp = False
+    , isTransparent = False
+    , isExplored = False
+    , visibility = Visible
+    }
+
+
+modelChangerFuncsForGame1Level1 : List (Grid.Coordinate -> GameModel.Model -> GameModel.Model)
+modelChangerFuncsForGame1Level1 =
+    let
+        nrEnlightenedOpponents model =
+            Dict.values model.enemies |> List.filter (\en -> en.indexOfLight >= en.indexOfLightMax) |> List.length
+
+        nrDeadOpponents model =
+            Dict.values model.enemies |> List.filter (\en -> en.health <= 0) |> List.length
+
+        reqsCompleted model =
+            nrEnlightenedOpponents model >= 3 && nrDeadOpponents model == 0
+    in
+    [ \coords model ->
+        if reqsCompleted model then
+            { model
+                | level =
+                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
+                        |> Grid.set (Grid.Coordinate 16 2) (Tile.Water GameModel.walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 17 2) (Tile.Water GameModel.walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 20 13) (Tile.Grass defaultGrassInfo)
+            }
+
+        else
+            { model
+                | level =
+                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
+                        |> Grid.set coords (Lever customLeverInfo)
+            }
+    ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -252,26 +306,26 @@ update msg model =
                 --checkIfTheresAnItemLocatedAt pcoords
                 ( updatedInventory, newGrid, newHealth ) =
                     case Grid.get pcoords model.level of
-                        Just (GameModel.Floor floorinfo) ->
+                        Just (Tile.Floor floorinfo) ->
                             case floorinfo.item of
                                 Just item ->
                                     case item of
                                         Paper paperinfo ->
                                             ( Dict.update ("paper_" ++ String.fromInt paperinfo.id) (\_ -> Just item) model.player.inventory
-                                            , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            , Grid.set pcoords (Tile.Floor { floorinfo | item = Nothing }) model.level
                                             , model.player.health
                                             )
 
                                         Food fdescription ->
                                             -- consume imediatly the item which adds to the player health
                                             ( model.player.inventory
-                                            , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            , Grid.set pcoords (Tile.Floor { floorinfo | item = Nothing }) model.level
                                             , model.player.health + 4
                                             )
 
                                         _ ->
                                             ( Dict.update (GameModel.itemToString item) (\_ -> Just item) model.player.inventory
-                                            , Grid.set pcoords (GameModel.Floor { floorinfo | item = Nothing }) model.level
+                                            , Grid.set pcoords (Tile.Floor { floorinfo | item = Nothing }) model.level
                                             , model.player.health
                                             )
 
@@ -306,14 +360,14 @@ update msg model =
                 newModel =
                     --GameModel.location x2 y2
                     case Grid.get (GameModel.location x2 y2) model.level of
-                        Just (GameModel.Lever leverinfo) ->
+                        Just (Tile.Lever leverinfo) ->
                             if leverinfo.isUp then
                                 model
                                 --|> Debug.log " you just interacted with an up lever "
 
                             else
-                                { model | level = Grid.set (GameModel.location x2 y2) (GameModel.Lever { leverinfo | isUp = True }) model.level }
-                                    |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2) modacc) xmodel leverinfo.modelChangerFuncs)
+                                { model | level = Grid.set (GameModel.location x2 y2) (Tile.Lever { leverinfo | isUp = True }) model.level }
+                                    |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2) modacc) xmodel (modelChangerFuncsByGameIdAndLeverId 2 1))
 
                         --|> turnNeighbourWallCellstoAshes (GameModel.location x2 y2)
                         --  |> Debug.log " you just interacted with a down lever "
@@ -321,7 +375,7 @@ update msg model =
                             model
                                 |> (\model_ ->
                                         case Grid.get (GameModel.location x2 y2) model_.level of
-                                            Just (GameModel.ConverterTile initialTile newTile) ->
+                                            Just (Tile.ConverterTile initialTile newTile) ->
                                                 { model_ | level = Grid.set (GameModel.location x2 y2) newTile model_.level }
 
                                             _ ->
@@ -592,7 +646,7 @@ isPlayerStandingOnStairs model =
             Grid.get model.player.location model.level
     in
     case mbTile of
-        Just (GameModel.Stairs sinfo) ->
+        Just (Tile.Stairs sinfo) ->
             True
 
         _ ->
@@ -606,7 +660,7 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
             Grid.get model.player.location model.level
     in
     case mbTile of
-        Just (GameModel.Stairs sinfo) ->
+        Just (Tile.Stairs sinfo) ->
             let
                 mbDestinationCoordsTuple =
                     searchFloorForStairsId sinfo.toFloorId sinfo.toStairsId model
@@ -618,7 +672,7 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
                 Nothing ->
                     model
 
-        Just (GameModel.Hole hinfo) ->
+        Just (Tile.Hole hinfo) ->
             let
                 lfloorIds =
                     model.floorDict |> Dict.filter (\floorId v -> floorId < model.currentFloorId) |> Dict.keys
@@ -635,7 +689,7 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
                 Nothing ->
                     model
 
-        Just (GameModel.Wall wallinfo) ->
+        Just (Tile.Wall wallinfo) ->
             case wallinfo.mbTeleporterObject of
                 Nothing ->
                     model
@@ -681,7 +735,7 @@ searchFloorForTeleporterId fid target_id_ model =
 
         checkCoords coords_ fgrid =
             case Grid.get coords_ fgrid of
-                Just (GameModel.Wall wallinfo) ->
+                Just (Tile.Wall wallinfo) ->
                     case wallinfo.mbTeleporterObject of
                         Just ateleporter ->
                             ateleporter.teleporter_id == target_id_
@@ -713,9 +767,9 @@ searchFloorForTargetId fid target_id model =
 
         checkCoords coords_ fgrid =
             case Grid.get coords_ fgrid of
-                Just (GameModel.Floor finfo) ->
+                Just (Tile.Floor finfo) ->
                     case finfo.floorDrawing of
-                        Just (GameModel.LandingTargetDrawing tid) ->
+                        Just (Tile.LandingTargetDrawing tid) ->
                             target_id == tid
 
                         _ ->
@@ -745,7 +799,7 @@ searchFloorForStairsId floorId stairsId model =
 
         checkCoords coords_ fgrid =
             case Grid.get coords_ fgrid of
-                Just (GameModel.Stairs sinfo) ->
+                Just (Tile.Stairs sinfo) ->
                     sinfo.stairsId == stairsId
 
                 _ ->
@@ -838,12 +892,12 @@ turnNeighbourWallCellstoAshes { x, y } model =
 
         convertCellsFunc cellCoords themodel =
             case Grid.get cellCoords themodel.level of
-                Just (GameModel.Wall wallinfo) ->
+                Just (Tile.Wall wallinfo) ->
                     let
                         floorinfo =
                             GameModel.defaultFloorInfo
                     in
-                    { themodel | level = Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just Ash }) themodel.level }
+                    { themodel | level = Grid.set cellCoords (Tile.Floor { floorinfo | item = Just Ash }) themodel.level }
                         |> turnNeighbourWallCellstoAshes cellCoords
 
                 _ ->
@@ -871,16 +925,16 @@ updateWallPercentageValue model =
     { model | wallPercentage = Just wallPercentage }
 
 
-getWallPercentage : List GameModel.Tile -> Float
+getWallPercentage : List Tile -> Float
 getWallPercentage gridAsList =
     let
-        getCountTuple : GameModel.Tile -> ( Int, Int ) -> ( Int, Int )
+        getCountTuple : Tile -> ( Int, Int ) -> ( Int, Int )
         getCountTuple elem ( acc1, acc2 ) =
             case elem of
-                GameModel.Wall _ ->
+                Tile.Wall _ ->
                     ( acc1 + 1, acc2 )
 
-                GameModel.Floor _ ->
+                Tile.Floor _ ->
                     ( acc1, acc2 + 1 )
 
                 _ ->
@@ -1035,13 +1089,13 @@ openDoorIfPlayerStandingOnDoorAndClosed model =
     let
         newGrid =
             case Grid.get model.player.location model.level of
-                Just (GameModel.Door doorinfo) ->
+                Just (Tile.Door doorinfo) ->
                     if not doorinfo.isOpen then
                         let
                             newDoorInfo =
                                 { doorinfo | isOpen = True }
                         in
-                        Grid.set model.player.location (GameModel.Door newDoorInfo) model.level
+                        Grid.set model.player.location (Tile.Door newDoorInfo) model.level
 
                     else
                         model.level
@@ -1362,8 +1416,8 @@ reveal model =
         intermediateModelGrid =
             Grid.map
                 (\t ->
-                    if GameModel.getTileVisibility t == GameModel.Visible then
-                        GameModel.setTileVisibility GameModel.Explored t
+                    if GameModel.getTileVisibility t == Visible then
+                        GameModel.setTileVisibility Explored t
 
                     else
                         t
@@ -1374,7 +1428,7 @@ reveal model =
             { model | level = intermediateModelGrid }
 
         newModel =
-            List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc GameModel.Visible imodel) intermediateModel (GameModel.visible model)
+            List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc Visible imodel) intermediateModel (GameModel.visible model)
     in
     newModel
 
@@ -1397,15 +1451,15 @@ inList a_val la =
            exploredAcc =
                Grid.map
                    (\t ->
-                       if t == GameModel.Visible then
-                           GameModel.Explored
+                       if t == Visible then
+                           Explored
                        else
                            t
                    )
                    model.explored
 
            explored_ =
-               List.foldl (\l explored -> Grid.set l GameModel.Visible explored) exploredAcc (GameModel.visible model)
+               List.foldl (\l explored -> Grid.set l Visible explored) exploredAcc (GameModel.visible model)
        in
        { model | explored = explored_ }
 -}

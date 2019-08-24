@@ -23,11 +23,12 @@ import GameDefinitions.Game2.FirstFloor as FirstFloor
 import GameDefinitions.Game2.GroundFloor as GroundFloor
 import GameDefinitions.Game2.LastFloor as LastFloor
 import GameDefinitions.Game2.TheAttic as TheAttic
-import GameModel exposing (HoleInfo, RoomRectangle, RoomType(..), TeleporterInfo, TeleporterType(..), TunnelRectangle)
+import GameModel exposing (RoomRectangle, TunnelRectangle)
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
 import Thorns.Types
+import Tile exposing (HoleInfo, RoomType(..), TeleporterInfo, TeleporterType(..), Tile(..))
 
 
 initialPlayer : Player
@@ -315,12 +316,12 @@ place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
 
                                                 Just atile ->
                                                     case atile of
-                                                        GameModel.Floor finfo ->
+                                                        Floor finfo ->
                                                             let
                                                                 --newItem =
                                                                 --    Item.Paper (Item.PaperInfo paperid "" "" "")
                                                                 tileWithItem =
-                                                                    GameModel.Floor { finfo | item = Just newItem }
+                                                                    Floor { finfo | item = Just newItem }
                                                             in
                                                             case finfo.item of
                                                                 Nothing ->

@@ -10,16 +10,17 @@ module GameSimulation exposing
 import GameModel
 import Grid
 import Item exposing (Item(..), KeyInfo)
+import Tile exposing (Tile(..))
 
 
-mbTurnNeighbourWallCellstoAshes : Maybe Grid.Coordinate -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+mbTurnNeighbourWallCellstoAshes : Maybe Grid.Coordinate -> Grid.Grid Tile -> Grid.Grid Tile
 mbTurnNeighbourWallCellstoAshes mbCoords grid =
     mbCoords
         |> Maybe.map (\coords -> turnNeighbourWallCellstoAshes coords grid)
         |> Maybe.withDefault grid
 
 
-turnNeighbourWallCellstoAshes : Grid.Coordinate -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+turnNeighbourWallCellstoAshes : Grid.Coordinate -> Grid.Grid Tile -> Grid.Grid Tile
 turnNeighbourWallCellstoAshes { x, y } grid =
     let
         upCell =
@@ -36,12 +37,12 @@ turnNeighbourWallCellstoAshes { x, y } grid =
 
         convertCellsFunc cellCoords grid_ =
             case Grid.get cellCoords grid_ of
-                Just (GameModel.Wall wallinfo) ->
+                Just (Tile.Wall wallinfo) ->
                     let
                         floorinfo =
                             GameModel.defaultFloorInfo
                     in
-                    Grid.set cellCoords (GameModel.Floor { floorinfo | item = Just Ash }) grid_
+                    Grid.set cellCoords (Tile.Floor { floorinfo | item = Just Ash }) grid_
                         |> turnNeighbourWallCellstoAshes cellCoords
 
                 _ ->
@@ -53,7 +54,7 @@ turnNeighbourWallCellstoAshes { x, y } grid =
         |> convertCellsFunc rightCell
 
 
-getWallTilePositionsFromGrid : Grid.Grid GameModel.Tile -> List Grid.Coordinate
+getWallTilePositionsFromGrid : Grid.Grid Tile -> List Grid.Coordinate
 getWallTilePositionsFromGrid grid =
     let
         lx =
@@ -68,10 +69,10 @@ getWallTilePositionsFromGrid grid =
         addToListIfIsWall : Grid.Coordinate -> List Grid.Coordinate -> List Grid.Coordinate
         addToListIfIsWall coords lcoords =
             case Grid.get coords grid of
-                Just (GameModel.Wall wallinfo) ->
+                Just (Tile.Wall wallinfo) ->
                     coords :: lcoords
 
-                Just (GameModel.WallOver woinfo) ->
+                Just (Tile.WallOver woinfo) ->
                     coords :: lcoords
 
                 _ ->
@@ -95,7 +96,7 @@ getRandomIntBetweenValues minVal maxVal lrandomInts =
     ( randInt, List.drop 1 lrandomInts )
 
 
-randomlySelectPositionFromListAndSimulateWallToAshes : List Grid.Coordinate -> List Int -> Grid.Grid GameModel.Tile -> ( Grid.Grid GameModel.Tile, Maybe Grid.Coordinate, List Int )
+randomlySelectPositionFromListAndSimulateWallToAshes : List Grid.Coordinate -> List Int -> Grid.Grid Tile -> ( Grid.Grid Tile, Maybe Grid.Coordinate, List Int )
 randomlySelectPositionFromListAndSimulateWallToAshes lwallCoords lrandints grid =
     -- select wall that is in contact with at least one floor
     let
@@ -104,7 +105,7 @@ randomlySelectPositionFromListAndSimulateWallToAshes lwallCoords lrandints grid 
                 lrelevantNeighbourCells =
                     [ Grid.Coordinate (coords.x + 1) coords.y, Grid.Coordinate coords.x (coords.y + 1), Grid.Coordinate (coords.x - 1) coords.y, Grid.Coordinate coords.x (coords.y - 1) ]
             in
-            List.foldl (\cell bacc -> GameModel.isFloor (Grid.get cell grid_ |> Maybe.withDefault GameModel.NoTileYet) || bacc) False lrelevantNeighbourCells
+            List.foldl (\cell bacc -> GameModel.isFloor (Grid.get cell grid_ |> Maybe.withDefault Tile.NoTileYet) || bacc) False lrelevantNeighbourCells
 
         filterWalls =
             List.filter (\coords -> cellHasAtLeastOneFloorNeighbour coords grid) lwallCoords
@@ -128,7 +129,7 @@ randomlySelectPositionFromListAndSimulateWallToAshes lwallCoords lrandints grid 
     ( newGrid, mbCandidateCellCoords, newlrandInts )
 
 
-simulationToGetLeverPositions : Int -> ( Grid.Grid GameModel.Tile, List Grid.Coordinate, List Int ) -> ( Grid.Grid GameModel.Tile, List Grid.Coordinate, List Int )
+simulationToGetLeverPositions : Int -> ( Grid.Grid Tile, List Grid.Coordinate, List Int ) -> ( Grid.Grid Tile, List Grid.Coordinate, List Int )
 simulationToGetLeverPositions maxNrIterations ( grid, lleverCoords, lrandints ) =
     let
         nrWallTilesThreshold =

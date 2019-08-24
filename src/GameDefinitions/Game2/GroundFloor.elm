@@ -56,12 +56,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
-        , RoomType(..)
-        , TeleporterInfo
-        , TeleporterType(..)
-        , Tile(..)
         , TunnelRectangle
-        , WallInfo
         , defaultBrickWallInfo
         , defaultFloorInfo
         , defaultWallInfo
@@ -71,15 +66,24 @@ import GameModel
 import Grid
 import Item
 import MapGen
+import Tile
+    exposing
+        ( RoomType(..)
+        , TeleporterInfo
+        , TeleporterType(..)
+        , Tile(..)
+        , Visibility(..)
+        , WallInfo
+        )
 
 
-gridGroundFloor : Grid.Grid GameModel.Tile
+gridGroundFloor : Grid.Grid Tile
 gridGroundFloor =
     GameDefinitions.Common.gridInitializer 9 7 config_params
         |> addGroundFloorCustomRoomsAndTunnels
 
 
-addGroundFloorCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addGroundFloorCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
 addGroundFloorCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (groundFloorInitialRoomRectangles ++ groundFloorCustomRoomRectangles)
@@ -101,7 +105,7 @@ groundFloorItems =
     getItemsByFloorId groundFloor_id itemCreationDict
 
 
-groundFloorHoles : Dict HoleId GameModel.HoleInfo
+groundFloorHoles : Dict HoleId Tile.HoleInfo
 groundFloorHoles =
     getHolesByFloorId groundFloor_id holesDict
 
@@ -270,9 +274,9 @@ groundFloorStairsTunnelWithOptions =
     --
     , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
         --, defaultNoDoorOptions
-      , { left = GameModel.UseDoor (customBlackDoorInfo GameModel.DoorToTheRight)
+      , { left = GameModel.UseDoor (customBlackDoorInfo Tile.DoorToTheRight)
 
-        --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
+        --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToTheRight)
         , top = GameModel.NoDoorNoWall
         , right = GameModel.NoDoorNoWall
         , bottom = GameModel.NoDoorNoWall
@@ -282,7 +286,7 @@ groundFloorStairsTunnelWithOptions =
         |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))
 
 
-customBlackDoorInfo : GameModel.DoorOrientation -> GameModel.DoorInfo
+customBlackDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 customBlackDoorInfo dorientation =
     { isOpen = False
     , color = Just "black"
@@ -293,7 +297,7 @@ customBlackDoorInfo dorientation =
         , Item.Paper (Item.PaperInfo 3 "" "" "")
         ]
     , isExplored = False
-    , visibility = GameModel.Unexplored
+    , visibility = Unexplored
     }
 
 
@@ -302,7 +306,7 @@ groundFloorStairsTunnel =
     List.map (\( tun, opt ) -> tun) groundFloorStairsTunnelWithOptions
 
 
-addGroundFloorStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addGroundFloorStairs : Grid.Grid Tile -> Grid.Grid Tile
 addGroundFloorStairs grid =
     let
         lstairs =

@@ -50,10 +50,11 @@ module GameDefinitions.Common exposing
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
-import GameModel exposing (HoleInfo, RoomRectangle, RoomType(..), TeleporterInfo, TeleporterType(..), TunnelRectangle)
+import GameModel exposing (RoomRectangle, TunnelRectangle)
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import Thorns.Types
+import Tile exposing (HoleInfo, RoomType(..), TeleporterInfo, TeleporterType(..), Tile(..), Visibility(..))
 
 
 type alias HoleId =
@@ -68,18 +69,18 @@ type alias ItemId =
     Int
 
 
-gridInitializer : Int -> Int -> ConfigParams -> Grid.Grid GameModel.Tile
+gridInitializer : Int -> Int -> ConfigParams -> Grid.Grid Tile
 gridInitializer nr_rows nr_cols config_params =
-    Grid.initialize { width = get_total_width config_params nr_cols, height = get_total_height config_params nr_rows } GameModel.NoTileYet
+    Grid.initialize { width = get_total_width config_params nr_cols, height = get_total_height config_params nr_rows } NoTileYet
 
 
-setAllAsUnexplored : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Visibility
+setAllAsUnexplored : Grid.Grid Tile -> Grid.Grid Visibility
 setAllAsUnexplored level =
     let
         grid =
             Grid.toList level
     in
-    List.map (\row -> List.map (\_ -> GameModel.Unexplored) row) grid |> Grid.fromList
+    List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid.fromList
 
 
 initialPlayer : Player
@@ -462,7 +463,7 @@ getCustomRoom row_nr col_nr shift_x shift_y rwidth rheight config_params =
     new_room
 
 
-getStairsOnRoom : Int -> Int -> Int -> Int -> Int -> StairsOrientation -> Maybe RoomType -> ( Int, Int ) -> Maybe ( Int, Int ) -> ConfigParams -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+getStairsOnRoom : Int -> Int -> Int -> Int -> Int -> StairsOrientation -> Maybe RoomType -> ( Int, Int ) -> Maybe ( Int, Int ) -> ConfigParams -> Grid.Grid Tile -> Grid.Grid Tile
 getStairsOnRoom row_nr col_nr stairsId toFloorId toStairsId orientation mbFromRoomType shiftOnDestinationTuple mbShiftLocationTuple config_params grid =
     let
         tunnel_width =
@@ -491,7 +492,7 @@ getStairsOnRoom row_nr col_nr stairsId toFloorId toStairsId orientation mbFromRo
                     ( square_room_top_left_x config_params row_nr col_nr + config_params.square_room_side // 2 + loc_x_shift, square_room_top_left_y config_params row_nr col_nr + config_params.square_room_side + tunnel_height - 1 + loc_y_shift - addOneIfRoomTypeHorizontal mbFromRoomType )
 
         tileStairs =
-            GameModel.Stairs (GameModel.StairsInfo stairsId toFloorId toStairsId shiftOnDestinationTuple False GameModel.Unexplored)
+            Tile.Stairs (Tile.StairsInfo stairsId toFloorId toStairsId shiftOnDestinationTuple False Unexplored)
     in
     Grid.set (Grid.Coordinate top_left_x top_left_y) tileStairs grid
 
@@ -631,7 +632,7 @@ getItemCoordsAndItemInfo config_params itemInfo =
     ( ( x_coord, y_coord ), itemInfo )
 
 
-setItemsInGrid : ConfigParams -> Dict ItemId ItemCreationInfo -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+setItemsInGrid : ConfigParams -> Dict ItemId ItemCreationInfo -> Grid.Grid Tile -> Grid.Grid Tile
 setItemsInGrid config_params dItemsToCreate grid =
     let
         lcoordsAndInfo =
@@ -640,7 +641,7 @@ setItemsInGrid config_params dItemsToCreate grid =
                 |> List.map (getItemCoordsAndItemInfo config_params)
 
         tileItem i_c_info =
-            GameModel.Floor (createItemFloorInfo i_c_info)
+            Tile.Floor (createItemFloorInfo i_c_info)
 
         setTileFloorItem xcoord ycoord i_creation_info_ grid_ =
             Grid.set (Grid.Coordinate xcoord ycoord) (tileItem i_creation_info_) grid_
@@ -648,12 +649,12 @@ setItemsInGrid config_params dItemsToCreate grid =
     List.foldl (\( ( x_coord, y_coord ), i_creation_info ) gridacc -> setTileFloorItem x_coord y_coord i_creation_info gridacc) grid lcoordsAndInfo
 
 
-createItemFloorInfo : ItemCreationInfo -> GameModel.FloorInfo
+createItemFloorInfo : ItemCreationInfo -> Tile.FloorInfo
 createItemFloorInfo i_c_info =
-    GameModel.FloorInfo (Just i_c_info.item) Nothing True True False GameModel.Unexplored ""
+    Tile.FloorInfo (Just i_c_info.item) Nothing True True False Unexplored ""
 
 
-setTeleportersInGrid : ConfigParams -> Dict TeleporterId TeleporterInfo -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+setTeleportersInGrid : ConfigParams -> Dict TeleporterId TeleporterInfo -> Grid.Grid Tile -> Grid.Grid Tile
 setTeleportersInGrid config_params teleporterDict_ grid =
     let
         lcoordsAndInfo =
@@ -666,8 +667,8 @@ setTeleportersInGrid config_params teleporterDict_ grid =
                     Grid.get (Grid.Coordinate xcoord ycoord) grid_
             in
             case c_wall_info of
-                Just (GameModel.Wall winfo) ->
-                    Just (GameModel.Wall (createTeleporterWallInfo winfo tel_info))
+                Just (Tile.Wall winfo) ->
+                    Just (Tile.Wall (createTeleporterWallInfo winfo tel_info))
 
                 _ ->
                     Nothing
@@ -683,12 +684,12 @@ setTeleportersInGrid config_params teleporterDict_ grid =
     List.foldl (\( ( x_coord, y_coord ), tinfo ) gridacc -> setTileTeleporter x_coord y_coord tinfo gridacc) grid lcoordsAndInfo
 
 
-createTeleporterInfo : Int -> Int -> TeleporterType -> Int -> Int -> RoomType -> String -> Int -> ( Int, Int ) -> GameModel.TeleporterInfo
+createTeleporterInfo : Int -> Int -> TeleporterType -> Int -> Int -> RoomType -> String -> Int -> ( Int, Int ) -> Tile.TeleporterInfo
 createTeleporterInfo teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift =
-    GameModel.TeleporterInfo teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift False GameModel.Unexplored
+    Tile.TeleporterInfo teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift False Unexplored
 
 
-createTeleporterWallInfo : GameModel.WallInfo -> TeleporterInfo -> GameModel.WallInfo
+createTeleporterWallInfo : Tile.WallInfo -> TeleporterInfo -> Tile.WallInfo
 createTeleporterWallInfo winfo tel_info =
     { winfo | mbTeleporterObject = Just tel_info }
 
@@ -754,9 +755,9 @@ get_xy_coords_from_room_row_col row_nr col_nr rtype pos_in_room config_params =
 defaultVerticalYellowDoorOptions : GameModel.DoorWallOptions
 defaultVerticalYellowDoorOptions =
     { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToDown)
+    , top = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToDown)
     , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToUp)
+    , bottom = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToUp)
     }
 
 
@@ -771,9 +772,9 @@ defaultNoDoorOptions =
 
 defaultHorizontalOpenDoorOptions : GameModel.DoorWallOptions
 defaultHorizontalOpenDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToTheRight)
+    { left = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToTheRight)
     , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToTheLeft)
+    , right = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToTheLeft)
     , bottom = GameModel.NoDoorNoWall
     }
 
@@ -781,17 +782,17 @@ defaultHorizontalOpenDoorOptions =
 defaultVerticalOpenDoorOptions : GameModel.DoorWallOptions
 defaultVerticalOpenDoorOptions =
     { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToDown)
+    , top = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToDown)
     , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultOpenDoorInfo GameModel.DoorToUp)
+    , bottom = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToUp)
     }
 
 
 defaultHorizontalBlueDoorOptions : GameModel.DoorWallOptions
 defaultHorizontalBlueDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheRight)
+    { left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToTheRight)
     , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToTheLeft)
+    , right = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToTheLeft)
     , bottom = GameModel.NoDoorNoWall
     }
 
@@ -799,17 +800,17 @@ defaultHorizontalBlueDoorOptions =
 defaultVerticalBlueDoorOptions : GameModel.DoorWallOptions
 defaultVerticalBlueDoorOptions =
     { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToDown)
+    , top = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToDown)
     , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultBlueDoorInfo GameModel.DoorToUp)
+    , bottom = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToUp)
     }
 
 
 defaultHorizontalRedDoorOptions : GameModel.DoorWallOptions
 defaultHorizontalRedDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToTheRight)
+    { left = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToTheRight)
     , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToTheLeft)
+    , right = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToTheLeft)
     , bottom = GameModel.NoDoorNoWall
     }
 
@@ -817,17 +818,17 @@ defaultHorizontalRedDoorOptions =
 defaultVerticalRedDoorOptions : GameModel.DoorWallOptions
 defaultVerticalRedDoorOptions =
     { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToDown)
+    , top = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToDown)
     , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultRedDoorInfo GameModel.DoorToUp)
+    , bottom = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToUp)
     }
 
 
 defaultHorizontalGreenDoorOptions : GameModel.DoorWallOptions
 defaultHorizontalGreenDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToTheRight)
+    { left = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToTheRight)
     , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToTheLeft)
+    , right = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToTheLeft)
     , bottom = GameModel.NoDoorNoWall
     }
 
@@ -835,17 +836,17 @@ defaultHorizontalGreenDoorOptions =
 defaultVerticalGreenDoorOptions : GameModel.DoorWallOptions
 defaultVerticalGreenDoorOptions =
     { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToDown)
+    , top = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToDown)
     , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultGreenDoorInfo GameModel.DoorToUp)
+    , bottom = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToUp)
     }
 
 
 defaultHorizontalYellowDoorOptions : GameModel.DoorWallOptions
 defaultHorizontalYellowDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToTheRight)
+    { left = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToTheRight)
     , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToTheLeft)
+    , right = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToTheLeft)
     , bottom = GameModel.NoDoorNoWall
     }
 
@@ -860,7 +861,7 @@ getLandingTargetsCoordsAndTargetInfo targetInfo =
             ( ( targetInfo.x + x_shift, targetInfo.y + y_shift ), targetInfo )
 
 
-setLandingTargetsInGrid : Dict TargetId LandingTargetInfo -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+setLandingTargetsInGrid : Dict TargetId LandingTargetInfo -> Grid.Grid Tile -> Grid.Grid Tile
 setLandingTargetsInGrid landingTargetsDict_ grid =
     let
         lcoordsAndInfo =
@@ -868,7 +869,7 @@ setLandingTargetsInGrid landingTargetsDict_ grid =
                 |> List.map getLandingTargetsCoordsAndTargetInfo
 
         tileLandingTarget lt_info =
-            GameModel.Floor (createLandingTargetFloorInfo lt_info)
+            Tile.Floor (createLandingTargetFloorInfo lt_info)
 
         setTileLandingTarget xcoord ycoord h_info grid_ =
             Grid.set (Grid.Coordinate xcoord ycoord) (tileLandingTarget h_info) grid_
@@ -876,9 +877,9 @@ setLandingTargetsInGrid landingTargetsDict_ grid =
     List.foldl (\( ( x_coord, y_coord ), hinfo ) gridacc -> setTileLandingTarget x_coord y_coord hinfo gridacc) grid lcoordsAndInfo
 
 
-createLandingTargetFloorInfo : LandingTargetInfo -> GameModel.FloorInfo
+createLandingTargetFloorInfo : LandingTargetInfo -> Tile.FloorInfo
 createLandingTargetFloorInfo ltinfo =
-    GameModel.FloorInfo Nothing (Just (GameModel.LandingTargetDrawing ltinfo.target_id)) True True False GameModel.Unexplored ""
+    Tile.FloorInfo Nothing (Just (Tile.LandingTargetDrawing ltinfo.target_id)) True True False Unexplored ""
 
 
 getLandingTargetsByFloorId : Int -> Dict TargetId LandingTargetInfo -> Dict TargetId LandingTargetInfo
@@ -886,12 +887,12 @@ getLandingTargetsByFloorId floorId dlandingTargets =
     Dict.filter (\k v -> v.floor_id == floorId) dlandingTargets
 
 
-getHoleCoordsAndHoleInfo : GameModel.HoleInfo -> ( ( Int, Int ), GameModel.HoleInfo )
+getHoleCoordsAndHoleInfo : HoleInfo -> ( ( Int, Int ), HoleInfo )
 getHoleCoordsAndHoleInfo holeinfo =
     ( ( holeinfo.x, holeinfo.y ), holeinfo )
 
 
-setHolesInGrid : Dict HoleId HoleInfo -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+setHolesInGrid : Dict HoleId HoleInfo -> Grid.Grid Tile -> Grid.Grid Tile
 setHolesInGrid holesDict_ grid =
     let
         lcoordsAndInfo =
@@ -899,7 +900,7 @@ setHolesInGrid holesDict_ grid =
                 |> List.map getHoleCoordsAndHoleInfo
 
         tileHole h_info =
-            GameModel.Hole h_info
+            Hole h_info
 
         setTileHole xcoord ycoord h_info grid_ =
             Grid.set (Grid.Coordinate xcoord ycoord) (tileHole h_info) grid_
@@ -912,6 +913,6 @@ getHolesByFloorId floorId dHoles =
     Dict.filter (\k v -> v.floorId == floorId) dHoles
 
 
-createHoleInfo : Int -> Int -> Int -> Int -> Int -> GameModel.HoleInfo
+createHoleInfo : Int -> Int -> Int -> Int -> Int -> HoleInfo
 createHoleInfo holeId floorId x y targetId =
-    HoleInfo holeId floorId x y targetId False GameModel.Unexplored
+    HoleInfo holeId floorId x y targetId False Unexplored

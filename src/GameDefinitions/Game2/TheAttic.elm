@@ -52,12 +52,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
-        , RoomType(..)
-        , TeleporterInfo
-        , TeleporterType(..)
-        , Tile(..)
         , TunnelRectangle
-        , WallInfo
         , defaultBrickWallInfo
         , defaultFloorInfo
         , defaultWallInfo
@@ -66,15 +61,23 @@ import GameModel
         )
 import Grid
 import MapGen
+import Tile
+    exposing
+        ( RoomType(..)
+        , TeleporterInfo
+        , TeleporterType(..)
+        , Tile(..)
+        , WallInfo
+        )
 
 
-gridTheAttic : Grid.Grid GameModel.Tile
+gridTheAttic : Grid.Grid Tile
 gridTheAttic =
     GameDefinitions.Common.gridInitializer 4 4 config_params
         |> addTheAtticCustomRoomsAndTunnels
 
 
-addTheAtticCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addTheAtticCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
 addTheAtticCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (theAtticInitialRoomRectangles ++ theAtticCustomRoomRectangles)
@@ -96,7 +99,7 @@ theAtticItems =
     getItemsByFloorId theAttic_id itemCreationDict
 
 
-theAtticHoles : Dict HoleId GameModel.HoleInfo
+theAtticHoles : Dict HoleId Tile.HoleInfo
 theAtticHoles =
     getHolesByFloorId theAttic_id holesDict
 
@@ -205,7 +208,7 @@ theAtticStairsTunnel =
     ]
 
 
-addTheAtticFloorStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addTheAtticFloorStairs : Grid.Grid Tile -> Grid.Grid Tile
 addTheAtticFloorStairs grid =
     let
         lstairs =

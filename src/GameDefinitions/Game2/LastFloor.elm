@@ -18,10 +18,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
         )
 import GameModel
     exposing
-        ( StairsInfo
-        , Tile(..)
-        , WallInfo
-        , defaultBrickWallInfo
+        ( defaultBrickWallInfo
         , defaultFloorInfo
         , defaultGrassInfo
         , defaultLeverInfo
@@ -34,58 +31,28 @@ import GameModel
         , defaultWaterWallUpInfo
         )
 import Grid
+import Tile
+    exposing
+        ( StairsInfo
+        , Tile(..)
+        , Visibility(..)
+        , WallInfo
+        )
 
 
-walkableWaterInfo : GameModel.WaterInfo
-walkableWaterInfo =
-    { description = "just_water", isTransparent = False, isWalkable = True, isExplored = False, visibility = GameModel.Unexplored }
-
-
-modelChangerFuncs : List (Grid.Coordinate -> GameModel.Model -> GameModel.Model)
-modelChangerFuncs =
-    let
-        nrEnlightenedOpponents model =
-            Dict.values model.enemies |> List.filter (\en -> en.indexOfLight >= en.indexOfLightMax) |> List.length
-
-        nrDeadOpponents model =
-            Dict.values model.enemies |> List.filter (\en -> en.health <= 0) |> List.length
-
-        reqsCompleted model =
-            nrEnlightenedOpponents model >= 3 && nrDeadOpponents model == 0
-    in
-    [ \coords model ->
-        if reqsCompleted model then
-            { model
-                | level =
-                    Grid.set (Grid.Coordinate 15 2) (GameModel.Floor GameModel.defaultFloorInfo) model.level
-                        |> Grid.set (Grid.Coordinate 16 2) (GameModel.Water walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 17 2) (GameModel.Water walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 20 13) (GameModel.Grass defaultGrassInfo)
-            }
-
-        else
-            { model
-                | level =
-                    Grid.set (Grid.Coordinate 15 2) (GameModel.Floor GameModel.defaultFloorInfo) model.level
-                        |> Grid.set coords (Lever customLeverInfo)
-            }
-    ]
-
-
-customLeverInfo : GameModel.LeverInfo
+customLeverInfo : Tile.LeverInfo
 customLeverInfo =
     { isUp = False
-    , modelChangerFuncs = modelChangerFuncs
     , isTransparent = False
     , isExplored = False
-    , visibility = GameModel.Visible
+    , visibility = Visible
     }
 
 
-lastFloorGridTiles : List GameModel.Tile
+lastFloorGridTiles : List Tile
 lastFloorGridTiles =
     [ NoTileYet
-    , Wall (WallInfo False GameModel.Unexplored "corner_top_left" Nothing)
+    , Wall (WallInfo False Unexplored "corner_top_left" Nothing)
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall defaultWallInfo
@@ -99,7 +66,7 @@ lastFloorGridTiles =
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall defaultWallInfo
-    , Wall (WallInfo False GameModel.Unexplored "corner_top_right" Nothing)
+    , Wall (WallInfo False Unexplored "corner_top_right" Nothing)
     , Water defaultWaterWallLeftInfo
     , Water defaultWaterInfo
     , Grass defaultGrassInfo
@@ -166,7 +133,7 @@ lastFloorGridTiles =
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
-    , Wall (WallInfo False GameModel.Unexplored "cul_de_sac_at_top" Nothing)
+    , Wall (WallInfo False Unexplored "cul_de_sac_at_top" Nothing)
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
@@ -210,21 +177,21 @@ lastFloorGridTiles =
 
     -- start 6th Row
     , NoTileYet
-    , Wall (WallInfo False GameModel.Unexplored "three_way_at_left" Nothing)
+    , Wall (WallInfo False Unexplored "three_way_at_left" Nothing)
     , Wall defaultWallInfo
     , Wall defaultWallInfo
-    , Wall (WallInfo False GameModel.Unexplored "three_way_at_top" Nothing)
+    , Wall (WallInfo False Unexplored "three_way_at_top" Nothing)
     , Wall defaultWallInfo
     , Wall defaultWallInfo
-    , Wall (WallInfo False GameModel.Unexplored "corner_bottom_right" Nothing)
+    , Wall (WallInfo False Unexplored "corner_bottom_right" Nothing)
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
-    , Wall (WallInfo False GameModel.Unexplored "cul_de_sac_at_left" Nothing)
+    , Wall (WallInfo False Unexplored "cul_de_sac_at_left" Nothing)
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall defaultWallInfo
-    , Wall (WallInfo False GameModel.Unexplored "three_way_at_right" Nothing)
+    , Wall (WallInfo False Unexplored "three_way_at_right" Nothing)
     , Water defaultWaterWallLeftInfo
     , Water defaultWaterInfo
     , Grass defaultGrassInfo
@@ -313,9 +280,9 @@ lastFloorGridTiles =
     , Wall defaultWallUpInfo
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
-    , Wall (WallInfo False GameModel.Unexplored "corner_bottom_left" Nothing)
+    , Wall (WallInfo False Unexplored "corner_bottom_left" Nothing)
     , Wall defaultWallInfo
-    , Wall (WallInfo False GameModel.Unexplored "cul_de_sac_at_right" Nothing)
+    , Wall (WallInfo False Unexplored "cul_de_sac_at_right" Nothing)
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
     , Floor defaultFloorInfo
@@ -385,7 +352,7 @@ lastFloorGridTiles =
 
     -- start 13th Row
     , NoTileYet
-    , Wall (WallInfo False GameModel.Unexplored "corner_bottom_left" Nothing)
+    , Wall (WallInfo False Unexplored "corner_bottom_left" Nothing)
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall defaultWallInfo
@@ -399,7 +366,7 @@ lastFloorGridTiles =
     , Wall defaultWallInfo
     , Wall defaultWallInfo
     , Wall defaultWallInfo
-    , Wall (WallInfo False GameModel.Unexplored "corner_bottom_right" Nothing)
+    , Wall (WallInfo False Unexplored "corner_bottom_right" Nothing)
     , Water defaultWaterWallLeftInfo
     , Water defaultWaterInfo
     , Grass defaultGrassInfo
@@ -460,7 +427,7 @@ lastFloorGridTiles =
     ]
 
 
-addLastFloorStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addLastFloorStairs : Grid.Grid Tile -> Grid.Grid Tile
 addLastFloorStairs grid =
     let
         recstairs =
@@ -476,7 +443,7 @@ addLastFloorStairs grid =
             }
 
         tileStairs =
-            GameModel.Stairs (GameModel.StairsInfo recstairs.stairsId recstairs.toFloorId recstairs.toStairsId recstairs.shift False GameModel.Unexplored)
+            Stairs (StairsInfo recstairs.stairsId recstairs.toFloorId recstairs.toStairsId recstairs.shift False Unexplored)
     in
     Grid.set (Grid.Coordinate recstairs.room_x recstairs.room_y) tileStairs grid
 
@@ -519,7 +486,7 @@ getNrFromLocCoords coords =
     coords.y * nr_cols + coords.x
 
 
-getTileAtCoords : Grid.Coordinate -> GameModel.Tile
+getTileAtCoords : Grid.Coordinate -> Tile
 getTileAtCoords coords =
     let
         nr =
@@ -527,14 +494,14 @@ getTileAtCoords coords =
     in
     List.drop nr lastFloorGridTiles
         |> List.head
-        |> Maybe.withDefault GameModel.NoTileYet
+        |> Maybe.withDefault NoTileYet
 
 
-gridLastFloor : Grid.Grid GameModel.Tile
+gridLastFloor : Grid.Grid Tile
 gridLastFloor =
     let
         grid =
-            Grid.initialize { width = nr_cols, height = nr_rows } GameModel.NoTileYet
+            Grid.initialize { width = nr_cols, height = nr_rows } NoTileYet
 
         lnrs =
             List.range 0 (nr_rows * nr_cols - 1)

@@ -52,14 +52,16 @@ import GameDefinitions.Common
         )
 import GameModel
     exposing
-        ( HoleInfo
-        , RoomRectangle
-        , RoomType(..)
-        , TeleporterInfo
-        , TeleporterType(..)
+        ( RoomRectangle
         , TunnelRectangle
         )
 import Item exposing (Item(..), KeyInfo)
+import Tile
+    exposing
+        ( RoomType(..)
+        , TeleporterInfo
+        , TeleporterType(..)
+        )
 
 
 
@@ -118,7 +120,7 @@ lastFloor_id =
     5
 
 
-holesDict : Dict HoleId GameModel.HoleInfo
+holesDict : Dict HoleId Tile.HoleInfo
 holesDict =
     let
         ( x1, y1 ) =

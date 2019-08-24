@@ -55,12 +55,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
-        , RoomType(..)
-        , TeleporterInfo
-        , TeleporterType(..)
-        , Tile(..)
         , TunnelRectangle
-        , WallInfo
         , defaultBrickWallInfo
         , defaultFloorInfo
         , defaultWallInfo
@@ -69,15 +64,23 @@ import GameModel
         )
 import Grid
 import MapGen
+import Tile
+    exposing
+        ( RoomType(..)
+        , TeleporterInfo
+        , TeleporterType(..)
+        , Tile(..)
+        , WallInfo
+        )
 
 
-gridBasement : Grid.Grid GameModel.Tile
+gridBasement : Grid.Grid Tile
 gridBasement =
     GameDefinitions.Common.gridInitializer 7 6 config_params
         |> addBasementCustomRoomsAndTunnels
 
 
-addBasementCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addBasementCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
 addBasementCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (basementInitialRoomRectangles ++ basementCustomRoomRectangles)
@@ -99,7 +102,7 @@ basementItems =
     getItemsByFloorId basement_floor_id itemCreationDict
 
 
-basementHoles : Dict HoleId GameModel.HoleInfo
+basementHoles : Dict HoleId Tile.HoleInfo
 basementHoles =
     getHolesByFloorId basement_floor_id holesDict
 
@@ -241,7 +244,7 @@ basementStairsTunnel =
     ]
 
 
-addBasementStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addBasementStairs : Grid.Grid Tile -> Grid.Grid Tile
 addBasementStairs grid =
     let
         lstairs =

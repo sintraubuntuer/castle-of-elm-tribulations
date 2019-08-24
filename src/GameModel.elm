@@ -1,36 +1,15 @@
 module GameModel exposing
-    ( ColumnInfo
-    , CurrentDisplay(..)
-    , DoorInfo
-    , DoorOrientation(..)
+    ( CurrentDisplay(..)
     , DoorWallOption(..)
     , DoorWallOptions
-    , FlagCondition(..)
-    , FlagInfo
-    , FloorDrawing(..)
-    , FloorInfo
     , FloorStore
-    , GrassInfo
-    , HoleInfo
     , Input(..)
     , LeverId
-    , LeverInfo
     , Location
     , Model
     , RoomRectangle
-    , RoomType(..)
     , RoomsInfo
-    , StairsInfo
-    , TeleporterInfo
-    , TeleporterType(..)
-    , Tile(..)
-    , TreeInfo
     , TunnelRectangle
-    , Visibility(..)
-    , WallInfo
-    , WallJunction(..)
-    , WallOverInfo
-    , WaterInfo
     , defaultBlackDoorInfo
     , defaultBlueDoorInfo
     , defaultBrickWallInfo
@@ -99,6 +78,7 @@ module GameModel exposing
     , validLocation
     , visibility
     , visible
+    , walkableWaterInfo
     )
 
 import Beings
@@ -116,43 +96,11 @@ import Dict exposing (Dict)
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import Thorns.Types
+import Tile exposing (Tile(..))
 
 
 type alias LeverId =
     Int
-
-
-type Tile
-    = Floor FloorInfo
-    | Stairs StairsInfo
-    | Hole HoleInfo
-    | Wall WallInfo
-    | WallOver WallOverInfo
-    | Door DoorInfo
-    | Lever LeverInfo
-    | Flag FlagInfo
-    | Column ColumnInfo
-    | Water WaterInfo
-    | Grass GrassInfo
-    | Tree TreeInfo
-    | ConverterTile Tile Tile
-    | NoTileYet
-
-
-type alias TreeInfo =
-    { treeType : String
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-type alias GrassInfo =
-    { description : String
-    , isTransparent : Bool
-    , isWalkable : Bool
-    , isExplored : Bool
-    , visibility : Visibility
-    }
 
 
 type CurrentDisplay
@@ -170,7 +118,7 @@ type alias Model =
     , enemies : Dict EnemyId Enemy
     , otherCharacters : Dict CharacterId OtherCharacter
     , level : Grid.Grid Tile
-    , explored : Grid.Grid Visibility
+    , explored : Grid.Grid Tile.Visibility
     , log : List String
     , gameOfThornsModel : Thorns.Types.Model
     , gameOfThornsModeisOn : Bool
@@ -198,7 +146,7 @@ type alias Model =
 
 type alias FloorStore =
     { level : Grid.Grid Tile
-    , explored : Grid.Grid Visibility
+    , explored : Grid.Grid Tile.Visibility
     , window_width : Int
     , window_height : Int
     , total_width : Int
@@ -271,44 +219,6 @@ type alias RoomsInfo =
     }
 
 
-type alias HoleInfo =
-    { holeId : Int
-    , floorId : Int
-    , x : Int
-    , y : Int
-    , target_id : Int
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-type RoomType
-    = SquareRoom
-    | HorizontalRoom
-    | VerticalRoom
-
-
-type TeleporterType
-    = Barrel
-    | BookCase
-    | Clock
-
-
-type alias TeleporterInfo =
-    { teleporter_id : Int
-    , floor_id : Int
-    , teleporterType : TeleporterType
-    , room_row_nr : Int
-    , room_col_nr : Int
-    , room_type : RoomType
-    , position_in_room : String --(in WallUp , L R or D )
-    , target_id : Int
-    , shift : ( Int, Int )
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
 type alias Inventory =
     Dict String Item
 
@@ -355,86 +265,53 @@ itemToString item =
             "a piece of food : " ++ fdescription
 
 
-type FloorDrawing
-    = LandingTargetDrawing Int
-
-
-type alias FloorInfo =
-    { item : Maybe Item
-    , floorDrawing : Maybe FloorDrawing
-    , isTransparent : Bool
-    , isWalkable : Bool
-    , isExplored : Bool
-    , visibility : Visibility
-    , color : String
-    }
-
-
-type alias StairsInfo =
-    { stairsId : Int
-    , toFloorId : Int
-    , toStairsId : Int
-    , shift : ( Int, Int ) --after the player has been moved to the destination stairs what's the shift applied relative to the stairs position
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-defaultFloorInfo : FloorInfo
+defaultFloorInfo : Tile.FloorInfo
 defaultFloorInfo =
-    { item = Nothing, floorDrawing = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "default" }
+    { item = Nothing, floorDrawing = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Tile.Unexplored, color = "default" }
 
 
-defaultOrangeFloorInfo : FloorInfo
+defaultOrangeFloorInfo : Tile.FloorInfo
 defaultOrangeFloorInfo =
-    { item = Nothing, floorDrawing = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Unexplored, color = "orange" }
+    { item = Nothing, floorDrawing = Nothing, isTransparent = True, isWalkable = True, isExplored = False, visibility = Tile.Unexplored, color = "orange" }
 
 
-type alias WallInfo =
-    { isExplored : Bool
-    , visibility : Visibility
-    , orientation : String
-    , mbTeleporterObject : Maybe TeleporterInfo
-    }
-
-
-defaultBrickWallInfo : WallInfo
+defaultBrickWallInfo : Tile.WallInfo
 defaultBrickWallInfo =
-    { isExplored = False, visibility = Unexplored, orientation = "just_bricks", mbTeleporterObject = Nothing }
+    { isExplored = False, visibility = Tile.Unexplored, orientation = "just_bricks", mbTeleporterObject = Nothing }
 
 
-defaultWallInfo : WallInfo
+defaultWallInfo : Tile.WallInfo
 defaultWallInfo =
-    { isExplored = False, visibility = Unexplored, orientation = "horizontal", mbTeleporterObject = Nothing }
+    { isExplored = False, visibility = Tile.Unexplored, orientation = "horizontal", mbTeleporterObject = Nothing }
 
 
-defaultWallUpInfo : WallInfo
+defaultWallUpInfo : Tile.WallInfo
 defaultWallUpInfo =
-    { isExplored = False, visibility = Unexplored, orientation = "up", mbTeleporterObject = Nothing }
+    { isExplored = False, visibility = Tile.Unexplored, orientation = "up", mbTeleporterObject = Nothing }
 
 
-defaultGrassWithDirtInfo : GrassInfo
+defaultGrassWithDirtInfo : Tile.GrassInfo
 defaultGrassWithDirtInfo =
-    { description = "grass_with_dirt", isTransparent = False, isWalkable = True, isExplored = False, visibility = Unexplored }
+    { description = "grass_with_dirt", isTransparent = False, isWalkable = True, isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultGrassInfo : GrassInfo
+defaultGrassInfo : Tile.GrassInfo
 defaultGrassInfo =
-    { description = "grass", isTransparent = False, isWalkable = True, isExplored = False, visibility = Unexplored }
+    { description = "grass", isTransparent = False, isWalkable = True, isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultPineTreeInfo : TreeInfo
+defaultPineTreeInfo : Tile.TreeInfo
 defaultPineTreeInfo =
-    { treeType = "pinetree", isExplored = False, visibility = Unexplored }
+    { treeType = "pinetree", isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultRoundTreeInfo : TreeInfo
+defaultRoundTreeInfo : Tile.TreeInfo
 defaultRoundTreeInfo =
-    { treeType = "roundtree", isExplored = False, visibility = Unexplored }
+    { treeType = "roundtree", isExplored = False, visibility = Tile.Unexplored }
 
 
 type DoorWallOption
-    = UseDoor DoorInfo
+    = UseDoor Tile.DoorInfo
     | UseWall
     | NoDoorNoWall
 
@@ -447,138 +324,74 @@ type alias DoorWallOptions =
     }
 
 
-type DoorOrientation
-    = DoorToTheRight
-    | DoorToTheLeft
-    | DoorToUp
-    | DoorToDown
-
-
-type alias DoorInfo =
-    { isOpen : Bool
-    , color : Maybe String
-    , orientation : DoorOrientation
-    , requiresToOpen : List Item
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-defaultDoorInfo : DoorOrientation -> DoorInfo
+defaultDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 defaultDoorInfo dorientation =
-    { isOpen = False, color = Nothing, orientation = dorientation, requiresToOpen = [], isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Nothing, orientation = dorientation, requiresToOpen = [], isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultOpenDoorInfo : DoorOrientation -> DoorInfo
+defaultOpenDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 defaultOpenDoorInfo dorientation =
-    { isOpen = True, color = Nothing, orientation = dorientation, requiresToOpen = [], isExplored = False, visibility = Unexplored }
+    { isOpen = True, color = Nothing, orientation = dorientation, requiresToOpen = [], isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultBlueDoorInfo : DoorOrientation -> DoorInfo
+defaultBlueDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 defaultBlueDoorInfo dorientation =
-    { isOpen = False, color = Just "blue", orientation = dorientation, requiresToOpen = [ Key { keyColor = "blue" } ], isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "blue", orientation = dorientation, requiresToOpen = [ Key { keyColor = "blue" } ], isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultBlackDoorInfo : DoorOrientation -> DoorInfo
+defaultBlackDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 defaultBlackDoorInfo dorientation =
-    { isOpen = False, color = Just "black", orientation = dorientation, requiresToOpen = [ Key { keyColor = "black" } ], isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "black", orientation = dorientation, requiresToOpen = [ Key { keyColor = "black" } ], isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultRedDoorInfo : DoorOrientation -> DoorInfo
+defaultRedDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 defaultRedDoorInfo dorientation =
-    { isOpen = False, color = Just "red", orientation = dorientation, requiresToOpen = [ Key { keyColor = "red" } ], isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "red", orientation = dorientation, requiresToOpen = [ Key { keyColor = "red" } ], isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultYellowDoorInfo : DoorOrientation -> DoorInfo
+defaultYellowDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 defaultYellowDoorInfo dorientation =
-    { isOpen = False, color = Just "yellow", orientation = dorientation, requiresToOpen = [ Key { keyColor = "yellow" } ], isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "yellow", orientation = dorientation, requiresToOpen = [ Key { keyColor = "yellow" } ], isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultGreenDoorInfo : DoorOrientation -> DoorInfo
+defaultGreenDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
 defaultGreenDoorInfo dorientation =
-    { isOpen = False, color = Just "green", orientation = dorientation, requiresToOpen = [ Key { keyColor = "green" } ], isExplored = False, visibility = Unexplored }
+    { isOpen = False, color = Just "green", orientation = dorientation, requiresToOpen = [ Key { keyColor = "green" } ], isExplored = False, visibility = Tile.Unexplored }
 
 
-type alias LeverInfo =
-    { isUp : Bool
-    , modelChangerFuncs : List (Grid.Coordinate -> Model -> Model)
-    , isTransparent : Bool
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-defaultLeverInfo : LeverInfo
+defaultLeverInfo : Tile.LeverInfo
 defaultLeverInfo =
-    { isUp = False, modelChangerFuncs = [], isTransparent = False, isExplored = False, visibility = Unexplored }
+    { isUp = False, isTransparent = False, isExplored = False, visibility = Tile.Unexplored }
 
 
-type alias FlagInfo =
-    { condition : FlagCondition
-    , isTransparent : Bool
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-defaultFlagInfo : FlagInfo
+defaultFlagInfo : Tile.FlagInfo
 defaultFlagInfo =
-    { condition = Fine, isTransparent = False, isExplored = False, visibility = Unexplored }
+    { condition = Tile.Fine, isTransparent = False, isExplored = False, visibility = Tile.Unexplored }
 
 
-type FlagCondition
-    = Ruined
-    | Fine
-
-
-type alias ColumnInfo =
-    { isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-defaultColumnInfo : ColumnInfo
+defaultColumnInfo : Tile.ColumnInfo
 defaultColumnInfo =
-    { isExplored = False, visibility = Unexplored }
+    { isExplored = False, visibility = Tile.Unexplored }
 
 
-type alias WaterInfo =
-    { description : String
-    , isTransparent : Bool
-    , isWalkable : Bool
-    , isExplored : Bool
-    , visibility : Visibility
-    }
-
-
-defaultWaterWallUpInfo : WaterInfo
+defaultWaterWallUpInfo : Tile.WaterInfo
 defaultWaterWallUpInfo =
-    { description = "water_wall_up", isTransparent = False, isWalkable = False, isExplored = False, visibility = Unexplored }
+    { description = "water_wall_up", isTransparent = False, isWalkable = False, isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultWaterWallLeftInfo : WaterInfo
+defaultWaterWallLeftInfo : Tile.WaterInfo
 defaultWaterWallLeftInfo =
-    { description = "water_wall_left", isTransparent = False, isWalkable = False, isExplored = False, visibility = Unexplored }
+    { description = "water_wall_left", isTransparent = False, isWalkable = False, isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultWaterInfo : WaterInfo
+defaultWaterInfo : Tile.WaterInfo
 defaultWaterInfo =
-    { description = "just_water", isTransparent = False, isWalkable = False, isExplored = False, visibility = Unexplored }
+    { description = "just_water", isTransparent = False, isWalkable = False, isExplored = False, visibility = Tile.Unexplored }
 
 
-type WallJunction
-    = Flat
-    | Empty
-
-
-type alias WallOverInfo =
-    { r : WallJunction, l : WallJunction, u : WallJunction, d : WallJunction, isExplored : Bool, visibility : Visibility }
-
-
-type Visibility
-    = Visible
-    | Unexplored
-    | Explored
+walkableWaterInfo : Tile.WaterInfo
+walkableWaterInfo =
+    { description = "just_water", isTransparent = False, isWalkable = True, isExplored = False, visibility = Tile.Unexplored }
 
 
 type Input
@@ -992,7 +805,7 @@ setModelTileAsExplored location_ model =
             { model | level = Grid.set location_ newTile model.level }
 
 
-getTileVisibility : Tile -> Visibility
+getTileVisibility : Tile -> Tile.Visibility
 getTileVisibility tile =
     case tile of
         Floor floorinfo ->
@@ -1032,27 +845,27 @@ getTileVisibility tile =
             waterInfo.visibility
 
         ConverterTile it ct ->
-            Visible
+            Tile.Visible
 
         NoTileYet ->
-            Unexplored
+            Tile.Unexplored
 
 
-getGridTileVisibility : Location -> Grid.Grid Tile -> Visibility
+getGridTileVisibility : Location -> Grid.Grid Tile -> Tile.Visibility
 getGridTileVisibility location_ gridtiles =
     Grid.get location_ gridtiles
         |> Maybe.map getTileVisibility
-        |> Maybe.withDefault Unexplored
+        |> Maybe.withDefault Tile.Unexplored
 
 
-getModelTileVisibility : Location -> Model -> Visibility
+getModelTileVisibility : Location -> Model -> Tile.Visibility
 getModelTileVisibility location_ model =
     Grid.get location_ model.level
         |> Maybe.map getTileVisibility
-        |> Maybe.withDefault Unexplored
+        |> Maybe.withDefault Tile.Unexplored
 
 
-setTileVisibility : Visibility -> Tile -> Tile
+setTileVisibility : Tile.Visibility -> Tile -> Tile
 setTileVisibility visibility_ tile =
     case tile of
         Floor floorinfo ->
@@ -1098,7 +911,7 @@ setTileVisibility visibility_ tile =
             NoTileYet
 
 
-setModelTileVisibility : Location -> Visibility -> Model -> Model
+setModelTileVisibility : Location -> Tile.Visibility -> Model -> Model
 setModelTileVisibility location_ visibility_ model =
     case Grid.get location_ model.level of
         Nothing ->
@@ -1239,9 +1052,9 @@ visible model =
     Grid.neighborhoodCalc 8 model.player.location
 
 
-visibility : Model -> Location -> Visibility
+visibility : Model -> Location -> Tile.Visibility
 visibility model location_ =
-    --Grid.getWithDefault Unexplored location model.explored
+    --Grid.getWithDefault Tile.Unexplored location model.explored
     getModelTileVisibility location_ model
 
 

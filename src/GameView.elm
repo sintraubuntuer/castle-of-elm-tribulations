@@ -20,6 +20,7 @@ import Html.Events
 import Item exposing (Item(..), KeyInfo)
 import Thorns.Types
 import Thorns.View as ThornsView
+import Tile exposing (Tile(..), Visibility(..))
 
 
 xScale : Int
@@ -45,7 +46,7 @@ noForm =
 
 
 floor_ :
-    GameModel.FloorInfo
+    Tile.FloorInfo
     -> Collage Msg --Form
 floor_ floorinfo =
     --rect (toFloat xScale) (toFloat yScale) |> filled black
@@ -62,7 +63,7 @@ floor_ floorinfo =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-floor : GameModel.FloorInfo -> Collage Msg
+floor : Tile.FloorInfo -> Collage Msg
 floor floorinfo =
     {- }
        let
@@ -79,7 +80,7 @@ floor floorinfo =
 
 floorOverlay : String -> Collage Msg
 floorOverlay elemStr =
-    --guy { avatar = "." |> Text.fromString |> Text.monospace |> Text.color white |> centered } GameModel.Visible
+    --guy { avatar = "." |> Text.fromString |> Text.monospace |> Text.color white |> centered } Tile.Visible
     if elemStr == "ash" then
         Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_ash.png"
 
@@ -176,21 +177,21 @@ wall orientationStr =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-wallOverlay : GameModel.WallInfo -> Collage Msg
+wallOverlay : Tile.WallInfo -> Collage Msg
 wallOverlay wallinfo =
-    --guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } GameModel.Visible
+    --guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } Tile.Visible
     let
         woverlay =
             case wallinfo.mbTeleporterObject of
                 Just tinfo ->
                     case tinfo.teleporterType of
-                        GameModel.Barrel ->
+                        Tile.Barrel ->
                             Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_barrel_up.png"
 
-                        GameModel.BookCase ->
+                        Tile.BookCase ->
                             Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_bookcase_up.png"
 
-                        GameModel.Clock ->
+                        Tile.Clock ->
                             Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_clock_up.png"
 
                 _ ->
@@ -199,18 +200,18 @@ wallOverlay wallinfo =
     woverlay
 
 
-door : GameModel.DoorInfo -> Collage Msg
+door : Tile.DoorInfo -> Collage Msg
 door doorinfo =
     let
         mbFileStr =
-            if doorinfo.isOpen && (doorinfo.orientation == GameModel.DoorToUp || doorinfo.orientation == GameModel.DoorToDown) then
+            if doorinfo.isOpen && (doorinfo.orientation == Tile.DoorToUp || doorinfo.orientation == Tile.DoorToDown) then
                 --rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform white)
                 Just "img/doors/doorUp_open_floorBg.png"
 
-            else if doorinfo.isOpen && doorinfo.orientation == GameModel.DoorToTheLeft then
+            else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheLeft then
                 Just "img/doors/doorLeft_open_floorBg.png"
 
-            else if doorinfo.isOpen && doorinfo.orientation == GameModel.DoorToTheRight then
+            else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheRight then
                 Just "img/doors/doorRight_open_floorBg.png"
 
             else if doorinfo.isOpen then
@@ -267,7 +268,7 @@ stringToColor theColorStr =
         white
 
 
-doorOverlay : GameModel.DoorInfo -> Collage Msg
+doorOverlay : Tile.DoorInfo -> Collage Msg
 doorOverlay doorInfo =
     noForm
 
@@ -327,27 +328,27 @@ halfFog =
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (rgba 0 0 0 0.6))
 
 
-tile : Int -> GameModel.Tile -> Collage Msg
+tile : Int -> Tile -> Collage Msg
 tile currentFloorId t =
     case t of
-        GameModel.Floor floorinfo ->
+        Tile.Floor floorinfo ->
             --floor floorinfo
             floor_ floorinfo
 
-        GameModel.Stairs sinfo ->
+        Tile.Stairs sinfo ->
             if sinfo.toFloorId > currentFloorId then
                 stairs "up"
 
             else
                 stairs "down"
 
-        GameModel.Tree treeinfo ->
+        Tile.Tree treeinfo ->
             tree treeinfo
 
-        GameModel.Hole hinfo ->
+        Tile.Hole hinfo ->
             hole
 
-        GameModel.Wall wallinfo ->
+        Tile.Wall wallinfo ->
             if wallinfo.orientation == "four_way" then
                 wall "four_way"
 
@@ -399,33 +400,33 @@ tile currentFloorId t =
             else
                 wall "horizontal"
 
-        GameModel.Door doorinfo ->
+        Tile.Door doorinfo ->
             door doorinfo
 
-        GameModel.NoTileYet ->
+        Tile.NoTileYet ->
             notileyet
 
-        GameModel.Lever leverinfo ->
+        Tile.Lever leverinfo ->
             if leverinfo.isUp then
                 lever "on"
 
             else
                 lever "off"
 
-        GameModel.Water waterinfo ->
+        Tile.Water waterinfo ->
             water waterinfo
 
-        GameModel.Grass grassinfo ->
+        Tile.Grass grassinfo ->
             grass grassinfo
 
-        GameModel.ConverterTile it ct ->
+        Tile.ConverterTile it ct ->
             tile currentFloorId it
 
         _ ->
             notileyet
 
 
-grass : GameModel.GrassInfo -> Collage Msg
+grass : Tile.GrassInfo -> Collage Msg
 grass grassinfo =
     let
         fileStr =
@@ -438,7 +439,7 @@ grass grassinfo =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-tree : GameModel.TreeInfo -> Collage Msg
+tree : Tile.TreeInfo -> Collage Msg
 tree treeinfo =
     let
         fileStr =
@@ -451,7 +452,7 @@ tree treeinfo =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-water : GameModel.WaterInfo -> Collage Msg
+water : Tile.WaterInfo -> Collage Msg
 water waterinfo =
     let
         fileStr =
@@ -467,10 +468,10 @@ water waterinfo =
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-tileOverlay : GameModel.Tile -> Collage Msg
+tileOverlay : Tile -> Collage Msg
 tileOverlay t =
     case t of
-        GameModel.Floor floorinfo ->
+        Tile.Floor floorinfo ->
             case floorinfo.item of
                 Just Ash ->
                     floorOverlay "ash"
@@ -501,38 +502,38 @@ tileOverlay t =
 
                 _ ->
                     case floorinfo.floorDrawing of
-                        Just (GameModel.LandingTargetDrawing nr) ->
+                        Just (Tile.LandingTargetDrawing nr) ->
                             floorOverlay "landingTarget"
 
                         _ ->
                             floorOverlay ""
 
-        GameModel.Wall wallinfo ->
+        Tile.Wall wallinfo ->
             wallOverlay wallinfo
 
-        GameModel.Door doorinfo ->
+        Tile.Door doorinfo ->
             doorOverlay doorinfo
 
-        GameModel.ConverterTile it ct ->
+        Tile.ConverterTile it ct ->
             tileOverlay it
 
-        GameModel.NoTileYet ->
+        Tile.NoTileYet ->
             notileyetOverlay
 
         _ ->
             notileyetOverlay
 
 
-fogT : GameModel.Visibility -> Collage Msg
+fogT : Tile.Visibility -> Collage Msg
 fogT visibility =
     case visibility of
-        GameModel.Visible ->
+        Visible ->
             noForm
 
-        GameModel.Explored ->
+        Explored ->
             halfFog
 
-        GameModel.Unexplored ->
+        Unexplored ->
             fog
 
 
@@ -559,10 +560,10 @@ tCollageFromStr elemStr =
 --|> centered
 
 
-playerImg : Player -> GameModel.Visibility -> Collage Msg
+playerImg : Player -> Tile.Visibility -> Collage Msg
 playerImg player_ visibility =
     case visibility of
-        GameModel.Visible ->
+        Tile.Visible ->
             let
                 fileStr =
                     case player_.direction of
@@ -584,10 +585,10 @@ playerImg player_ visibility =
             noForm
 
 
-enemyView : Beings.Enemy -> Bool -> GameModel.Visibility -> Collage Msg
+enemyView : Beings.Enemy -> Bool -> Tile.Visibility -> Collage Msg
 enemyView enem showBlood visibility =
     case visibility of
-        GameModel.Visible ->
+        Tile.Visible ->
             let
                 fileStr =
                     if enem.indexOfLight >= enem.indexOfLightMax then
@@ -608,10 +609,10 @@ enemyView enem showBlood visibility =
             noForm
 
 
-otherCharacterView : Beings.OtherCharacter -> Bool -> GameModel.Visibility -> Collage Msg
+otherCharacterView : Beings.OtherCharacter -> Bool -> Tile.Visibility -> Collage Msg
 otherCharacterView character showBlood visibility =
     case visibility of
-        GameModel.Visible ->
+        Tile.Visible ->
             let
                 fileStr =
                     "img/pc/right.png"
@@ -637,10 +638,10 @@ otherCharacterView character showBlood visibility =
             noForm
 
 
-guy : { r | textAvatar : String } -> GameModel.Visibility -> Collage Msg
+guy : { r | textAvatar : String } -> Tile.Visibility -> Collage Msg
 guy r visibility =
     case visibility of
-        GameModel.Visible ->
+        Tile.Visible ->
             let
                 form =
                     r.textAvatar |> tCollageFromStr
@@ -733,8 +734,8 @@ mainScreen model =
             List.map makeTile tiles_
 
         player_ =
-            --guy model.player GameModel.Visible |> shift (location model.player)
-            playerImg model.player GameModel.Visible
+            --guy model.player Tile.Visible |> shift (location model.player)
+            playerImg model.player Tile.Visible
                 |> shift (location model.player)
 
         enemy_ =
@@ -832,7 +833,7 @@ inViewRange enemy_ =
 
 
 {-
-   background : Grid.Grid GameModel.Tile -> Model -> Element
+   background : Grid.Grid Tile -> Model -> Element
    background subgrid model =
        let
            grid =

@@ -5,15 +5,16 @@ import Dict exposing (Dict)
 import GameModel
 import Grid
 import Thorns.Types
+import Tile exposing (Tile(..), Visibility(..))
 
 
-setAllAsUnexplored : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Visibility
+setAllAsUnexplored : Grid.Grid Tile -> Grid.Grid Tile.Visibility
 setAllAsUnexplored level =
     let
         grid =
             Grid.toList level
     in
-    List.map (\row -> List.map (\_ -> GameModel.Unexplored) row) grid |> Grid.fromList
+    List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid.fromList
 
 
 initialPlayer : Player
@@ -72,7 +73,7 @@ initialModelFunc =
 
         firstMap =
             -- MapGen.randomCave dimensions
-            Grid.initialize { width = w, height = h } GameModel.NoTileYet
+            Grid.initialize { width = w, height = h } Tile.NoTileYet
 
         roomsInfo =
             Just <| GameModel.RoomsInfo [] 20 12 7

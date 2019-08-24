@@ -55,12 +55,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
-        , RoomType(..)
-        , TeleporterInfo
-        , TeleporterType(..)
-        , Tile(..)
         , TunnelRectangle
-        , WallInfo
         , defaultBrickWallInfo
         , defaultFloorInfo
         , defaultWallInfo
@@ -69,15 +64,23 @@ import GameModel
         )
 import Grid
 import MapGen
+import Tile
+    exposing
+        ( RoomType(..)
+        , TeleporterInfo
+        , TeleporterType(..)
+        , Tile(..)
+        , WallInfo
+        )
 
 
-gridCaverns : Grid.Grid GameModel.Tile
+gridCaverns : Grid.Grid Tile
 gridCaverns =
     GameDefinitions.Common.gridInitializer 7 11 config_params
         |> addCavernsCustomRoomsAndTunnels
 
 
-addCavernsCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addCavernsCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
 addCavernsCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc cavernsInitialRoomRectangles
@@ -282,7 +285,7 @@ cavernsStairsTunnel =
     ]
 
 
-addCavernsStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addCavernsStairs : Grid.Grid Tile -> Grid.Grid Tile
 addCavernsStairs grid =
     let
         lstairs =

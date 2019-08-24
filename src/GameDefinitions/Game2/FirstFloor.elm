@@ -52,12 +52,7 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
-        , RoomType(..)
-        , TeleporterInfo
-        , TeleporterType(..)
-        , Tile(..)
         , TunnelRectangle
-        , WallInfo
         , defaultBrickWallInfo
         , defaultFloorInfo
         , defaultWallInfo
@@ -66,15 +61,23 @@ import GameModel
         )
 import Grid
 import MapGen
+import Tile
+    exposing
+        ( RoomType(..)
+        , TeleporterInfo
+        , TeleporterType(..)
+        , Tile(..)
+        , WallInfo
+        )
 
 
-gridFirstFloor : Grid.Grid GameModel.Tile
+gridFirstFloor : Grid.Grid Tile
 gridFirstFloor =
     GameDefinitions.Common.gridInitializer 7 6 config_params
         |> addFirstFloorCustomRoomsAndTunnels
 
 
-addFirstFloorCustomRoomsAndTunnels : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addFirstFloorCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
 addFirstFloorCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (firstFloorInitialRoomRectangles ++ firstFloorCustomRoomRectangles)
@@ -91,7 +94,7 @@ addFirstFloorCustomRoomsAndTunnels grid =
         |> MapGen.correctSomeWallCorners
 
 
-firstFloorHoles : Dict HoleId GameModel.HoleInfo
+firstFloorHoles : Dict HoleId Tile.HoleInfo
 firstFloorHoles =
     getHolesByFloorId firstFloor_id holesDict
 
@@ -237,7 +240,7 @@ firstFloorStairsTunnelWithOptions =
     [ ( getVerticalTunnel 5 5 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) Nothing Nothing config_params, defaultNoDoorOptions )
     , ( getVerticalTunnel 3 5 TunnelDown Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) Nothing Nothing config_params
       , { left = GameModel.NoDoorNoWall
-        , top = GameModel.UseDoor (GameModel.defaultYellowDoorInfo GameModel.DoorToDown)
+        , top = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToDown)
         , right = GameModel.NoDoorNoWall
         , bottom = GameModel.NoDoorNoWall
         }
@@ -245,7 +248,7 @@ firstFloorStairsTunnelWithOptions =
     ]
 
 
-addFirstFloorStairs : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+addFirstFloorStairs : Grid.Grid Tile -> Grid.Grid Tile
 addFirstFloorStairs grid =
     let
         lstairs =

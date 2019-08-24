@@ -45,6 +45,7 @@ module MapGen exposing
 import GameModel
 import GameSimulation
 import Grid
+import Tile exposing (Tile(..))
 
 
 getNeighborsOrElse : a -> Grid.Grid a -> Grid.Coordinate -> List a
@@ -57,23 +58,23 @@ getNeighborsOrElse2 x grid coord =
     List.map (\c -> Grid.getWithDefault x c grid) <| Grid.neighborhoodCalc 2 coord
 
 
-getNeighbors : Grid.Grid GameModel.Tile -> Grid.Coordinate -> List GameModel.Tile
+getNeighbors : Grid.Grid Tile -> Grid.Coordinate -> List Tile
 getNeighbors =
-    getNeighborsOrElse (GameModel.Wall GameModel.defaultWallInfo)
+    getNeighborsOrElse (Tile.Wall GameModel.defaultWallInfo)
 
 
-getNeighbors2 : Grid.Grid GameModel.Tile -> Grid.Coordinate -> List GameModel.Tile
+getNeighbors2 : Grid.Grid Tile -> Grid.Coordinate -> List Tile
 getNeighbors2 =
-    getNeighborsOrElse2 (GameModel.Wall GameModel.defaultWallInfo)
+    getNeighborsOrElse2 (Tile.Wall GameModel.defaultWallInfo)
 
 
-numberOfWalls : Grid.Grid GameModel.Tile -> Grid.Coordinate -> Int
+numberOfWalls : Grid.Grid Tile -> Grid.Coordinate -> Int
 numberOfWalls grid coord =
     getNeighbors grid coord
         |> List.filter
             (\t ->
                 case t of
-                    GameModel.Wall _ ->
+                    Tile.Wall _ ->
                         True
 
                     _ ->
@@ -82,13 +83,13 @@ numberOfWalls grid coord =
         |> List.length
 
 
-numberOfWalls2 : Grid.Grid GameModel.Tile -> Grid.Coordinate -> Int
+numberOfWalls2 : Grid.Grid Tile -> Grid.Coordinate -> Int
 numberOfWalls2 grid coord =
     getNeighbors2 grid coord
         |> List.filter
             (\t ->
                 case t of
-                    GameModel.Wall _ ->
+                    Tile.Wall _ ->
                         True
 
                     _ ->
@@ -97,26 +98,26 @@ numberOfWalls2 grid coord =
         |> List.length
 
 
-randomTile : Float -> GameModel.Tile
+randomTile : Float -> Tile
 randomTile rfloat =
     let
         tile =
             --if rfloat < 0.4 then
             if rfloat < 0.4 then
-                GameModel.Wall GameModel.defaultWallInfo
+                Tile.Wall GameModel.defaultWallInfo
 
             else
-                GameModel.Floor GameModel.defaultFloorInfo
+                Tile.Floor GameModel.defaultFloorInfo
     in
     tile
 
 
-randomMap : ( Int, Int ) -> List Float -> Grid.Grid GameModel.Tile
+randomMap : ( Int, Int ) -> List Float -> Grid.Grid Tile
 randomMap ( w, h ) lfloats =
     let
         -- lfloats should have w*h elements
         initialGrid =
-            Grid.initialize { width = w, height = h } GameModel.NoTileYet
+            Grid.initialize { width = w, height = h } Tile.NoTileYet
 
         lcoordinates =
             Grid.toCoordinates initialGrid
@@ -127,7 +128,7 @@ randomMap ( w, h ) lfloats =
     List.foldl (\( gcoord, rfl ) accy -> Grid.set gcoord (randomTile rfl) accy) initialGrid lcoordsFloats
 
 
-iterate : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+iterate : Grid.Grid Tile -> Grid.Grid Tile
 iterate grid =
     let
         coords =
@@ -138,10 +139,10 @@ iterate grid =
                 (\coord ->
                     ( coord
                     , if numberOfWalls grid coord >= 5 then
-                        GameModel.Wall GameModel.defaultWallInfo
+                        Tile.Wall GameModel.defaultWallInfo
 
                       else
-                        GameModel.Floor GameModel.defaultFloorInfo
+                        Tile.Floor GameModel.defaultFloorInfo
                     )
                 )
                 coords
@@ -149,7 +150,7 @@ iterate grid =
     List.foldl (\( coord, a ) grid_ -> Grid.set coord a grid_) grid x
 
 
-iterate2 : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+iterate2 : Grid.Grid Tile -> Grid.Grid Tile
 iterate2 grid =
     let
         coords =
@@ -157,13 +158,13 @@ iterate2 grid =
 
         rule coord =
             if numberOfWalls grid coord >= 5 then
-                GameModel.Wall GameModel.defaultWallInfo
+                Tile.Wall GameModel.defaultWallInfo
 
             else if numberOfWalls2 grid coord <= 2 then
-                GameModel.Wall GameModel.defaultWallInfo
+                Tile.Wall GameModel.defaultWallInfo
 
             else
-                GameModel.Floor GameModel.defaultFloorInfo
+                Tile.Floor GameModel.defaultFloorInfo
 
         x =
             List.map (\coord -> ( coord, rule coord )) coords
@@ -171,7 +172,7 @@ iterate2 grid =
     List.foldl (\( coord, a ) grid_ -> Grid.set coord a grid_) grid x
 
 
-randomCave : ( Int, Int ) -> List Float -> Grid.Grid GameModel.Tile
+randomCave : ( Int, Int ) -> List Float -> Grid.Grid Tile
 randomCave ( w, h ) lfloats =
     let
         -- lfloats should have w*h elements
@@ -296,7 +297,7 @@ randomMapRoomRectanglesGenerator totalwidth totalheight maxRooms roomMaxSize roo
     new_lroomrectanglesRandInts
 
 
-randomMapGeneratorWithRooms : Int -> Int -> Int -> Int -> Int -> List Int -> Grid.Grid GameModel.Tile -> { tileGrid : Grid.Grid GameModel.Tile, lroomRectangles : List GameModel.RoomRectangle, ltunnelRectangles : List GameModel.TunnelRectangle, unusedRandoms : List Int }
+randomMapGeneratorWithRooms : Int -> Int -> Int -> Int -> Int -> List Int -> Grid.Grid Tile -> { tileGrid : Grid.Grid Tile, lroomRectangles : List GameModel.RoomRectangle, ltunnelRectangles : List GameModel.TunnelRectangle, unusedRandoms : List Int }
 randomMapGeneratorWithRooms totalwidth totalheight maxRooms roomMaxSize roomMinSize lrandomInts grid =
     let
         ( lroomrectangles, unused_lrandomints ) =
@@ -332,7 +333,7 @@ randomMapGeneratorWithRooms totalwidth totalheight maxRooms roomMaxSize roomMinS
     { tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
 
 
-determineCornerAndInstallLever : List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> ( Grid.Grid GameModel.Tile, List Grid.Coordinate )
+determineCornerAndInstallLever : List GameModel.RoomRectangle -> Grid.Grid Tile -> ( Grid.Grid Tile, List Grid.Coordinate )
 determineCornerAndInstallLever lrrects grid =
     let
         lcoords =
@@ -341,7 +342,7 @@ determineCornerAndInstallLever lrrects grid =
     ( installLeversInCoords lcoords grid, lcoords )
 
 
-determineLeverNearCornerRoom1Coords : List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> List Grid.Coordinate
+determineLeverNearCornerRoom1Coords : List GameModel.RoomRectangle -> Grid.Grid Tile -> List Grid.Coordinate
 determineLeverNearCornerRoom1Coords lroomrectangles grid =
     let
         mbXYpos1 =
@@ -362,11 +363,11 @@ determineLeverNearCornerRoom1Coords lroomrectangles grid =
     addMbElemToList mbXYpos1 lcoords
 
 
-installLeversInCoords : List Grid.Coordinate -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+installLeversInCoords : List Grid.Coordinate -> Grid.Grid Tile -> Grid.Grid Tile
 installLeversInCoords lcoords grid =
     let
         setLeverFunc coords grid_ =
-            Grid.set coords (GameModel.Lever GameModel.defaultLeverInfo) grid_
+            Grid.set coords (Tile.Lever GameModel.defaultLeverInfo) grid_
     in
     List.foldl (\coords gridacc -> setLeverFunc coords gridacc) grid lcoords
 
@@ -425,7 +426,7 @@ determineRectangularRegionBoundaries rrect topBotLeftRightStr =
         []
 
 
-determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> String -> Grid.Grid Tile -> Grid.Grid Tile
 determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect topBotLeftRightStr grid =
     let
         lcoords =
@@ -433,12 +434,12 @@ determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect topBotLeftR
     in
     List.foldl
         (\cellcoords gridacc ->
-            if Grid.get cellcoords gridacc == Just GameModel.NoTileYet then
+            if Grid.get cellcoords gridacc == Just Tile.NoTileYet then
                 if topBotLeftRightStr == "left-1" || topBotLeftRightStr == "left" || topBotLeftRightStr == "right" || topBotLeftRightStr == "right+1" then
-                    Grid.set cellcoords (GameModel.Wall GameModel.defaultWallUpInfo) gridacc
+                    Grid.set cellcoords (Tile.Wall GameModel.defaultWallUpInfo) gridacc
 
                 else
-                    Grid.set cellcoords (GameModel.Wall GameModel.defaultWallInfo) gridacc
+                    Grid.set cellcoords (Tile.Wall GameModel.defaultWallInfo) gridacc
 
             else
                 gridacc
@@ -447,7 +448,7 @@ determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect topBotLeftR
         lcoords
 
 
-createWallBoundaries : List { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+createWallBoundaries : List { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Grid.Grid Tile -> Grid.Grid Tile
 createWallBoundaries lrrect grid =
     let
         fillBoundariesIfNecessary rrect grid_ =
@@ -460,7 +461,7 @@ createWallBoundaries lrrect grid =
     List.foldl (\rrect gridacc -> fillBoundariesIfNecessary rrect gridacc) grid lrrect
 
 
-correctSomeWallCorners : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+correctSomeWallCorners : Grid.Grid Tile -> Grid.Grid Tile
 correctSomeWallCorners grid =
     let
         lcoords =
@@ -568,7 +569,7 @@ correctSomeWallCorners grid =
     List.foldl (\coord gacc -> checkAndUpdateGriCoord coord gacc) grid lcoords
 
 
-transformFloorToWallOnDisplayBoundaries : Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+transformFloorToWallOnDisplayBoundaries : Grid.Grid Tile -> Grid.Grid Tile
 transformFloorToWallOnDisplayBoundaries grid =
     let
         w =
@@ -592,12 +593,12 @@ transformFloorToWallOnDisplayBoundaries grid =
         getNewGrid coord lrtd grid_ =
             --get { x, y } grid
             case Grid.get coord grid_ of
-                Just (GameModel.Floor _) ->
+                Just (Tile.Floor _) ->
                     if lrtd == "l" || lrtd == "r" then
-                        Grid.set coord (GameModel.Wall GameModel.defaultWallUpInfo) grid_
+                        Grid.set coord (Tile.Wall GameModel.defaultWallUpInfo) grid_
 
                     else
-                        Grid.set coord (GameModel.Wall GameModel.defaultWallInfo) grid_
+                        Grid.set coord (Tile.Wall GameModel.defaultWallInfo) grid_
 
                 _ ->
                     grid_
@@ -640,7 +641,7 @@ cellBelongsToARectRegion coord lrects =
     List.foldl (\roomrect bacc -> coordBelongsTorectRegion coord roomrect || bacc) False lrects
 
 
-createHorizontalAndVerticalTunnels : List Int -> List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> ( Grid.Grid GameModel.Tile, List GameModel.TunnelRectangle, List Int )
+createHorizontalAndVerticalTunnels : List Int -> List GameModel.RoomRectangle -> Grid.Grid Tile -> ( Grid.Grid Tile, List GameModel.TunnelRectangle, List Int )
 createHorizontalAndVerticalTunnels lrandomints lroomrectangles grid =
     let
         lrooms2 =
@@ -758,19 +759,19 @@ mbCreateVerticalTunnel roomrect1 roomrect2 =
         Nothing
 
 
-listTunnelRectangleToGridFunc : List GameModel.TunnelRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+listTunnelRectangleToGridFunc : List GameModel.TunnelRectangle -> Grid.Grid Tile -> Grid.Grid Tile
 listTunnelRectangleToGridFunc ltunnels grid =
     -- for now , still have to write this
     listDungeonRectangleToGridFunc (List.map (\tun -> ( tun, noDoornoWallOption )) ltunnels) (Just "orange") grid
 
 
-listTunnelRectangleWithOptionsToGridFunc : List ( GameModel.TunnelRectangle, GameModel.DoorWallOptions ) -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+listTunnelRectangleWithOptionsToGridFunc : List ( GameModel.TunnelRectangle, GameModel.DoorWallOptions ) -> Grid.Grid Tile -> Grid.Grid Tile
 listTunnelRectangleWithOptionsToGridFunc ltunnelsWithOptions grid =
     -- for now , still have to write this
     listDungeonRectangleToGridFunc ltunnelsWithOptions (Just "orange") grid
 
 
-dungeonRectangleToGridFunc : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> GameModel.DoorWallOptions -> Maybe String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+dungeonRectangleToGridFunc : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> GameModel.DoorWallOptions -> Maybe String -> Grid.Grid Tile -> Grid.Grid Tile
 dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
     let
         left_x =
@@ -800,19 +801,19 @@ dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
         useWalls =
             False
 
-        getDoorWallOrFloor : GameModel.DoorWallOption -> GameModel.Tile
+        getDoorWallOrFloor : GameModel.DoorWallOption -> Tile
         getDoorWallOrFloor doorWallOption =
             case doorWallOption of
                 GameModel.UseWall ->
-                    GameModel.Wall GameModel.defaultWallInfo
+                    Tile.Wall GameModel.defaultWallInfo
 
                 GameModel.UseDoor dinfo ->
-                    GameModel.Door dinfo
+                    Tile.Door dinfo
 
                 GameModel.NoDoorNoWall ->
-                    GameModel.Floor defaultFloorInfoWithColor
+                    Tile.Floor defaultFloorInfoWithColor
 
-        generateTile : Int -> Int -> GameModel.Tile
+        generateTile : Int -> Int -> Tile
         generateTile xval yval =
             if xval == left_x && left_x /= right_x then
                 getDoorWallOrFloor doorWallOptions.left
@@ -827,7 +828,7 @@ dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
                 getDoorWallOrFloor doorWallOptions.top
 
             else
-                GameModel.Floor defaultFloorInfoWithColor
+                Tile.Floor defaultFloorInfoWithColor
 
         ltiles =
             List.concatMap (\xval -> List.map (\yval -> ( xval, yval, generateTile xval yval )) ly) lx
@@ -844,12 +845,12 @@ noDoornoWallOption =
     GameModel.DoorWallOptions GameModel.NoDoorNoWall GameModel.NoDoorNoWall GameModel.NoDoorNoWall GameModel.NoDoorNoWall
 
 
-listDungeonRectangleToGridFunc : List ( { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int }, GameModel.DoorWallOptions ) -> Maybe String -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+listDungeonRectangleToGridFunc : List ( { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int }, GameModel.DoorWallOptions ) -> Maybe String -> Grid.Grid Tile -> Grid.Grid Tile
 listDungeonRectangleToGridFunc lroomrectsWithOptions mbFloorColor grid =
     List.foldl (\( roomrect, doorWallOptions ) gridacc -> dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor gridacc) grid lroomrectsWithOptions
 
 
-listRoomRectangleToGridFunc : List GameModel.RoomRectangle -> Grid.Grid GameModel.Tile -> Grid.Grid GameModel.Tile
+listRoomRectangleToGridFunc : List GameModel.RoomRectangle -> Grid.Grid Tile -> Grid.Grid Tile
 listRoomRectangleToGridFunc lroomrects grid =
     listDungeonRectangleToGridFunc (List.map (\rrect -> ( rrect, noDoornoWallOption )) lroomrects) Nothing grid
 
