@@ -1116,8 +1116,39 @@ enemyExceedsNrMovesInCurrentTurn enemyid model =
             enemy.nrMovesInCurrentTurn >= enemy.maxNrEnemyMovesPerTurn
 
 
+type alias EnemiesPlayerRec =
+    { enemies : Dict Beings.EnemyId Beings.Enemy
+    , player : Beings.Player
+    , grid : Grid.Grid Tile
+    , lEnemiesForGameOfThorns : List Beings.Enemy
+    , textMsgs : List String
+    , lrandInts : List Int
+    }
+
+
 enemy_AI : Model -> ( Model, List Enemy )
 enemy_AI model =
+    let
+        enemiesPlayerRec =
+            BeingsInTileGrid.enemy_AI (model.currentDisplay |> GameModel.currDisplayToString) model.currentFloorId (EnemiesPlayerRec model.enemies model.player model.level [] [] model.pseudoRandomIntsPool)
+
+        newModel =
+            -- enemiesPlayerRec |> eprecToModel
+            { model
+                | enemies = enemiesPlayerRec.enemies
+                , player = enemiesPlayerRec.player
+                , level = enemiesPlayerRec.grid
+                , pseudoRandomIntsPool = enemiesPlayerRec.lrandInts
+            }
+
+        lenemiesForGoT =
+            enemiesPlayerRec.lEnemiesForGameOfThorns
+    in
+    ( newModel, lenemiesForGoT )
+
+
+enemy_AI_old : Model -> ( Model, List Enemy )
+enemy_AI_old model =
     let
         enemyIdEnemyPairList =
             Dict.filter (\enemyid enemy -> enemy.health > 0 && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) model.enemies

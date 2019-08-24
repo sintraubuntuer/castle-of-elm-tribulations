@@ -2,6 +2,7 @@ module BeingsInTileGrid exposing
     ( attack
     , attackIfClose_OtherwiseMove
     , enemyMove
+    , enemy_AI
     , isGridTileWalkable
     , isTileWalkable
     , move
@@ -105,17 +106,101 @@ isTileWalkable being tile =
             False
 
 
+type alias EnemiesPlayerRec =
+    { enemies : Dict Beings.EnemyId Beings.Enemy
+    , player : Beings.Player
+    , grid : Grid.Grid Tile
+    , lEnemiesForGameOfThorns : List Beings.Enemy
+    , textMsgs : List String
+    , lrandInts : List Int
+    }
 
---attackIfClose_OtherwiseMove enemy player pseudoRandomIntsPool =
---    ( enemy, player, pseudoRandomIntsPool )
+
+increseNrOfEnemyMovesInCurrentTurn : Beings.EnemyId -> EnemiesPlayerRec -> EnemiesPlayerRec
+increseNrOfEnemyMovesInCurrentTurn enemyid enemiesPlayerRec =
+    let
+        updatedEnemies =
+            Dict.update enemyid (\mbenemy -> mbenemy |> Maybe.map (\en -> { en | nrMovesInCurrentTurn = en.nrMovesInCurrentTurn + 1 })) enemiesPlayerRec.enemies
+    in
+    { enemiesPlayerRec | enemies = updatedEnemies }
+
+
+enemyExceedsNrMovesInCurrentTurn : Beings.EnemyId -> EnemiesPlayerRec -> Bool
+enemyExceedsNrMovesInCurrentTurn enemyid enemiesPlayerRec =
+    let
+        mbEnemy =
+            Dict.get enemyid enemiesPlayerRec.enemies
+    in
+    case mbEnemy of
+        Nothing ->
+            True
+
+        Just enemy ->
+            enemy.nrMovesInCurrentTurn >= enemy.maxNrEnemyMovesPerTurn
+
+
+enemy_AI : String -> Int -> EnemiesPlayerRec -> EnemiesPlayerRec
+enemy_AI currentDisplay currentFloorId enemiesPlayerRec =
+    let
+        enemyIdEnemyPairList =
+            Dict.filter (\enemyid enemy -> enemy.health > 0 && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) enemiesPlayerRec.enemies
+                |> Dict.toList
+
+        ai_helper_func : Beings.EnemyId -> EnemiesPlayerRec -> EnemiesPlayerRec
+        ai_helper_func enemyid enemies_player_rec =
+            if enemyExceedsNrMovesInCurrentTurn enemyid enemies_player_rec || currentDisplay == "DisplayGameOfThorns" then
+                enemies_player_rec
+
+            else
+                let
+                    mbenemy =
+                        Dict.get enemyid enemies_player_rec.enemies
+
+                    ( enemies_player_rec2, mbenemyForGameOfThorns ) =
+                        case mbenemy of
+                            Nothing ->
+                                ( enemies_player_rec, Nothing )
+
+                            Just enemy ->
+                                if enemy.floorId == currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && enemies_player_rec.player.health > 0 && currentDisplay /= "DisplayGameOfThorns" then
+                                    let
+                                        outRec =
+                                            attackIfClose_OtherwiseMove enemy enemies_player_rec.player currentFloorId enemies_player_rec.grid enemies_player_rec.lrandInts
+
+                                        newEnPlayerRec =
+                                            ( { enemies_player_rec
+                                                | enemies = Dict.update enemyid (\_ -> Just outRec.enemy) enemies_player_rec.enemies
+                                                , player = outRec.player
+                                                , lEnemiesForGameOfThorns = enemies_player_rec.lEnemiesForGameOfThorns ++ (outRec.mbEnemyForGameOfThorns |> Maybe.map (\x -> [ x ]) |> Maybe.withDefault [])
+                                                , textMsgs = []
+                                                , lrandInts = outRec.lrandInts
+                                              }
+                                            , outRec.mbEnemyForGameOfThorns
+                                            )
+                                                |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))
+                                    in
+                                    newEnPlayerRec
+
+                                else
+                                    ( enemyMove enemy enemies_player_rec.player.location enemies_player_rec.grid enemies_player_rec.lrandInts
+                                        |> (\( enem, lrand ) -> { enemies_player_rec | enemies = Dict.update enemyid (\_ -> Just enem) enemies_player_rec.enemies, lrandInts = lrand })
+                                        |> (\x -> increseNrOfEnemyMovesInCurrentTurn enemyid x)
+                                    , Nothing
+                                    )
+                in
+                case mbenemyForGameOfThorns of
+                    Just en ->
+                        { enemies_player_rec2 | lEnemiesForGameOfThorns = enemies_player_rec.lEnemiesForGameOfThorns ++ [ en ] }
+
+                    Nothing ->
+                        ai_helper_func enemyid enemies_player_rec2
+    in
+    List.foldl (\enpair modelacc -> ai_helper_func (Tuple.first enpair) modelacc) enemiesPlayerRec enemyIdEnemyPairList
 
 
 attackIfClose_OtherwiseMove : Beings.Enemy -> Beings.Player -> Int -> Grid.Grid Tile -> List Int -> { enemy : Beings.Enemy, player : Beings.Player, mbEnemyForGameOfThorns : Maybe Beings.Enemy, textMsg : String, lrandInts : List Int }
 attackIfClose_OtherwiseMove enemy player currentFloorId grid pseudoRandomIntsPool =
-    --   outputRecord =
-    --( updatedEnemy, updatedPlayer, mbEnemyForGameOfThorns ,   txtMsg , updatedRandInts )
     if enemy.floorId /= currentFloorId && enemy.health > 0 then
-        --( enemyMove enemy model, Nothing ) textMsg
         let
             ( updatedEnemy, updatedRandInts ) =
                 enemyMove enemy player.location grid pseudoRandomIntsPool
@@ -126,12 +211,10 @@ attackIfClose_OtherwiseMove enemy player currentFloorId grid pseudoRandomIntsPoo
         case List.filter (\location -> location == player.location) (Grid.neighborhoodCalc 1 enemy.location) of
             location :: locs ->
                 if enemy.attacksUsingGameOfThorns then
-                    --( model, Just enemy )
                     { enemy = enemy, player = player, mbEnemyForGameOfThorns = Just enemy, textMsg = "", lrandInts = pseudoRandomIntsPool }
 
                 else
                     let
-                        --( enemy_, player_, msg, newprandInts ) =
                         attackOutput =
                             attack enemy player pseudoRandomIntsPool
                     in
@@ -143,7 +226,6 @@ attackIfClose_OtherwiseMove enemy player currentFloorId grid pseudoRandomIntsPoo
                     }
 
             [] ->
-                --( enemyMove enemy model, Nothing )
                 let
                     ( updatedEnemy, updatedRandInts ) =
                         enemyMove enemy player.location grid pseudoRandomIntsPool

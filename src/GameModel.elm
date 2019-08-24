@@ -10,6 +10,7 @@ module GameModel exposing
     , RoomRectangle
     , RoomsInfo
     , TunnelRectangle
+    , currDisplayToString
     , defaultBlackDoorInfo
     , defaultBlueDoorInfo
     , defaultBrickWallInfo
@@ -105,6 +106,31 @@ type CurrentDisplay
     | DisplayOpponentReport
     | DisplayHelpScreen
     | DisplayInventory
+
+
+currDisplayToString : CurrentDisplay -> String
+currDisplayToString cDisplay =
+    case cDisplay of
+        DisplayRegularGame ->
+            "DisplayRegularGame"
+
+        DisplayGameOver ->
+            "DisplayGameOver"
+
+        DisplayGameCompleted ->
+            "DisplayGameCompleted"
+
+        DisplayGameOfThorns ->
+            "DisplayGameOfThorns"
+
+        DisplayOpponentReport ->
+            "DisplayOpponentReport"
+
+        DisplayHelpScreen ->
+            "DisplayHelpScreen"
+
+        DisplayInventory ->
+            "DisplayInventory"
 
 
 type ModelChangerFuncs
