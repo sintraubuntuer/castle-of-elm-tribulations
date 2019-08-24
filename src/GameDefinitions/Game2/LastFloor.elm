@@ -1,4 +1,4 @@
-module GameDefinitions.Game2.LastFloor exposing (gridLastFloor)
+module GameDefinitions.Game2.LastFloor exposing (gridLastFloor, leverModelChangerFuncs)
 
 import Dict exposing (Dict)
 import GameDefinitions.Common exposing (StairsOrientation(..))
@@ -42,11 +42,50 @@ import Tile
 
 customLeverInfo : Tile.LeverInfo
 customLeverInfo =
-    { isUp = False
+    { leverId = 1
+    , isUp = False
     , isTransparent = False
     , isExplored = False
     , visibility = Visible
     }
+
+
+modelChangerFuncsForLever1 : List (Grid.Coordinate -> GameModel.Model -> GameModel.Model)
+modelChangerFuncsForLever1 =
+    let
+        nrEnlightenedOpponents model =
+            Dict.values model.enemies |> List.filter (\en -> en.indexOfLight >= en.indexOfLightMax) |> List.length
+
+        nrDeadOpponents model =
+            Dict.values model.enemies |> List.filter (\en -> en.health <= 0) |> List.length
+
+        reqsCompleted model =
+            nrEnlightenedOpponents model >= 3 && nrDeadOpponents model == 0
+    in
+    [ \coords model ->
+        if reqsCompleted model then
+            { model
+                | level =
+                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
+                        |> Grid.set (Grid.Coordinate 16 2) (Tile.Water GameModel.walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 17 2) (Tile.Water GameModel.walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 20 13) (Tile.Grass defaultGrassInfo)
+            }
+
+        else
+            { model
+                | level =
+                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
+                        |> Grid.set coords (Lever customLeverInfo)
+            }
+    ]
+
+
+leverModelChangerFuncs : Dict GameModel.LeverId GameModel.ModelChangerFuncs
+leverModelChangerFuncs =
+    Dict.fromList
+        [ ( 1, GameModel.SimpleModelChanger modelChangerFuncsForLever1 )
+        ]
 
 
 lastFloorGridTiles : List Tile

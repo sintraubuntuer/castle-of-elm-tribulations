@@ -81,53 +81,17 @@ type Msg
     | ThornsMsg Thorns.Types.Msg
 
 
-modelChangerFuncsByGameIdAndLeverId : Int -> Int -> List (Grid.Coordinate -> GameModel.Model -> GameModel.Model)
-modelChangerFuncsByGameIdAndLeverId gId lId =
-    if gId == 2 && lId == 1 then
-        modelChangerFuncsForGame1Level1
+getModelChangerFuncs : Tile.LeverId -> Model -> List (Grid.Coordinate -> Model -> Model)
+getModelChangerFuncs leverId model =
+    Dict.get leverId model.leverModelChangerFuncs
+        |> (\x ->
+                case x of
+                    Just (GameModel.SimpleModelChanger lfuncs) ->
+                        lfuncs
 
-    else
-        []
-
-
-customLeverInfo : Tile.LeverInfo
-customLeverInfo =
-    { isUp = False
-    , isTransparent = False
-    , isExplored = False
-    , visibility = Visible
-    }
-
-
-modelChangerFuncsForGame1Level1 : List (Grid.Coordinate -> GameModel.Model -> GameModel.Model)
-modelChangerFuncsForGame1Level1 =
-    let
-        nrEnlightenedOpponents model =
-            Dict.values model.enemies |> List.filter (\en -> en.indexOfLight >= en.indexOfLightMax) |> List.length
-
-        nrDeadOpponents model =
-            Dict.values model.enemies |> List.filter (\en -> en.health <= 0) |> List.length
-
-        reqsCompleted model =
-            nrEnlightenedOpponents model >= 3 && nrDeadOpponents model == 0
-    in
-    [ \coords model ->
-        if reqsCompleted model then
-            { model
-                | level =
-                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
-                        |> Grid.set (Grid.Coordinate 16 2) (Tile.Water GameModel.walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 17 2) (Tile.Water GameModel.walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 20 13) (Tile.Grass defaultGrassInfo)
-            }
-
-        else
-            { model
-                | level =
-                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
-                        |> Grid.set coords (Lever customLeverInfo)
-            }
-    ]
+                    Nothing ->
+                        []
+           )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -280,7 +244,6 @@ update msg model =
                         )
 
                     GameModel.ViewInventory ->
-                        --( { model | displayInventory = not model.displayInventory }, Cmd.none )
                         ( { model
                             | currentDisplay =
                                 if model.currentDisplay == GameModel.DisplayInventory then
@@ -367,7 +330,7 @@ update msg model =
 
                             else
                                 { model | level = Grid.set (GameModel.location x2 y2) (Tile.Lever { leverinfo | isUp = True }) model.level }
-                                    |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2) modacc) xmodel (modelChangerFuncsByGameIdAndLeverId 2 1))
+                                    |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2) modacc) xmodel (getModelChangerFuncs leverinfo.leverId model))
 
                         --|> turnNeighbourWallCellstoAshes (GameModel.location x2 y2)
                         --  |> Debug.log " you just interacted with a down lever "
@@ -1256,7 +1219,7 @@ enemy_AI model =
         --|> List.head
         ai_helper_func : EnemyId -> ( Model, List Enemy ) -> ( Model, List Enemy )
         ai_helper_func enemyid ( model_, lmbe ) =
-            if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model.currentDisplay == GameModel.DisplayGameOfThorns then
+            if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model_.currentDisplay == GameModel.DisplayGameOfThorns then
                 -- model_.gameOfThornsModeisOn then
                 ( model_, lmbe )
 
@@ -1271,7 +1234,7 @@ enemy_AI model =
                                 ( model_, Nothing )
 
                             Just enemy ->
-                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && model.player.health > 0 && model.currentDisplay /= GameModel.DisplayGameOfThorns then
+                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && model.player.health > 0 && model_.currentDisplay /= GameModel.DisplayGameOfThorns then
                                     attackIfClose enemy model_
                                         -- prevent possible infinite recursion
                                         |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))

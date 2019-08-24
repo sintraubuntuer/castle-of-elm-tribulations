@@ -8,6 +8,7 @@ module Tile exposing
     , FloorInfo
     , GrassInfo
     , HoleInfo
+    , LeverId
     , LeverInfo
     , RoomType(..)
     , StairsInfo
@@ -97,8 +98,13 @@ type DoorOrientation
     | DoorToDown
 
 
+type alias LeverId =
+    Int
+
+
 type alias LeverInfo =
-    { isUp : Bool
+    { leverId : LeverId
+    , isUp : Bool
     , isTransparent : Bool
     , isExplored : Bool
     , visibility : Visibility

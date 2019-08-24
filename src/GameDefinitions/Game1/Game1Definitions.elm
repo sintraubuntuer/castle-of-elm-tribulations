@@ -114,7 +114,6 @@ initialModelFunc =
       , total_width = Tuple.first dimensions
       , total_height = Tuple.second dimensions
       , currentDisplay = GameModel.DisplayRegularGame
-      , displayInventory = False
       , displayStatsOverlay = False
       , showBlood = True
       , wallPercentage = Nothing -- Maybe Float
@@ -122,6 +121,7 @@ initialModelFunc =
       , floorDict = Dict.empty
       , currentFloorId = theFloorId
       , gameCompletionFunc = \fid coords -> False
+      , leverModelChangerFuncs = Dict.empty
       , started = True
       , debugMode = False
       }

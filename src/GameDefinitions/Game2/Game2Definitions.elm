@@ -161,7 +161,6 @@ initialModelFunc lrandints =
       , total_width = get_total_width config_params 7
       , total_height = get_total_height config_params 9
       , currentDisplay = GameModel.DisplayRegularGame
-      , displayInventory = False
       , displayStatsOverlay = False
       , showBlood = True
       , wallPercentage = Nothing -- Maybe Float
@@ -169,6 +168,7 @@ initialModelFunc lrandints =
       , floorDict = storeDictWithPlacedPapers
       , currentFloorId = groundFloor_id
       , gameCompletionFunc = customGameCompletionFunc
+      , leverModelChangerFuncs = LastFloor.leverModelChangerFuncs
       , started = True
       , debugMode = False
       }

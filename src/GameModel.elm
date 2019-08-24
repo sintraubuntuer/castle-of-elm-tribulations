@@ -4,9 +4,9 @@ module GameModel exposing
     , DoorWallOptions
     , FloorStore
     , Input(..)
-    , LeverId
     , Location
     , Model
+    , ModelChangerFuncs(..)
     , RoomRectangle
     , RoomsInfo
     , TunnelRectangle
@@ -99,10 +99,6 @@ import Thorns.Types
 import Tile exposing (Tile(..))
 
 
-type alias LeverId =
-    Int
-
-
 type CurrentDisplay
     = DisplayRegularGame
     | DisplayGameOver
@@ -111,6 +107,10 @@ type CurrentDisplay
     | DisplayOpponentReport
     | DisplayHelpScreen
     | DisplayInventory
+
+
+type ModelChangerFuncs
+    = SimpleModelChanger (List (Grid.Coordinate -> Model -> Model))
 
 
 type alias Model =
@@ -131,7 +131,6 @@ type alias Model =
     , total_width : Int
     , total_height : Int
     , currentDisplay : CurrentDisplay
-    , displayInventory : Bool
     , displayStatsOverlay : Bool
     , showBlood : Bool
     , wallPercentage : Maybe Float
@@ -139,6 +138,7 @@ type alias Model =
     , floorDict : Dict Int FloorStore
     , currentFloorId : Int
     , gameCompletionFunc : Int -> Grid.Coordinate -> Bool
+    , leverModelChangerFuncs : Dict Tile.LeverId ModelChangerFuncs
     , started : Bool
     , debugMode : Bool
     }
@@ -359,9 +359,9 @@ defaultGreenDoorInfo dorientation =
     { isOpen = False, color = Just "green", orientation = dorientation, requiresToOpen = [ Key { keyColor = "green" } ], isExplored = False, visibility = Tile.Unexplored }
 
 
-defaultLeverInfo : Tile.LeverInfo
-defaultLeverInfo =
-    { isUp = False, isTransparent = False, isExplored = False, visibility = Tile.Unexplored }
+defaultLeverInfo : Tile.LeverId -> Tile.LeverInfo
+defaultLeverInfo lever_id =
+    { leverId = lever_id, isUp = False, isTransparent = False, isExplored = False, visibility = Tile.Unexplored }
 
 
 defaultFlagInfo : Tile.FlagInfo

@@ -170,13 +170,13 @@ initialModelFunc =
       , total_height = Tuple.second dimensions
       , currentDisplay = GameModel.DisplayRegularGame
       , displayStatsOverlay = False
-      , displayInventory = False
       , showBlood = True
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
       , floorDict = Dict.empty
       , currentFloorId = theFloorId
       , gameCompletionFunc = \fid coords -> False
+      , leverModelChangerFuncs = Dict.empty
       , started = False
       , debugMode = False
       }

@@ -366,10 +366,13 @@ determineLeverNearCornerRoom1Coords lroomrectangles grid =
 installLeversInCoords : List Grid.Coordinate -> Grid.Grid Tile -> Grid.Grid Tile
 installLeversInCoords lcoords grid =
     let
-        setLeverFunc coords grid_ =
-            Grid.set coords (Tile.Lever GameModel.defaultLeverInfo) grid_
+        lindexAndCoords =
+            List.indexedMap (\i coord -> ( i, coord )) lcoords
+
+        setLeverFunc idx coords grid_ =
+            Grid.set coords (Tile.Lever (GameModel.defaultLeverInfo idx)) grid_
     in
-    List.foldl (\coords gridacc -> setLeverFunc coords gridacc) grid lcoords
+    List.foldl (\( idx, coords ) gridacc -> setLeverFunc idx coords gridacc) grid lindexAndCoords
 
 
 
