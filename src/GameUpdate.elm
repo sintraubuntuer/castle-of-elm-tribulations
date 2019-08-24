@@ -1,7 +1,8 @@
 module GameUpdate exposing
-    ( Msg(..)
-    , attack
-    , attackIfClose
+    (  Msg(..)
+       --,  attack
+       --, attackIfClose
+
     , checkAndAlterDisplayAnchorIfNecessary
     , cleanup
     , cmdFillRandomIntsPool
@@ -29,6 +30,7 @@ module GameUpdate exposing
 --import Collage.Layout
 
 import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import BeingsInTileGrid
 import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
@@ -360,7 +362,7 @@ update msg model =
                                 ( newModel, StartOpponentInteraction enemy )
 
                             else if enemy.health <= 0 && enemy.playerCanWalkOverIfDead && (x_ /= 0 || y_ /= 0) then
-                                ( { newModel | player = move ( x_, y_ ) newModel newModel.player }
+                                ( { newModel | player = move ( x_, y_ ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
                                     --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
@@ -373,7 +375,7 @@ update msg model =
 
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
-                                ( { newModel | player = move ( x_, y_ ) newModel newModel.player }
+                                ( { newModel | player = move ( x_, y_ ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
                                     --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
@@ -482,7 +484,7 @@ update msg model =
                 --_ =
                 --    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation model)
             in
-            case GameModel.isModelTileWalkable newLocation newPlayer model of
+            case BeingsInTileGrid.isGridTileWalkable newLocation newPlayer model.level of
                 True ->
                     ( { model
                         | player = newPlayer
@@ -520,7 +522,7 @@ update msg model =
                     ( model, Cmd.none )
 
                 Just actualEnemy ->
-                    case GameModel.isModelTileWalkable newLocation actualEnemy model of
+                    case BeingsInTileGrid.isGridTileWalkable newLocation actualEnemy model.level of
                         True ->
                             ( { model | enemies = GameModel.placeExistingEnemy enemyId newLocation model.enemies }, Cmd.none )
 
@@ -819,7 +821,7 @@ changeFloorTo model floorId locTuple =
             Tuple.second locTuple - newModel.player.location.y
 
         player_ =
-            move ( delta_x, delta_y ) newModel newModel.player
+            move ( delta_x, delta_y ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player
     in
     { newModel
         | player = player_
@@ -1015,36 +1017,9 @@ cmdGenFloatsForRandomCave w h =
     Random.generate NewRandomFloatsForGenCave (Random.list nrFloats (Random.float 0 1))
 
 
-move : ( Int, Int ) -> Model -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int }
-move ( x_shift, y_shift ) model a =
-    let
-        location =
-            GameModel.location (a.location.x + x_shift) (a.location.y + y_shift)
-
-        initiative =
-            a.initiative + 100
-    in
-    case GameModel.isModelTileWalkable location a model of
-        False ->
-            a
-
-        True ->
-            { a
-                | location = location
-                , initiative = initiative
-                , direction =
-                    if x_shift > 0 then
-                        Beings.Right
-
-                    else if x_shift < 0 then
-                        Beings.Left
-
-                    else if y_shift > 0 then
-                        Beings.Down
-
-                    else
-                        Beings.Up
-            }
+move : ( Int, Int ) -> Grid.Grid Tile -> (GameModel.Location -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> Grid.Grid Tile -> Bool) -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int }
+move ( x_shift, y_shift ) grid isWalkableFunc a =
+    BeingsInTileGrid.move ( x_shift, y_shift ) grid isWalkableFunc a
 
 
 openDoorIfPlayerStandingOnDoorAndClosed : Model -> Model
@@ -1067,73 +1042,6 @@ openDoorIfPlayerStandingOnDoorAndClosed model =
                     model.level
     in
     { model | level = newGrid }
-
-
-attack :
-    { a | coordination : Int, power : Int, initiative : Int, name : String }
-    -> { b | stealth : Int, protection : Int, armor : Int, health : Int, name : String }
-    -> List Int
-    -> { dudeA : { a | coordination : Int, power : Int, initiative : Int, name : String }, dudeB : { b | stealth : Int, protection : Int, armor : Int, health : Int, name : String }, textMsg : String, randInts : List Int }
-attack dude1 dude2 lprandInts =
-    let
-        ( roll1, newprandInts ) =
-            ( List.head lprandInts
-                |> Maybe.withDefault 1
-            , List.drop 1 lprandInts
-            )
-
-        ( roll2, newprandInts2 ) =
-            ( List.head newprandInts
-                |> Maybe.withDefault 1
-            , List.drop 1 newprandInts
-            )
-
-        hit =
-            if roll1 > dude1.coordination - dude2.stealth then
-                False
-
-            else
-                True
-
-        guard =
-            if dude1.coordination - dude2.stealth > 100 then
-                --  dude2.protection - (dude1.coordination - rem dude2.stealth 100)
-                dude2.protection - (dude1.coordination - Basics.remainderBy 100 dude2.stealth)
-
-            else
-                dude2.protection
-
-        block =
-            if hit == True && roll2 < guard then
-                True
-
-            else
-                False
-
-        dmg =
-            if hit && not block then
-                dude1.power
-
-            else if hit && block then
-                max 0 (dude1.power - dude2.armor)
-
-            else if not hit then
-                0
-
-            else
-                0
-
-        result =
-            dude2.health - dmg
-
-        msg =
-            if not hit then
-                dude1.name ++ " miss"
-
-            else
-                dude1.name ++ " hit " ++ dude2.name ++ " for " ++ String.fromInt dmg ++ " dmg"
-    in
-    { dudeA = { dude1 | initiative = dude1.initiative + 100 }, dudeB = { dude2 | health = result }, textMsg = msg, randInts = newprandInts2 }
 
 
 resetEnemyMovesCurrentTurn : Model -> Model
@@ -1220,7 +1128,6 @@ enemy_AI model =
         ai_helper_func : EnemyId -> ( Model, List Enemy ) -> ( Model, List Enemy )
         ai_helper_func enemyid ( model_, lmbe ) =
             if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model_.currentDisplay == GameModel.DisplayGameOfThorns then
-                -- model_.gameOfThornsModeisOn then
                 ( model_, lmbe )
 
             else
@@ -1235,7 +1142,7 @@ enemy_AI model =
 
                             Just enemy ->
                                 if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && model.player.health > 0 && model_.currentDisplay /= GameModel.DisplayGameOfThorns then
-                                    attackIfClose enemy model_
+                                    attackIfClose_OtherwiseMove enemy model_
                                         -- prevent possible infinite recursion
                                         |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))
 
@@ -1250,122 +1157,37 @@ enemy_AI model =
                         ( model2, lmbe ++ [ en ] )
 
                     Nothing ->
-                        --ai_helper_func enemyid ( model2, lmbe )
                         ai_helper_func enemyid ( model2, lmbe )
     in
     List.foldl (\enpair ( modelacc, lmbenemies ) -> ai_helper_func (Tuple.first enpair) ( modelacc, lmbenemies )) ( model, [] ) enemyIdEnemyPairList
 
 
-attackIfClose : Enemy -> Model -> ( Model, Maybe Enemy )
-attackIfClose enemy model =
-    if enemy.floorId /= model.currentFloorId && enemy.health > 0 then
-        ( enemyMove enemy model, Nothing )
-
-    else
-        case List.filter (\location -> location == model.player.location) (Grid.neighborhoodCalc 1 enemy.location) of
-            location :: locs ->
-                if enemy.attacksUsingGameOfThorns then
-                    ( model, Just enemy )
-
-                else
-                    let
-                        --( enemy_, player_, msg, newprandInts ) =
-                        attackOutput =
-                            attack enemy model.player model.pseudoRandomIntsPool
-                    in
-                    ( log attackOutput.textMsg
-                        { model
-                            | player = attackOutput.dudeB
-                            , enemies = Dict.insert enemy.id attackOutput.dudeA model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
-                            , pseudoRandomIntsPool = attackOutput.randInts
-                        }
-                    , Nothing
-                    )
-
-            [] ->
-                ( enemyMove enemy model, Nothing )
+attackIfClose_OtherwiseMove : Enemy -> Model -> ( Model, Maybe Enemy )
+attackIfClose_OtherwiseMove enemy model =
+    let
+        --{ updatedEnemy, updatedPlayer, mbEnemyForGameOfThorns , updatedRandInts }
+        outputRecord =
+            BeingsInTileGrid.attackIfClose_OtherwiseMove enemy model.player model.currentFloorId model.level model.pseudoRandomIntsPool
+    in
+    ( log outputRecord.textMsg
+        { model
+            | player = outputRecord.player
+            , enemies = Dict.insert enemy.id outputRecord.enemy model.enemies
+            , pseudoRandomIntsPool = outputRecord.lrandInts
+        }
+    , outputRecord.mbEnemyForGameOfThorns
+    )
 
 
 enemyMove : Enemy -> Model -> Model
 enemyMove enemy model =
     let
-        ( xrand, yrand, newprandInts ) =
-            ( List.head model.pseudoRandomIntsPool |> Maybe.withDefault 0
-            , List.drop 1 model.pseudoRandomIntsPool
-                |> List.head
-                |> Maybe.withDefault 0
-            , List.drop 2 model.pseudoRandomIntsPool
-            )
-
-        x_delta_toPlayer =
-            model.player.location.x - enemy.location.x
-
-        y_delta_toPlayer =
-            model.player.location.y - enemy.location.y
-
-        xscaled =
-            if x_delta_toPlayer > 0 then
-                if xrand <= 85 then
-                    -- 1/3 probability
-                    1
-
-                else
-                    -1
-
-            else if x_delta_toPlayer < 0 then
-                if xrand <= 85 then
-                    -- 1/3 probability
-                    -1
-
-                else
-                    1
-
-            else if xrand <= 33 then
-                -1
-
-            else if xrand > 33 && xrand <= 66 then
-                0
-
-            else
-                1
-
-        yscaled =
-            if y_delta_toPlayer > 0 then
-                if yrand <= 85 then
-                    1
-
-                else
-                    -1
-
-            else if y_delta_toPlayer < 0 then
-                if yrand <= 85 then
-                    -1
-
-                else
-                    1
-
-            else if yrand <= 33 then
-                -1
-
-            else if yrand > 33 && yrand <= 66 then
-                0
-
-            else
-                1
-
-        enemy_ =
-            move ( xscaled, yscaled ) model enemy
-                |> (\en ->
-                        if en.location == model.player.location then
-                            enemy
-
-                        else
-                            en
-                   )
+        ( updatedEnemy, updatedRandInts ) =
+            BeingsInTileGrid.enemyMove enemy model.player.location model.level model.pseudoRandomIntsPool
     in
     { model
-        | enemies = Dict.insert enemy.id enemy_ model.enemies -- enemy_ :: getTailWithDefaultEmptyList model.enemies
-        , pseudoRandomIntsPool = newprandInts
+        | enemies = Dict.insert enemy.id updatedEnemy model.enemies
+        , pseudoRandomIntsPool = updatedRandInts
     }
 
 

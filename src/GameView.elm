@@ -1033,12 +1033,13 @@ display model =
     in
     --flow right [ sidebar model, mainScreen model ] |> color black
     Collage.group
-        [ if model.displayInventory then
-            viewInventoryOverlay model |> shift ( 0, 0 )
+        [ {- if model.displayInventory then
+               viewInventoryOverlay model |> shift ( 0, 0 )
 
-          else
-            noForm
-        , if model.displayStatsOverlay then
+             else
+               noForm
+          -}
+          if model.displayStatsOverlay then
             sidebar model pos
 
           else

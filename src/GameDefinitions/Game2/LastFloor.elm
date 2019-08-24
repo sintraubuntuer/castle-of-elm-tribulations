@@ -81,7 +81,7 @@ modelChangerFuncsForLever1 =
     ]
 
 
-leverModelChangerFuncs : Dict GameModel.LeverId GameModel.ModelChangerFuncs
+leverModelChangerFuncs : Dict Tile.LeverId GameModel.ModelChangerFuncs
 leverModelChangerFuncs =
     Dict.fromList
         [ ( 1, GameModel.SimpleModelChanger modelChangerFuncsForLever1 )

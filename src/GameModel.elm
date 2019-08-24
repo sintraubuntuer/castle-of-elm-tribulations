@@ -53,11 +53,9 @@ module GameModel exposing
     , isMbTileWall
     , isModelTileExplored
     , isModelTileTransparent
-    , isModelTileWalkable
     , isNoTileYet
     , isTileExplored
-    , isTileTransparent
-    ,  isTileWalkable
+    ,  isTileTransparent
        -- , isVerticalWall
 
     , isWall
@@ -578,65 +576,6 @@ isNoTileYet tile =
 
         _ ->
             False
-
-
-isTileWalkable : { a | inventory : Inventory } -> Tile -> Bool
-isTileWalkable being tile =
-    case tile of
-        Floor floorinfo ->
-            floorinfo.isWalkable
-
-        Grass grassinfo ->
-            grassinfo.isWalkable
-
-        Tree treeInfo ->
-            False
-
-        Stairs sinfo ->
-            True
-
-        Hole hinfo ->
-            True
-
-        Wall wInfo ->
-            case wInfo.mbTeleporterObject of
-                Just tel ->
-                    True
-
-                Nothing ->
-                    False
-
-        WallOver wOverInfo ->
-            False
-
-        Door doorinfo ->
-            --doorinfo.isOpen || List.contains doorinfo.requiresToOpen (Dict.values player.inventory)
-            List.foldl (\it bacc -> inList it (Dict.values being.inventory) && bacc) True doorinfo.requiresToOpen
-
-        Lever leverInfo ->
-            False
-
-        Flag flagInfo ->
-            False
-
-        Column columnInfo ->
-            False
-
-        Water waterInfo ->
-            waterInfo.isWalkable
-
-        ConverterTile it ct ->
-            False
-
-        NoTileYet ->
-            False
-
-
-isModelTileWalkable : Location -> { a | inventory : Inventory } -> Model -> Bool
-isModelTileWalkable location_ being model =
-    Grid.get location_ model.level
-        |> Maybe.map (isTileWalkable being)
-        |> Maybe.withDefault False
 
 
 isTileTransparent : Tile -> Bool
