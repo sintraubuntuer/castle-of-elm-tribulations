@@ -6,7 +6,7 @@ module Thorns.OpponentInteraction exposing
     , get_interaction_options
     )
 
-import Beings exposing (Enemy, Player)
+import Beings exposing (FightingCharacter, Player)
 import Dict exposing (Dict)
 import Grid
 import Item exposing (Item)
@@ -56,8 +56,8 @@ do_activate_and_calc_opponents :
     -> Maybe (List Grid.Coordinate)
     -> Grid.Grid (Maybe Thorn)
     -> Player
-    -> Beings.Enemy
-    -> { grid : Grid.Grid (Maybe Thorn), player : Player, opponent : Beings.Enemy, txtmsg : String }
+    -> Beings.FightingCharacter
+    -> { grid : Grid.Grid (Maybe Thorn), player : Player, opponent : Beings.FightingCharacter, txtmsg : String }
 do_activate_and_calc_opponents coords mbSegment grid player opponent =
     let
         ( finalGrid, mb_opt, mb_attack_power ) =

@@ -15,8 +15,8 @@ type Msg
     = Noop
     | NewRandomIntsAddToPool (List Int)
     | NewRandomIntsAddToPoolAndInitializeGrid (List Int)
-    | SetOpponent Beings.Enemy
-    | SetOpponentAndPlayerAndInitializeGrid Beings.Enemy Beings.Player
+    | SetOpponent Beings.FightingCharacter
+    | SetOpponentAndPlayerAndInitializeGrid Beings.FightingCharacter Beings.Player
     | DoActivate Int Int
     | MouseOver Int Int
     | MouseOut Int Int
@@ -25,7 +25,7 @@ type Msg
 
 
 type Opponent
-    = Enemy Beings.Enemy
+    = FightingCharacter Beings.FightingCharacter
     | Ochar Beings.OtherCharacter
 
 
@@ -42,13 +42,13 @@ type alias Model =
     }
 
 
-initialModel : Beings.Player -> Maybe Beings.Enemy -> Model
-initialModel player mbenemy =
+initialModel : Beings.Player -> Maybe Beings.FightingCharacter -> Model
+initialModel player mbFightCharacter =
     { gridInteractionOptions = Grid.initialize (Grid.Size 6 6) Nothing
     , currentSegment = []
     , previousGrid = Nothing
     , player = player
-    , opponent = mbenemy |> Maybe.map (\x -> Enemy x)
+    , opponent = mbFightCharacter |> Maybe.map (\x -> FightingCharacter x)
     , interactionHasFinished = False
     , pseudoRandomIntsPool = []
     , helpStr = Nothing

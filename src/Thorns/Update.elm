@@ -38,7 +38,7 @@ update msg model =
 
         SetOpponent opponent ->
             ( { model
-                | opponent = Just (Types.Enemy opponent)
+                | opponent = Just (Types.FightingCharacter opponent)
                 , interactionHasFinished = False
               }
             , Cmd.none
@@ -46,7 +46,7 @@ update msg model =
 
         SetOpponentAndPlayerAndInitializeGrid opponent player ->
             { model
-                | opponent = Just (Types.Enemy opponent)
+                | opponent = Just (Types.FightingCharacter opponent)
                 , player = player
                 , interactionHasFinished = False
             }
@@ -90,7 +90,7 @@ update msg model =
                 Just (Types.Ochar opp) ->
                     ( model, Cmd.none )
 
-                Just (Types.Enemy opponent) ->
+                Just (Types.FightingCharacter opponent) ->
                     let
                         coords =
                             Grid.Coordinate colnr rownr
@@ -113,7 +113,7 @@ update msg model =
                             info_rec.player.health <= 0 || info_rec.opponent.health <= 0 || info_rec.opponent.indexOfLight >= info_rec.opponent.indexOfLightMax
 
                         newModel =
-                            { model | gridInteractionOptions = newGrid, previousGrid = Just previous_grid, currentSegment = [], player = info_rec.player, opponent = Just (Types.Enemy info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_ }
+                            { model | gridInteractionOptions = newGrid, previousGrid = Just previous_grid, currentSegment = [], player = info_rec.player, opponent = Just (Types.FightingCharacter info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_ }
 
                         --_ =
                         --    Debug.log "message : " info_rec.txtmsg

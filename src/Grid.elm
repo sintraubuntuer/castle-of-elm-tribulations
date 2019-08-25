@@ -5,7 +5,7 @@ module Grid exposing
     , fromList
     , get
     , getColumnWithDefault
-    , getGridBoundsToPlaceEnemy
+    , getGridBoundsToPlaceFightingCharacter
     , getGridBoundsToPlacePlayer
     , getRow
     , getRowOrEmptyList
@@ -59,8 +59,8 @@ getGridBoundsToPlacePlayer grid =
     }
 
 
-getGridBoundsToPlaceEnemy : Grid a -> { minX : Int, maxX : Int, minY : Int, maxY : Int }
-getGridBoundsToPlaceEnemy grid =
+getGridBoundsToPlaceFightingCharacter : Grid a -> { minX : Int, maxX : Int, minY : Int, maxY : Int }
+getGridBoundsToPlaceFightingCharacter grid =
     { minX = 1
     , maxX = grid.size.width - 1
     , minY = 1

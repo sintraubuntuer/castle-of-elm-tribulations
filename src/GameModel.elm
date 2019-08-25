@@ -62,10 +62,10 @@ module GameModel exposing
     , isWall
     , itemToString
     , location
-    , mbUpdateEnemyInitiativeByMbEnemyId
-    , mbUpdateEnemyLocation
-    , placeExistingEnemy
-    , randomlyPlaceExistingEnemies
+    , mbUpdateFightingCharacterInitiativeByMbFCharId
+    , mbUpdateFightingCharacterLocation
+    , placeExistingFightingCharacter
+    , randomlyPlaceExistingFightingCharacters
     , setModelTileAsExplored
     , setModelTileVisibility
     , setTileAsExplored
@@ -84,8 +84,8 @@ import Beings
     exposing
         ( CharacterId
         , Direction(..)
-        , Enemy
-        , EnemyId
+        , FightingCharacter
+        , FightingCharacterId
         , OPPONENT_INTERACTION_OPTIONS(..)
         , OtherCharacter
         , Player
@@ -139,7 +139,7 @@ type ModelChangerFuncs
 
 type alias Model =
     { player : Player
-    , enemies : Dict EnemyId Enemy
+    , fightingCharacters : Dict FightingCharacterId FightingCharacter
     , otherCharacters : Dict CharacterId OtherCharacter
     , level : Grid.Grid Tile
     , explored : Grid.Grid Tile.Visibility
@@ -919,50 +919,50 @@ setModelTileVisibility location_ visibility_ model =
 -}
 
 
-mbUpdateEnemyInitiativeByMbEnemyId : Int -> Maybe EnemyId -> Model -> Model
-mbUpdateEnemyInitiativeByMbEnemyId intval mbEnemyid model =
-    case mbEnemyid of
+mbUpdateFightingCharacterInitiativeByMbFCharId : Int -> Maybe FightingCharacterId -> Model -> Model
+mbUpdateFightingCharacterInitiativeByMbFCharId intval mbFightCharid model =
+    case mbFightCharid of
         Nothing ->
             model
 
-        Just enemyid ->
+        Just fCharId ->
             let
-                newEnemies =
-                    Dict.update enemyid (\mbEnemy -> mbEnemy |> Maybe.map (\enemyRec -> { enemyRec | initiative = intval })) model.enemies
+                updatedFightingCharacters =
+                    Dict.update fCharId (\mbFightChar -> mbFightChar |> Maybe.map (\fCharRec -> { fCharRec | initiative = intval })) model.fightingCharacters
             in
-            { model | enemies = newEnemies }
+            { model | fightingCharacters = updatedFightingCharacters }
 
 
-mbUpdateEnemyLocation : Location -> Maybe Enemy -> Maybe Enemy
-mbUpdateEnemyLocation loc mbenemy =
-    case mbenemy of
+mbUpdateFightingCharacterLocation : Location -> Maybe FightingCharacter -> Maybe FightingCharacter
+mbUpdateFightingCharacterLocation loc mbFightChar =
+    case mbFightChar of
         Nothing ->
             Nothing
 
-        Just en ->
-            Just { en | location = loc, placed = True }
+        Just fchar ->
+            Just { fchar | location = loc, placed = True }
 
 
-placeExistingEnemy : EnemyId -> Location -> Dict EnemyId Enemy -> Dict EnemyId Enemy
-placeExistingEnemy enid loc dictacc =
-    case Dict.get enid dictacc of
+placeExistingFightingCharacter : FightingCharacterId -> Location -> Dict FightingCharacterId FightingCharacter -> Dict FightingCharacterId FightingCharacter
+placeExistingFightingCharacter fcharid loc dictacc =
+    case Dict.get fcharid dictacc of
         Nothing ->
             dictacc
 
-        Just enemy_ ->
-            Dict.update enid (\mbenemy -> mbUpdateEnemyLocation loc mbenemy) dictacc
+        Just _ ->
+            Dict.update fcharid (\mbFightChar -> mbUpdateFightingCharacterLocation loc mbFightChar) dictacc
 
 
-randomlyPlaceExistingEnemies : List ( Location, EnemyId ) -> Model -> Model
-randomlyPlaceExistingEnemies lpairIntIds model =
+randomlyPlaceExistingFightingCharacters : List ( Location, FightingCharacterId ) -> Model -> Model
+randomlyPlaceExistingFightingCharacters lpairIntIds model =
     let
-        dictenemies =
-            model.enemies
+        dictFightingCharacters =
+            model.fightingCharacters
 
-        newDictEnemies =
-            List.foldl (\( loc, enid ) dictacc -> placeExistingEnemy enid loc dictacc) dictenemies lpairIntIds
+        newDictFightingCharacters =
+            List.foldl (\( loc, fcharid ) dictacc -> placeExistingFightingCharacter fcharid loc dictacc) dictFightingCharacters lpairIntIds
     in
-    { model | enemies = newDictEnemies }
+    { model | fightingCharacters = newDictFightingCharacters }
 
 
 showTile : Tile -> Text.Text

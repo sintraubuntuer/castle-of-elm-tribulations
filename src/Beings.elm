@@ -1,15 +1,15 @@
 module Beings exposing
     ( CharacterId
     , Direction(..)
-    , Enemy
-    , EnemyId
     , EnlightenmentSpellEffect(..)
+    , FightingCharacter
+    , FightingCharacterId
     , Inventory
     , Location
     , OPPONENT_INTERACTION_OPTIONS(..)
     , OtherCharacter
     , Player
-    , enemyCreationFunc
+    , fightingCharacterCreationFunc
     , otherCharacterCreationFunc
     , playerCreationFunc
     )
@@ -23,7 +23,7 @@ type alias Location =
     Grid.Coordinate
 
 
-type alias EnemyId =
+type alias FightingCharacterId =
     Int
 
 
@@ -67,10 +67,10 @@ type Direction
     | Right
 
 
-type alias Enemy =
+type alias FightingCharacter =
     { location : Location
     , floorId : Int
-    , id : EnemyId
+    , id : FightingCharacterId
     , textAvatar : String --Element.Element
     , name : String
     , direction : Direction
@@ -91,7 +91,7 @@ type alias Enemy =
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
-    , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn : Int -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn : Int
     , placed : Bool
     }
@@ -110,18 +110,12 @@ type alias OtherCharacter =
     , mana : Int
     , enlSpellEffect : EnlightenmentSpellEffect
     , inventory : Inventory
-    , stealth : Int
-    , armor : Int
-    , protection : Int
-    , coordination : Int
-    , power : Int
     , initiative : Int
-    , attacksUsingGameOfThorns : Bool
     , indexOfLightMax : Int
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
-    , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn : Int -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn : Int
     , placed : Bool
     }
@@ -141,18 +135,12 @@ otherCharacterCreationFunc id_ ename floor_id_ =
     , mana = 100
     , enlSpellEffect = IncreaseIndexOfLight
     , inventory = Dict.empty
-    , stealth = 20
-    , armor = 1
-    , protection = 5
-    , coordination = 20
-    , power = 10
     , initiative = 100
-    , attacksUsingGameOfThorns = False
     , indexOfLightMax = 30
     , disappearsWhenHealthIsZero = True
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False
-    , maxNrEnemyMovesPerTurn = 1 -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn = 1 -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn = 0
     , placed = True
     }
@@ -193,11 +181,11 @@ playerCreationFunc elem pname =
     }
 
 
-enemyCreationFunc : String -> EnemyId -> String -> String -> Int -> Enemy
-enemyCreationFunc elem enemyid ename species_ floor_id =
+fightingCharacterCreationFunc : String -> FightingCharacterId -> String -> String -> Int -> FightingCharacter
+fightingCharacterCreationFunc elem fcharId ename species_ floor_id =
     { location = Grid.Coordinate 14 4
     , floorId = floor_id
-    , id = enemyid
+    , id = fcharId
     , textAvatar = elem
     , name = ename
     , direction = Down
@@ -218,7 +206,7 @@ enemyCreationFunc elem enemyid ename species_ floor_id =
     , disappearsWhenHealthIsZero = False
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False
-    , maxNrEnemyMovesPerTurn = 2 -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn = 2 -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn = 0
     , placed = False
     }

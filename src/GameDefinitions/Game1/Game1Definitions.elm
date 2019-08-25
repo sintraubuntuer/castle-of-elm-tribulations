@@ -1,6 +1,6 @@
 module GameDefinitions.Game1.Game1Definitions exposing (initialModelFunc)
 
-import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameModel
 import Grid
@@ -31,18 +31,18 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> Int -> Enemy
-initialEnemy enemyid floorId =
+initialFightingCharacter : FightingCharacterId -> Int -> FightingCharacter
+initialFightingCharacter fcharId floorId =
     let
         elem =
-            "e" ++ String.fromInt enemyid
+            "e" ++ String.fromInt fcharId
 
         --|> Text.fromString
         --|> Text.monospace
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) "ghost" floorId
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingCharacter" ++ String.fromInt fcharId) "ghost" floorId
 
 
 dimensions : ( Int, Int )
@@ -56,11 +56,11 @@ initialModelFunc =
         player =
             initialPlayer
 
-        enemy =
-            initialEnemy 1 theFloorId
+        fightingCharacter =
+            initialFightingCharacter 1 theFloorId
 
-        enemy2 =
-            initialEnemy 2 theFloorId
+        fightingCharacter2 =
+            initialFightingCharacter 2 theFloorId
 
         levers =
             Dict.empty
@@ -92,10 +92,10 @@ initialModelFunc =
     in
     -- GameModel.Model
     ( { player = player
-      , enemies =
+      , fightingCharacters =
             Dict.fromList
-                [ ( 1, enemy )
-                , ( 2, enemy2 )
+                [ ( 1, fightingCharacter )
+                , ( 2, fightingCharacter2 )
                 ]
       , otherCharacters = Dict.empty
       , level = firstMap -- Grid.Grid Tile

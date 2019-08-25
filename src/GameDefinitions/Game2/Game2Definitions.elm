@@ -1,6 +1,6 @@
 module GameDefinitions.Game2.Game2Definitions exposing (initialModelFunc)
 
-import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameDefinitions.Common exposing (ItemCreationInfo, get_total_height, get_total_width, setAllAsUnexplored, setItemsInGrid)
 import GameDefinitions.Game2.Basement as Basement
@@ -45,18 +45,18 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> String -> Int -> Enemy
-initialEnemy enemyid species floorId =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
+initialFightingCharacter fcharId species floorId =
     let
         elem =
-            "e" ++ String.fromInt enemyid
+            "e" ++ String.fromInt fcharId
 
         --|> Text.fromString
         --|> Text.monospace
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) species floorId
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species floorId
 
 
 otherCharacterFunc =
@@ -78,35 +78,35 @@ initialModelFunc lrandints =
         player =
             initialPlayer
 
-        enemy1 =
-            initialEnemy 1 "ghost" caverns_floor_id
+        fightingCharacter1 =
+            initialFightingCharacter 1 "ghost" caverns_floor_id
 
-        enemy2 =
-            initialEnemy 2 "snake" caverns_floor_id
+        fightingCharacter2 =
+            initialFightingCharacter 2 "snake" caverns_floor_id
 
-        enemy3 =
-            initialEnemy 3 "bat" basement_floor_id
+        fightingCharacter3 =
+            initialFightingCharacter 3 "bat" basement_floor_id
 
-        enemy4 =
-            initialEnemy 4 "slime" basement_floor_id
+        fightingCharacter4 =
+            initialFightingCharacter 4 "slime" basement_floor_id
 
-        enemy5 =
-            initialEnemy 5 "small_worm" groundFloor_id
+        fightingCharacter5 =
+            initialFightingCharacter 5 "small_worm" groundFloor_id
 
-        enemy6 =
-            initialEnemy 6 "pumpking" groundFloor_id
+        fightingCharacter6 =
+            initialFightingCharacter 6 "pumpking" groundFloor_id
 
-        enemy7 =
-            initialEnemy 7 "ghost" firstFloor_id
+        fightingCharacter7 =
+            initialFightingCharacter 7 "ghost" firstFloor_id
 
-        enemy8 =
-            initialEnemy 8 "pumpking" firstFloor_id
+        fightingCharacter8 =
+            initialFightingCharacter 8 "pumpking" firstFloor_id
 
-        enemy9 =
-            initialEnemy 9 "ghost" theAttic_id
+        fightingCharacter9 =
+            initialFightingCharacter 9 "ghost" theAttic_id
 
-        enemy10 =
-            initialEnemy 10 "bat" theAttic_id
+        fightingCharacter10 =
+            initialFightingCharacter 10 "bat" theAttic_id
 
         levers =
             Dict.empty
@@ -128,18 +128,18 @@ initialModelFunc lrandints =
     in
     -- GameModel.Model
     ( { player = { player | location = { x = 67, y = 36 } }
-      , enemies =
+      , fightingCharacters =
             Dict.fromList
-                [ ( enemy1.id, enemy1 )
-                , ( enemy2.id, enemy2 )
-                , ( enemy3.id, enemy3 )
-                , ( enemy4.id, enemy4 )
-                , ( enemy5.id, enemy5 )
-                , ( enemy6.id, enemy6 )
-                , ( enemy7.id, enemy7 )
-                , ( enemy8.id, enemy8 )
-                , ( enemy9.id, enemy9 )
-                , ( enemy10.id, enemy10 )
+                [ ( fightingCharacter1.id, fightingCharacter1 )
+                , ( fightingCharacter2.id, fightingCharacter2 )
+                , ( fightingCharacter3.id, fightingCharacter3 )
+                , ( fightingCharacter4.id, fightingCharacter4 )
+                , ( fightingCharacter5.id, fightingCharacter5 )
+                , ( fightingCharacter6.id, fightingCharacter6 )
+                , ( fightingCharacter7.id, fightingCharacter7 )
+                , ( fightingCharacter8.id, fightingCharacter8 )
+                , ( fightingCharacter9.id, fightingCharacter9 )
+                , ( fightingCharacter10.id, fightingCharacter10 )
                 ]
       , otherCharacters =
             Dict.fromList

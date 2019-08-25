@@ -2,7 +2,7 @@ module GameView exposing (view)
 
 --import Element exposing (..)
 
-import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Collage exposing (..)
 import Collage.Events
 import Collage.Layout exposing (..)
@@ -542,8 +542,8 @@ player =
     Collage.circle (toFloat xScale / 2) |> filled (uniform red)
 
 
-enemy : Collage Msg
-enemy =
+fightingCharacter : Collage Msg
+fightingCharacter =
     Collage.circle (toFloat xScale / 2) |> filled (uniform green)
 
 
@@ -585,23 +585,23 @@ playerImg player_ visibility =
             noForm
 
 
-enemyView : Beings.Enemy -> Bool -> Tile.Visibility -> Collage Msg
-enemyView enem showBlood visibility =
+fightingCharacterView : Beings.FightingCharacter -> Bool -> Tile.Visibility -> Collage Msg
+fightingCharacterView fightChar showBlood visibility =
     case visibility of
         Tile.Visible ->
             let
                 fileStr =
-                    if enem.indexOfLight >= enem.indexOfLightMax then
-                        "img/characters/" ++ String.toLower enem.species ++ "_enlightened.png"
+                    if fightChar.indexOfLight >= fightChar.indexOfLightMax then
+                        "img/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
 
-                    else if enem.health > 0 then
-                        "img/characters/" ++ String.toLower enem.species ++ ".png"
+                    else if fightChar.health > 0 then
+                        "img/characters/" ++ String.toLower fightChar.species ++ ".png"
 
-                    else if enem.health <= 0 && showBlood then
-                        "img/characters/" ++ String.toLower enem.species ++ "_dead_blood.png"
+                    else if fightChar.health <= 0 && showBlood then
+                        "img/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
 
                     else
-                        "img/characters/" ++ String.toLower enem.species ++ "_dead.png"
+                        "img/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
             in
             Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -619,16 +619,16 @@ otherCharacterView character showBlood visibility =
 
                 {-
                      if character.indexOfLight >= character.indexOfLightMax then
-                         "img/characters/" ++ String.toLower enem.species ++ "_enlightened.png"
+                         "img/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
 
                      else if character.health > 0 then
-                         "img/characters/" ++ String.toLower enem.species ++ ".png"
+                         "img/characters/" ++ String.toLower fightChar.species ++ ".png"
 
                      else if character.health <= 0 && showBlood then
-                         "img/characters/" ++ String.toLower enem.species ++ "_dead_blood.png"
+                         "img/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
 
                      else
-                         "img/characters/" ++ String.toLower enem.species ++ "_dead.png"
+                         "img/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
                    -
                 -}
             in
@@ -738,18 +738,18 @@ mainScreen model =
             playerImg model.player Tile.Visible
                 |> shift (location model.player)
 
-        enemy_ =
+        fightingCharacter_ =
             let
-                relevantEnemiesDict =
-                    Dict.filter (\enId enem -> (enem.floorId == model.currentFloorId) && (enem.location.x >= model.x_display_anchor && enem.location.x - model.x_display_anchor < model.window_width) && (enem.location.y >= model.y_display_anchor && enem.location.y - model.y_display_anchor < model.window_height)) model.enemies
+                relevantFightingCharactersDict =
+                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= model.x_display_anchor && fightChar.location.x - model.x_display_anchor < model.window_width) && (fightChar.location.y >= model.y_display_anchor && fightChar.location.y - model.y_display_anchor < model.window_height)) model.fightingCharacters
 
-                mkEnemy enid anenemy =
-                    --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
-                    --guy anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
-                    enemyView anenemy model.showBlood (GameModel.getGridTileVisibility anenemy.location model.level)
-                        |> shift (location anenemy)
+                mkfightingCharacter fcharId anfightingCharacter =
+                    --guy fightingCharacter (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location fightingCharacter)) subgrid)
+                    --guy anfightingCharacter (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
+                    fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
+                        |> shift (location anfightingCharacter)
             in
-            group <| (Dict.map mkEnemy relevantEnemiesDict |> Dict.values)
+            group <| (Dict.map mkfightingCharacter relevantFightingCharactersDict |> Dict.values)
 
         otherCharacters_ =
             let
@@ -757,8 +757,8 @@ mainScreen model =
                     Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.x_display_anchor && char.location.x - model.x_display_anchor < model.window_width) && (char.location.y >= model.y_display_anchor && char.location.y - model.y_display_anchor < model.window_height)) model.otherCharacters
 
                 mkOtherChar ch_id achar =
-                    --guy enemy (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location enemy)) subgrid)
-                    --guy anenemy (GameModel.getGridTileVisibility anenemy.location model.level)
+                    --guy fightingCharacter (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location fightingCharacter)) subgrid)
+                    --guy anfightingCharacter (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
                     otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level)
                         |> shift (location achar)
             in
@@ -783,16 +783,16 @@ mainScreen model =
 
         --|> Debug.log "background topLeft is : "
         pg =
-            --collage (w + xScale) (h + yScale) [ player_, enemy_ ]
+            --collage (w + xScale) (h + yScale) [ player_, fightingCharacter_ ]
             Collage.group
                 [ player_ |> shift ( 0, 0 )
 
-                --  , enemy_ |> shift ( 0, 0 )
+                --  , fightingCharacter_ |> shift ( 0, 0 )
                 ]
 
         eg =
             Collage.group
-                [ enemy_ ]
+                [ fightingCharacter_ ]
 
         ocg =
             Collage.group
@@ -826,8 +826,8 @@ mainScreen model =
         |> name "mainScreen"
 
 
-inViewRange : Enemy -> Bool
-inViewRange enemy_ =
+inViewRange : FightingCharacter -> Bool
+inViewRange fightingCharacter_ =
     False
 
 
@@ -1114,24 +1114,24 @@ viewDebugPlayer model =
         ]
 
 
-viewDebugEnemies : Model -> List (Html Msg)
-viewDebugEnemies model =
+viewDebugFightingCharacters : Model -> List (Html Msg)
+viewDebugFightingCharacters model =
     let
-        enemyToHtmlFunc enemy_ enemyId =
+        fightingCharacterToHtmlFunc fightingCharacter_ fightingCharacterId =
             Html.h2 []
                 [ Html.text
-                    ("enemy "
-                        ++ String.fromInt enemyId
+                    ("fightingCharacter "
+                        ++ String.fromInt fightingCharacterId
                         ++ " is in position "
-                        ++ String.fromInt enemy_.location.x
+                        ++ String.fromInt fightingCharacter_.location.x
                         ++ " , "
-                        ++ String.fromInt enemy_.location.y
+                        ++ String.fromInt fightingCharacter_.location.y
                         ++ " , has health = "
-                        ++ String.fromInt enemy_.health
+                        ++ String.fromInt fightingCharacter_.health
                     )
                 ]
     in
-    Dict.map (\enid enemy_ -> enemyToHtmlFunc enemy_ enid) model.enemies
+    Dict.map (\fcharId fightingCharacter_ -> fightingCharacterToHtmlFunc fightingCharacter_ fcharId) model.fightingCharacters
         |> Dict.values
 
 
@@ -1142,7 +1142,7 @@ viewOpponentReport model =
         , Html.br [] []
         , Html.div
             []
-            (Dict.values model.enemies |> List.concatMap (\enem -> [ Html.text ("name : " ++ enem.name ++ " , health : " ++ String.fromInt enem.health ++ " ,  IndexOfLight : " ++ String.fromInt enem.indexOfLight), Html.br [] [], Html.br [] [], Html.br [] [] ]))
+            (Dict.values model.fightingCharacters |> List.concatMap (\fightChar -> [ Html.text ("name : " ++ fightChar.name ++ " , health : " ++ String.fromInt fightChar.health ++ " ,  IndexOfLight : " ++ String.fromInt fightChar.indexOfLight), Html.br [] [], Html.br [] [], Html.br [] [] ]))
         , Html.br [] []
         , Html.br [] []
         , Html.text "Press E to leave Opponent Report"
@@ -1201,7 +1201,7 @@ view model =
                                 |> svg
                              ]
                              --++ [ viewDebugPlayer model ]
-                             --  ++ viewDebugEnemies model
+                             --  ++ viewDebugFightingCharacters model
                              --  ++ viewDebugGrid model.level model
                             )
                 ]

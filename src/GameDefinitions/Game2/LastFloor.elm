@@ -54,10 +54,10 @@ modelChangerFuncsForLever1 : List (Grid.Coordinate -> GameModel.Model -> GameMod
 modelChangerFuncsForLever1 =
     let
         nrEnlightenedOpponents model =
-            Dict.values model.enemies |> List.filter (\en -> en.indexOfLight >= en.indexOfLightMax) |> List.length
+            Dict.values model.fightingCharacters |> List.filter (\en -> en.indexOfLight >= en.indexOfLightMax) |> List.length
 
         nrDeadOpponents model =
-            Dict.values model.enemies |> List.filter (\en -> en.health <= 0) |> List.length
+            Dict.values model.fightingCharacters |> List.filter (\en -> en.health <= 0) |> List.length
 
         reqsCompleted model =
             nrEnlightenedOpponents model >= 3 && nrDeadOpponents model == 0

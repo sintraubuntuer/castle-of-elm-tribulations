@@ -38,7 +38,7 @@ module GameDefinitions.Common exposing
     , get_total_height
     , get_total_width
     , gridInitializer
-    , initialEnemy
+    , initialFightingCharacter
     , initialModelFunc
     , initialPlayer
     , setAllAsUnexplored
@@ -48,7 +48,7 @@ module GameDefinitions.Common exposing
     , setTeleportersInGrid
     )
 
-import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameModel exposing (RoomRectangle, TunnelRectangle)
 import Grid
@@ -97,18 +97,18 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialEnemy : EnemyId -> String -> Int -> Enemy
-initialEnemy enemyid species floor_id =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
+initialFightingCharacter fcharId species floor_id =
     let
         elem =
-            "e" ++ String.fromInt enemyid
+            "e" ++ String.fromInt fcharId
 
         --|> Text.fromString
         --|> Text.monospace
         --|> Text.color white
         --|> centered
     in
-    Beings.enemyCreationFunc elem enemyid ("enemy" ++ String.fromInt enemyid) species floor_id
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingCharacter" ++ String.fromInt fcharId) species floor_id
 
 
 dimensions : ( Int, Int )
@@ -122,11 +122,11 @@ initialModelFunc =
         player =
             initialPlayer
 
-        enemy =
-            initialEnemy 1 "ghost" theFloorId
+        fightingCharacter =
+            initialFightingCharacter 1 "ghost" theFloorId
 
-        enemy2 =
-            initialEnemy 2 "ghost" theFloorId
+        fightingCharacter2 =
+            initialFightingCharacter 2 "ghost" theFloorId
 
         levers =
             Dict.empty
@@ -149,10 +149,10 @@ initialModelFunc =
     in
     -- GameModel.Model
     ( { player = player
-      , enemies =
+      , fightingCharacters =
             Dict.fromList
-                [ ( 1, enemy )
-                , ( 2, enemy2 )
+                [ ( 1, fightingCharacter )
+                , ( 2, fightingCharacter2 )
                 ]
       , otherCharacters = Dict.empty
       , level = firstMap -- Grid.Grid Tile

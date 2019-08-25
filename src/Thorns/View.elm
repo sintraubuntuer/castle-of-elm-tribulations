@@ -71,7 +71,7 @@ viewHealthReport model =
     div []
         [ div [] [ text ("Your Health : " ++ String.fromInt model.player.health) ]
         , case model.opponent of
-            Just (Types.Enemy opponent) ->
+            Just (Types.FightingCharacter opponent) ->
                 div []
                     [ br [] []
                     , text ("Your Opponent's health : " ++ String.fromInt opponent.health)

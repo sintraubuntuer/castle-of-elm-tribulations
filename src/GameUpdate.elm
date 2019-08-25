@@ -9,17 +9,17 @@ module GameUpdate exposing
     , cmdFillRandomIntsPoolAndGenerateRandomMap
     , cmdGenFloatsForRandomCave
     , cmdGenerateRandomInitiativeValue
-    , cmdGetRandomPositionedEnemy
+    , cmdGetRandomPositionedFightingCharacter
     , cmdGetRandomPositionedPlayer
-    , enemy_AI
+    , fightingCharacter_AI
     , getRandIntPair
     , getTailWithDefaultEmptyList
-    , increseNrOfEnemyMovesInCurrentTurn
+    , increseNrOfFightingCharacterMovesInCurrentTurn
     , log
     , move
     , randIntList
     , randIntPairsList
-    , resetEnemyMovesCurrentTurn
+    , resetFightingCharacterMovesCurrentTurn
     , reveal
     , turnNeighbourWallCellstoAshes
     , update
@@ -29,7 +29,7 @@ module GameUpdate exposing
 --import Collage
 --import Collage.Layout
 
-import Beings exposing (Enemy, EnemyId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import BeingsInTileGrid
 import Collage
 import Dict exposing (Dict)
@@ -71,13 +71,13 @@ type Msg
     | KeyDown GameModel.Input
     | TryAddToPlayerInventory
     | TryShiftPlayerPosition ( Int, Int )
-    | CleanUpAndEnemyLogic
-    | StartOpponentInteraction Enemy
+    | CleanUpAndFightingCharacterLogic
+    | StartOpponentInteraction FightingCharacter
     | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
-    | NewRandomPointToPlaceEnemy EnemyId ( Int, Int )
+    | NewRandomPointToPlaceFightingCharacter FightingCharacterId ( Int, Int )
     | NewRandomFloatsForGenCave (List Float)
-    | RandomInitiativeValue String (Maybe EnemyId) Int
+    | RandomInitiativeValue String (Maybe FightingCharacterId) Int
     | NewRandomIntsAddToPool (List Int)
     | NewRandomIntsAddToPoolAndGenerateRandomMap (List Int)
     | ThornsMsg Thorns.Types.Msg
@@ -110,22 +110,22 @@ update msg model =
                 newModel =
                     if newThornsModel.interactionHasFinished then
                         let
-                            ( newEnemies, newOtherCharacters, newPlayer ) =
+                            ( updatedFightCharacters, newOtherCharacters, newPlayer ) =
                                 case newThornsModel.opponent of
-                                    Just (Thorns.Types.Enemy erec) ->
-                                        ( Dict.update erec.id (\_ -> Just erec) model.enemies
+                                    Just (Thorns.Types.FightingCharacter erec) ->
+                                        ( Dict.update erec.id (\_ -> Just erec) model.fightingCharacters
                                         , model.otherCharacters
                                         , newThornsModel.player
                                         )
 
                                     Just (Thorns.Types.Ochar orec) ->
-                                        ( model.enemies
+                                        ( model.fightingCharacters
                                         , Dict.update orec.id (\_ -> Just orec) model.otherCharacters
                                         , newThornsModel.player
                                         )
 
                                     Nothing ->
-                                        ( model.enemies, model.otherCharacters, model.player )
+                                        ( model.fightingCharacters, model.otherCharacters, model.player )
 
                             newDisplay =
                                 --model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
@@ -143,7 +143,7 @@ update msg model =
                                     model.currentDisplay
                         in
                         { model
-                            | enemies = newEnemies
+                            | fightingCharacters = updatedFightCharacters
                             , otherCharacters = newOtherCharacters
                             , player = newPlayer
                             , gameOfThornsModel = newThornsModel
@@ -188,10 +188,10 @@ update msg model =
                     Cmd.none
                  , Cmd.map ThornsMsg (ThornsUpdate.cmdFillRandomIntsPool True initModel.gameOfThornsModel)
                  ]
-                    ++ (Dict.map (\enid enemy -> cmdGetRandomPositionedEnemy enemy enid gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initModel.enemies
+                    ++ (Dict.map (\fcharId fightingCharacter -> cmdGetRandomPositionedFightingCharacter fightingCharacter fcharId gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initModel.fightingCharacters
                             |> Dict.values
                        )
-                    ++ (Dict.map (\enid enemy -> cmdGenerateRandomInitiativeValue "enemy" (Just enid) 1 100) initModel.enemies
+                    ++ (Dict.map (\fcharId fightingCharacter -> cmdGenerateRandomInitiativeValue "fightingCharacter" (Just fcharId) 1 100) initModel.fightingCharacters
                             |> Dict.values
                        )
                 )
@@ -347,31 +347,31 @@ update msg model =
                                                 model_
                                    )
 
-                mbEnemy =
-                    case Dict.filter (\enemyid enemy -> enemy.floorId == model.currentFloorId && enemy.location == GameModel.location x2 y2) model.enemies |> Dict.values of
+                mbFightChar =
+                    case Dict.filter (\fcharId fightingCharacter -> fightingCharacter.floorId == model.currentFloorId && fightingCharacter.location == GameModel.location x2 y2) model.fightingCharacters |> Dict.values of
                         [] ->
                             Nothing
 
-                        enemy :: es ->
-                            Just enemy
+                        fightingCharacter :: es ->
+                            Just fightingCharacter
 
                 ( newModel2, themsg ) =
-                    case mbEnemy of
-                        Just enemy ->
-                            if enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax && newModel.player.health > 0 then
-                                ( newModel, StartOpponentInteraction enemy )
+                    case mbFightChar of
+                        Just fightingCharacter ->
+                            if fightingCharacter.health > 0 && fightingCharacter.indexOfLight < fightingCharacter.indexOfLightMax && newModel.player.health > 0 then
+                                ( newModel, StartOpponentInteraction fightingCharacter )
 
-                            else if enemy.health <= 0 && enemy.playerCanWalkOverIfDead && (x_ /= 0 || y_ /= 0) then
+                            else if fightingCharacter.health <= 0 && fightingCharacter.playerCanWalkOverIfDead && (x_ /= 0 || y_ /= 0) then
                                 ( { newModel | player = move ( x_, y_ ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
                                     --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
-                                , CleanUpAndEnemyLogic
+                                , CleanUpAndFightingCharacterLogic
                                 )
 
                             else
-                                ( newModel, CleanUpAndEnemyLogic )
+                                ( newModel, CleanUpAndFightingCharacterLogic )
 
                         Nothing ->
                             if x_ /= 0 || y_ /= 0 then
@@ -380,21 +380,21 @@ update msg model =
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
                                     --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
-                                , CleanUpAndEnemyLogic
+                                , CleanUpAndFightingCharacterLogic
                                 )
 
                             else
-                                ( newModel, CleanUpAndEnemyLogic )
+                                ( newModel, CleanUpAndFightingCharacterLogic )
             in
             update themsg newModel2
 
-        CleanUpAndEnemyLogic ->
+        CleanUpAndFightingCharacterLogic ->
             let
-                ( newModel, lenemies ) =
+                ( newModel, lfightingCharacters ) =
                     model
                         |> cleanup
-                        |> resetEnemyMovesCurrentTurn
-                        |> enemy_AI
+                        |> resetFightingCharacterMovesCurrentTurn
+                        |> fightingCharacter_AI
                         |> (\( modl, le ) ->
                                 if modl.currentDisplay == GameModel.DisplayGameOver then
                                     ( { modl | listeningToKeyInput = False }, le )
@@ -409,35 +409,35 @@ update msg model =
             if isGameCompleted then
                 ( { newModel
                     | currentDisplay = GameModel.DisplayGameCompleted
-                    , enemies = Dict.empty
+                    , fightingCharacters = Dict.empty
                     , otherCharacters = Dict.empty
                   }
                 , Cmd.none
                 )
 
             else
-                case lenemies |> List.head of
-                    Just enemy_ ->
-                        update (StartOpponentInteraction enemy_) newModel
+                case lfightingCharacters |> List.head of
+                    Just fightingCharacter_ ->
+                        update (StartOpponentInteraction fightingCharacter_) newModel
 
                     Nothing ->
                         ( newModel |> reveal, cmdFillRandomIntsPool newModel )
 
-        StartOpponentInteraction enemy ->
+        StartOpponentInteraction fightingCharacter ->
             let
                 ( newThornsModel, thornsCmd ) =
-                    ThornsUpdate.update (Thorns.Types.SetOpponentAndPlayerAndInitializeGrid enemy model.player) model.gameOfThornsModel
+                    ThornsUpdate.update (Thorns.Types.SetOpponentAndPlayerAndInitializeGrid fightingCharacter model.player) model.gameOfThornsModel
 
-                -- ThornsUpdate.update (Thorns.Types.SetOpponent enemy)
+                -- ThornsUpdate.update (Thorns.Types.SetOpponent fightingCharacter)
                 {- }
                    attackOutput =
-                       attack model.player enemy model.pseudoRandomIntsPool
+                       attack model.player fightingCharacter model.pseudoRandomIntsPool
 
                    newModel =
                        log attackOutput.textMsg
                            { model
                                | player = attackOutput.dudeA
-                               , enemies = Dict.insert enemy.id attackOutput.dudeB model.enemies --enemy_ :: getTailWithDefaultEmptyList model.enemies
+                               , fightingCharacters = Dict.insert fightingCharacter.id attackOutput.dudeB model.fightingCharacters --fightingCharacter_ :: getTailWithDefaultEmptyList model.fightingCharacters
                                , pseudoRandomIntsPool = attackOutput.randInts
                            }
                 -}
@@ -449,7 +449,7 @@ update msg model =
                     }
 
                 newModel_after_cleanup =
-                    --newModel |> cleanup |> resetEnemyMovesCurrentTurn |> enemy_AI |> reveal
+                    --newModel |> cleanup |> resetFightingCharacterMovesCurrentTurn |> fightingCharacter_AI |> reveal
                     newModel |> cleanup |> reveal
             in
             ( newModel_after_cleanup
@@ -498,39 +498,39 @@ update msg model =
                 False ->
                     ( model, cmdGetRandomPositionedPlayer { oldPlayer | placed = False } gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
-        NewRandomPointToPlaceEnemy enemyId tupPosition ->
+        NewRandomPointToPlaceFightingCharacter fcharId tupPosition ->
             let
-                mbActualEnemy =
-                    Dict.get enemyId model.enemies
+                mbActualFightChar =
+                    Dict.get fcharId model.fightingCharacters
 
                 newLocation =
                     GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition)
 
                 gridBounds =
-                    Grid.getGridBoundsToPlaceEnemy model.level
+                    Grid.getGridBoundsToPlaceFightingCharacter model.level
 
-                mbNewEnemy =
-                    case mbActualEnemy of
-                        Just actualEnemy ->
-                            Just { actualEnemy | location = newLocation, placed = True }
+                mbNewFightingCharacter =
+                    case mbActualFightChar of
+                        Just actualFightChar ->
+                            Just { actualFightChar | location = newLocation, placed = True }
 
                         Nothing ->
                             Nothing
             in
-            case mbActualEnemy of
+            case mbActualFightChar of
                 Nothing ->
                     ( model, Cmd.none )
 
-                Just actualEnemy ->
-                    case BeingsInTileGrid.isGridTileWalkable newLocation actualEnemy model.level of
+                Just actualFightChar ->
+                    case BeingsInTileGrid.isGridTileWalkable newLocation actualFightChar model.level of
                         True ->
-                            ( { model | enemies = GameModel.placeExistingEnemy enemyId newLocation model.enemies }, Cmd.none )
+                            ( { model | fightingCharacters = GameModel.placeExistingFightingCharacter fcharId newLocation model.fightingCharacters }, Cmd.none )
 
                         False ->
                             --( { model | player = newPlayer }, Cmd.none )
-                            ( model, cmdGetRandomPositionedEnemy actualEnemy enemyId gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
+                            ( model, cmdGetRandomPositionedFightingCharacter actualFightChar fcharId gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
-        --randomlyPlaceExistingEnemies : List ( Location, EnemyId ) -> Model -> Model
+        --randomlyPlaceExistingFightCharacters : List ( Location, FightingCharacterId ) -> Model -> Model
         NewRandomFloatsForGenCave lfloats ->
             let
                 theSize =
@@ -552,10 +552,10 @@ update msg model =
                 in
                 ( { model | player = newPlayer }, Cmd.none )
 
-            else if strCharacter == "enemy" then
+            else if strCharacter == "fightingCharacter" then
                 let
                     newModel =
-                        GameModel.mbUpdateEnemyInitiativeByMbEnemyId intval mbCharacterId model
+                        GameModel.mbUpdateFightingCharacterInitiativeByMbFCharId intval mbCharacterId model
                 in
                 ( newModel, Cmd.none )
 
@@ -953,16 +953,16 @@ cmdGetRandomPositionedPlayer player minX maxX minY maxY =
         Random.generate NewRandomPointToPlacePlayer (getRandIntPair minX maxX minY maxY)
 
 
-cmdGetRandomPositionedEnemy : Enemy -> EnemyId -> Int -> Int -> Int -> Int -> Cmd Msg
-cmdGetRandomPositionedEnemy actualEnemy enemyId minX maxX minY maxY =
-    if actualEnemy.placed then
+cmdGetRandomPositionedFightingCharacter : FightingCharacter -> FightingCharacterId -> Int -> Int -> Int -> Int -> Cmd Msg
+cmdGetRandomPositionedFightingCharacter actualFightChar fcharId minX maxX minY maxY =
+    if actualFightChar.placed then
         Cmd.none
 
     else
-        Random.generate (NewRandomPointToPlaceEnemy enemyId) (getRandIntPair minX maxX minY maxY)
+        Random.generate (NewRandomPointToPlaceFightingCharacter fcharId) (getRandIntPair minX maxX minY maxY)
 
 
-cmdGenerateRandomInitiativeValue : String -> Maybe EnemyId -> Int -> Int -> Cmd Msg
+cmdGenerateRandomInitiativeValue : String -> Maybe FightingCharacterId -> Int -> Int -> Cmd Msg
 cmdGenerateRandomInitiativeValue strCharacter mbCharacterId minval maxval =
     Random.generate (RandomInitiativeValue strCharacter mbCharacterId) (Random.int minval maxval)
 
@@ -1044,41 +1044,41 @@ openDoorIfPlayerStandingOnDoorAndClosed model =
     { model | level = newGrid }
 
 
-resetEnemyMovesCurrentTurn : Model -> Model
-resetEnemyMovesCurrentTurn model =
+resetFightingCharacterMovesCurrentTurn : Model -> Model
+resetFightingCharacterMovesCurrentTurn model =
     let
-        newEnemies =
-            Dict.map (\enemyid enemy -> { enemy | nrMovesInCurrentTurn = 0 }) model.enemies
+        updatedFightCharacters =
+            Dict.map (\fcharId fightingCharacter -> { fightingCharacter | nrMovesInCurrentTurn = 0 }) model.fightingCharacters
     in
-    { model | enemies = newEnemies }
+    { model | fightingCharacters = updatedFightCharacters }
 
 
-increseNrOfEnemyMovesInCurrentTurn : EnemyId -> Model -> Model
-increseNrOfEnemyMovesInCurrentTurn enemyid model =
+increseNrOfFightingCharacterMovesInCurrentTurn : FightingCharacterId -> Model -> Model
+increseNrOfFightingCharacterMovesInCurrentTurn fcharId model =
     let
-        newEnemies =
-            Dict.update enemyid (\mbenemy -> mbenemy |> Maybe.map (\en -> { en | nrMovesInCurrentTurn = en.nrMovesInCurrentTurn + 1 })) model.enemies
+        updatedFightingCharaters =
+            Dict.update fcharId (\mbfchar -> mbfchar |> Maybe.map (\fchar -> { fchar | nrMovesInCurrentTurn = fchar.nrMovesInCurrentTurn + 1 })) model.fightingCharacters
     in
-    { model | enemies = newEnemies }
+    { model | fightingCharacters = updatedFightingCharaters }
 
 
 cleanup : Model -> Model
 cleanup model =
     let
         dead_and_disappears =
-            Dict.filter (\enemyId enemy -> enemy.health <= 0 && enemy.disappearsWhenHealthIsZero) model.enemies
+            Dict.filter (\fcharId fightingCharacter -> fightingCharacter.health <= 0 && fightingCharacter.disappearsWhenHealthIsZero) model.fightingCharacters
 
         dead_and_doesnt_disappear =
-            Dict.filter (\enemyId enemy -> enemy.health <= 0 && not enemy.disappearsWhenHealthIsZero) model.enemies
+            Dict.filter (\fcharId fightingCharacter -> fightingCharacter.health <= 0 && not fightingCharacter.disappearsWhenHealthIsZero) model.fightingCharacters
 
         alive_no_enlightenment =
-            Dict.filter (\enemyId enemy -> enemy.health > 0 && enemy.indexOfLight < enemy.indexOfLightMax) model.enemies
+            Dict.filter (\fcharId fightingCharacter -> fightingCharacter.health > 0 && fightingCharacter.indexOfLight < fightingCharacter.indexOfLightMax) model.fightingCharacters
 
         alive_enlightened_disappears =
-            Dict.filter (\enemyId enemy -> enemy.health > 0 && enemy.indexOfLight >= enemy.indexOfLightMax && enemy.disappearsWhenIndexOfLightMax) model.enemies
+            Dict.filter (\fcharId fightingCharacter -> fightingCharacter.health > 0 && fightingCharacter.indexOfLight >= fightingCharacter.indexOfLightMax && fightingCharacter.disappearsWhenIndexOfLightMax) model.fightingCharacters
 
         alive_enlightened_doesnt_disappear =
-            Dict.filter (\enemyId enemy -> enemy.health > 0 && enemy.indexOfLight >= enemy.indexOfLightMax && not enemy.disappearsWhenIndexOfLightMax) model.enemies
+            Dict.filter (\fcharId fightingCharacter -> fightingCharacter.health > 0 && fightingCharacter.indexOfLight >= fightingCharacter.indexOfLightMax && not fightingCharacter.disappearsWhenIndexOfLightMax) model.fightingCharacters
 
         keys_to_remove =
             (dead_and_disappears |> Dict.keys) ++ (alive_enlightened_disappears |> Dict.keys)
@@ -1088,11 +1088,11 @@ cleanup model =
                 Nothing
 
             else
-                Just (Dict.foldl (\id nstr acc -> acc ++ nstr) "" <| Dict.map (\enemyId enemy -> enemy.name ++ " died. ") dead_and_disappears)
+                Just (Dict.foldl (\id nstr acc -> acc ++ nstr) "" <| Dict.map (\fcharId fightingCharacter -> fightingCharacter.name ++ " died. ") dead_and_disappears)
 
-        --newModel =  { model | enemies = ( alive ++ dead_and_doesnt_disappear ++ alive_no_enlightenment ++  alive_enlightened_doesnt_disappear )  }
+        --newModel =  { model | fightingCharacters = ( alive ++ dead_and_doesnt_disappear ++ alive_no_enlightenment ++  alive_enlightened_doesnt_disappear )  }
         newModel =
-            { model | enemies = Dict.filter (\k v -> not (inList k keys_to_remove)) model.enemies }
+            { model | fightingCharacters = Dict.filter (\k v -> not (inList k keys_to_remove)) model.fightingCharacters }
     in
     case msg of
         Nothing ->
@@ -1102,122 +1102,66 @@ cleanup model =
             log m newModel
 
 
-enemyExceedsNrMovesInCurrentTurn : EnemyId -> Model -> Bool
-enemyExceedsNrMovesInCurrentTurn enemyid model =
+fightingCharacterExceedsNrMovesInCurrentTurn : FightingCharacterId -> Model -> Bool
+fightingCharacterExceedsNrMovesInCurrentTurn fcharId model =
     let
-        mbEnemy =
-            Dict.get enemyid model.enemies
+        mbFightChar =
+            Dict.get fcharId model.fightingCharacters
     in
-    case mbEnemy of
+    case mbFightChar of
         Nothing ->
             True
 
-        Just enemy ->
-            enemy.nrMovesInCurrentTurn >= enemy.maxNrEnemyMovesPerTurn
+        Just fightingCharacter ->
+            fightingCharacter.nrMovesInCurrentTurn >= fightingCharacter.maxNrCharacterMovesPerTurn
 
 
-type alias EnemiesPlayerRec =
-    { enemies : Dict Beings.EnemyId Beings.Enemy
-    , player : Beings.Player
-    , grid : Grid.Grid Tile
-    , lEnemiesForGameOfThorns : List Beings.Enemy
-    , textMsgs : List String
-    , lrandInts : List Int
-    }
-
-
-enemy_AI : Model -> ( Model, List Enemy )
-enemy_AI model =
+fightingCharacter_AI : Model -> ( Model, List FightingCharacter )
+fightingCharacter_AI model =
     let
-        enemiesPlayerRec =
-            BeingsInTileGrid.enemy_AI model.currentDisplay model.currentFloorId (EnemiesPlayerRec model.enemies model.player model.level [] [] model.pseudoRandomIntsPool)
+        fightingCharactersPlayerRec =
+            BeingsInTileGrid.fightingCharacter_AI model.currentDisplay model.currentFloorId (BeingsInTileGrid.OpponentsAndPlayerRec model.fightingCharacters model.player model.level [] [] model.pseudoRandomIntsPool)
 
         newModel =
-            -- enemiesPlayerRec |> eprecToModel
+            -- fightingCharactersPlayerRec |> eprecToModel
             { model
-                | enemies = enemiesPlayerRec.enemies
-                , player = enemiesPlayerRec.player
-                , level = enemiesPlayerRec.grid
-                , pseudoRandomIntsPool = enemiesPlayerRec.lrandInts
+                | fightingCharacters = fightingCharactersPlayerRec.fightingCharacters
+                , player = fightingCharactersPlayerRec.player
+                , level = fightingCharactersPlayerRec.grid
+                , pseudoRandomIntsPool = fightingCharactersPlayerRec.lrandInts
             }
 
-        lenemiesForGoT =
-            enemiesPlayerRec.lEnemiesForGameOfThorns
+        lfightingCharactersForGoT =
+            fightingCharactersPlayerRec.lFightingCharactersForGameOfThorns
     in
-    ( newModel, lenemiesForGoT )
+    ( newModel, lfightingCharactersForGoT )
 
 
-enemy_AI_old : Model -> ( Model, List Enemy )
-enemy_AI_old model =
+attackIfClose_OtherwiseMove : FightingCharacter -> Model -> ( Model, Maybe FightingCharacter )
+attackIfClose_OtherwiseMove fightingCharacter model =
     let
-        enemyIdEnemyPairList =
-            Dict.filter (\enemyid enemy -> enemy.health > 0 && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) model.enemies
-                |> Dict.toList
-
-        --&& enemy.initiative <= model.player.initiative
-        --|> List.head
-        ai_helper_func : EnemyId -> ( Model, List Enemy ) -> ( Model, List Enemy )
-        ai_helper_func enemyid ( model_, lmbe ) =
-            if enemyExceedsNrMovesInCurrentTurn enemyid model_ || model_.currentDisplay == GameModel.DisplayGameOfThorns then
-                ( model_, lmbe )
-
-            else
-                let
-                    mbenemy =
-                        Dict.get enemyid model_.enemies
-
-                    ( model2, mbenemyForGameOfThorns ) =
-                        case mbenemy of
-                            Nothing ->
-                                ( model_, Nothing )
-
-                            Just enemy ->
-                                if enemy.floorId == model_.currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && model.player.health > 0 && model_.currentDisplay /= GameModel.DisplayGameOfThorns then
-                                    attackIfClose_OtherwiseMove enemy model_
-                                        -- prevent possible infinite recursion
-                                        |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))
-
-                                else
-                                    ( enemyMove enemy model_
-                                        |> increseNrOfEnemyMovesInCurrentTurn enemyid
-                                    , Nothing
-                                    )
-                in
-                case mbenemyForGameOfThorns of
-                    Just en ->
-                        ( model2, lmbe ++ [ en ] )
-
-                    Nothing ->
-                        ai_helper_func enemyid ( model2, lmbe )
-    in
-    List.foldl (\enpair ( modelacc, lmbenemies ) -> ai_helper_func (Tuple.first enpair) ( modelacc, lmbenemies )) ( model, [] ) enemyIdEnemyPairList
-
-
-attackIfClose_OtherwiseMove : Enemy -> Model -> ( Model, Maybe Enemy )
-attackIfClose_OtherwiseMove enemy model =
-    let
-        --{ updatedEnemy, updatedPlayer, mbEnemyForGameOfThorns , updatedRandInts }
+        --{ updatedFightingCharacter, updatedPlayer, mbFightingCharacterForGameOfThorns , updatedRandInts }
         outputRecord =
-            BeingsInTileGrid.attackIfClose_OtherwiseMove enemy model.player model.currentFloorId model.level model.pseudoRandomIntsPool
+            BeingsInTileGrid.attackIfClose_OtherwiseMove fightingCharacter model.player model.currentFloorId model.level model.pseudoRandomIntsPool
     in
     ( log outputRecord.textMsg
         { model
             | player = outputRecord.player
-            , enemies = Dict.insert enemy.id outputRecord.enemy model.enemies
+            , fightingCharacters = Dict.insert fightingCharacter.id outputRecord.fightingCharacter model.fightingCharacters
             , pseudoRandomIntsPool = outputRecord.lrandInts
         }
-    , outputRecord.mbEnemyForGameOfThorns
+    , outputRecord.mbFightingCharacterForGameOfThorns
     )
 
 
-enemyMove : Enemy -> Model -> Model
-enemyMove enemy model =
+fightingCharacterMove : FightingCharacter -> Model -> Model
+fightingCharacterMove fightingCharacter model =
     let
-        ( updatedEnemy, updatedRandInts ) =
-            BeingsInTileGrid.enemyMove enemy model.player.location model.level model.pseudoRandomIntsPool
+        ( updatedFightingCharacter, updatedRandInts ) =
+            BeingsInTileGrid.fightingCharacterMove fightingCharacter model.player.location model.level model.pseudoRandomIntsPool
     in
     { model
-        | enemies = Dict.insert enemy.id updatedEnemy model.enemies
+        | fightingCharacters = Dict.insert fightingCharacter.id updatedFightingCharacter model.fightingCharacters
         , pseudoRandomIntsPool = updatedRandInts
     }
 
