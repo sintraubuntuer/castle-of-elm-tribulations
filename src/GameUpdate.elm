@@ -32,6 +32,7 @@ module GameUpdate exposing
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Beings.BeingsInTileGrid as BeingsInTileGrid
 import Beings.FightingCharacterInTileGrid as FightingCharacterInTileGrid
+import Beings.OtherCharacterInTileGrid as OtherCharacterInTileGrid
 import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
@@ -395,6 +396,8 @@ update msg model =
                     model
                         |> cleanup
                         |> resetFightingCharacterMovesCurrentTurn
+                        |> resetOtherCharacterMovesCurrentTurn
+                        |> otherCharacters_AI
                         |> fightingCharacter_AI
                         |> (\( modl, le ) ->
                                 if modl.currentDisplay == GameModel.DisplayGameOver then
@@ -1045,6 +1048,15 @@ openDoorIfPlayerStandingOnDoorAndClosed model =
     { model | level = newGrid }
 
 
+resetOtherCharacterMovesCurrentTurn : Model -> Model
+resetOtherCharacterMovesCurrentTurn model =
+    let
+        updatedOtherCharacters =
+            Dict.map (\ocharId otherCharacter -> { otherCharacter | nrMovesInCurrentTurn = 0 }) model.otherCharacters
+    in
+    { model | otherCharacters = updatedOtherCharacters }
+
+
 resetFightingCharacterMovesCurrentTurn : Model -> Model
 resetFightingCharacterMovesCurrentTurn model =
     let
@@ -1136,6 +1148,24 @@ fightingCharacter_AI model =
             fightingCharactersPlayerRec.lFightingCharactersForGameOfThorns
     in
     ( newModel, lfightingCharactersForGoT )
+
+
+otherCharacters_AI : Model -> Model
+otherCharacters_AI model =
+    let
+        otherCharactersPlayerRec =
+            OtherCharacterInTileGrid.otherCharacter_AI model.currentDisplay model.currentFloorId (OtherCharacterInTileGrid.OthersAndPlayerRec model.otherCharacters model.player model.level [] model.pseudoRandomIntsPool)
+
+        newModel =
+            -- fightingCharactersPlayerRec |> eprecToModel
+            { model
+                | otherCharacters = otherCharactersPlayerRec.otherCharacters
+                , player = otherCharactersPlayerRec.player
+                , level = otherCharactersPlayerRec.grid
+                , pseudoRandomIntsPool = otherCharactersPlayerRec.lrandInts
+            }
+    in
+    newModel
 
 
 attackIfClose_OtherwiseMove : FightingCharacter -> Model -> ( Model, Maybe FightingCharacter )

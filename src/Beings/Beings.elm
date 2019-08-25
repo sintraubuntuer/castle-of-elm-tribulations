@@ -8,6 +8,7 @@ module Beings.Beings exposing
     , Location
     , OPPONENT_INTERACTION_OPTIONS(..)
     , OtherCharacter
+    , OtherCharacterId
     , Player
     , fightingCharacterCreationFunc
     , otherCharacterCreationFunc
@@ -28,6 +29,10 @@ type alias FightingCharacterId =
 
 
 type alias CharacterId =
+    Int
+
+
+type alias OtherCharacterId =
     Int
 
 
@@ -100,7 +105,7 @@ type alias FightingCharacter =
 type alias OtherCharacter =
     { location : Location
     , floorId : Int
-    , id : CharacterId
+    , id : OtherCharacterId
     , textAvatar : String --Element.Element
     , name : String
     , direction : Direction
