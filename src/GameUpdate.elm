@@ -1130,7 +1130,7 @@ enemy_AI : Model -> ( Model, List Enemy )
 enemy_AI model =
     let
         enemiesPlayerRec =
-            BeingsInTileGrid.enemy_AI (model.currentDisplay |> GameModel.currDisplayToString) model.currentFloorId (EnemiesPlayerRec model.enemies model.player model.level [] [] model.pseudoRandomIntsPool)
+            BeingsInTileGrid.enemy_AI model.currentDisplay model.currentFloorId (EnemiesPlayerRec model.enemies model.player model.level [] [] model.pseudoRandomIntsPool)
 
         newModel =
             -- enemiesPlayerRec |> eprecToModel

@@ -10,6 +10,7 @@ module BeingsInTileGrid exposing
 
 import Beings
 import Dict exposing (Dict)
+import GameModel exposing (CurrentDisplay(..))
 import Grid
 import Tile exposing (Tile(..))
 
@@ -139,63 +140,64 @@ enemyExceedsNrMovesInCurrentTurn enemyid enemiesPlayerRec =
             enemy.nrMovesInCurrentTurn >= enemy.maxNrEnemyMovesPerTurn
 
 
-enemy_AI : String -> Int -> EnemiesPlayerRec -> EnemiesPlayerRec
+enemy_AI : CurrentDisplay -> Int -> EnemiesPlayerRec -> EnemiesPlayerRec
 enemy_AI currentDisplay currentFloorId enemiesPlayerRec =
     let
         enemyIdEnemyPairList =
             Dict.filter (\enemyid enemy -> enemy.health > 0 && enemy.nrMovesInCurrentTurn < enemy.maxNrEnemyMovesPerTurn) enemiesPlayerRec.enemies
                 |> Dict.toList
-
-        ai_helper_func : Beings.EnemyId -> EnemiesPlayerRec -> EnemiesPlayerRec
-        ai_helper_func enemyid enemies_player_rec =
-            if enemyExceedsNrMovesInCurrentTurn enemyid enemies_player_rec || currentDisplay == "DisplayGameOfThorns" then
-                enemies_player_rec
-
-            else
-                let
-                    mbenemy =
-                        Dict.get enemyid enemies_player_rec.enemies
-
-                    ( enemies_player_rec2, mbenemyForGameOfThorns ) =
-                        case mbenemy of
-                            Nothing ->
-                                ( enemies_player_rec, Nothing )
-
-                            Just enemy ->
-                                if enemy.floorId == currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && enemies_player_rec.player.health > 0 && currentDisplay /= "DisplayGameOfThorns" then
-                                    let
-                                        outRec =
-                                            attackIfClose_OtherwiseMove enemy enemies_player_rec.player currentFloorId enemies_player_rec.grid enemies_player_rec.lrandInts
-
-                                        newEnPlayerRec =
-                                            ( { enemies_player_rec
-                                                | enemies = Dict.update enemyid (\_ -> Just outRec.enemy) enemies_player_rec.enemies
-                                                , player = outRec.player
-                                                , lEnemiesForGameOfThorns = enemies_player_rec.lEnemiesForGameOfThorns ++ (outRec.mbEnemyForGameOfThorns |> Maybe.map (\x -> [ x ]) |> Maybe.withDefault [])
-                                                , textMsgs = []
-                                                , lrandInts = outRec.lrandInts
-                                              }
-                                            , outRec.mbEnemyForGameOfThorns
-                                            )
-                                                |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))
-                                    in
-                                    newEnPlayerRec
-
-                                else
-                                    ( enemyMove enemy enemies_player_rec.player.location enemies_player_rec.grid enemies_player_rec.lrandInts
-                                        |> (\( enem, lrand ) -> { enemies_player_rec | enemies = Dict.update enemyid (\_ -> Just enem) enemies_player_rec.enemies, lrandInts = lrand })
-                                        |> (\x -> increseNrOfEnemyMovesInCurrentTurn enemyid x)
-                                    , Nothing
-                                    )
-                in
-                case mbenemyForGameOfThorns of
-                    Just en ->
-                        { enemies_player_rec2 | lEnemiesForGameOfThorns = enemies_player_rec.lEnemiesForGameOfThorns ++ [ en ] }
-
-                    Nothing ->
-                        ai_helper_func enemyid enemies_player_rec2
     in
-    List.foldl (\enpair modelacc -> ai_helper_func (Tuple.first enpair) modelacc) enemiesPlayerRec enemyIdEnemyPairList
+    List.foldl (\enpair modelacc -> ai_helper_func currentDisplay currentFloorId (Tuple.first enpair) modelacc) enemiesPlayerRec enemyIdEnemyPairList
+
+
+ai_helper_func : CurrentDisplay -> Int -> Beings.EnemyId -> EnemiesPlayerRec -> EnemiesPlayerRec
+ai_helper_func currentDisplay currentFloorId enemyid enemies_player_rec =
+    if enemyExceedsNrMovesInCurrentTurn enemyid enemies_player_rec || currentDisplay == DisplayGameOfThorns then
+        enemies_player_rec
+
+    else
+        let
+            mbenemy =
+                Dict.get enemyid enemies_player_rec.enemies
+
+            ( enemies_player_rec2, mbenemyForGameOfThorns ) =
+                case mbenemy of
+                    Nothing ->
+                        ( enemies_player_rec, Nothing )
+
+                    Just enemy ->
+                        if enemy.floorId == currentFloorId && enemy.indexOfLight < enemy.indexOfLightMax && enemies_player_rec.player.health > 0 && currentDisplay /= DisplayGameOfThorns then
+                            let
+                                outRec =
+                                    attackIfClose_OtherwiseMove enemy enemies_player_rec.player currentFloorId enemies_player_rec.grid enemies_player_rec.lrandInts
+
+                                newEnPlayerRec =
+                                    ( { enemies_player_rec
+                                        | enemies = Dict.update enemyid (\_ -> Just outRec.enemy) enemies_player_rec.enemies
+                                        , player = outRec.player
+                                        , lEnemiesForGameOfThorns = enemies_player_rec.lEnemiesForGameOfThorns ++ (outRec.mbEnemyForGameOfThorns |> Maybe.map (\x -> [ x ]) |> Maybe.withDefault [])
+                                        , textMsgs = []
+                                        , lrandInts = outRec.lrandInts
+                                      }
+                                    , outRec.mbEnemyForGameOfThorns
+                                    )
+                                        |> (\( x, y ) -> ( increseNrOfEnemyMovesInCurrentTurn enemyid x, y ))
+                            in
+                            newEnPlayerRec
+
+                        else
+                            ( enemyMove enemy enemies_player_rec.player.location enemies_player_rec.grid enemies_player_rec.lrandInts
+                                |> (\( enem, lrand ) -> { enemies_player_rec | enemies = Dict.update enemyid (\_ -> Just enem) enemies_player_rec.enemies, lrandInts = lrand })
+                                |> (\x -> increseNrOfEnemyMovesInCurrentTurn enemyid x)
+                            , Nothing
+                            )
+        in
+        case mbenemyForGameOfThorns of
+            Just en ->
+                { enemies_player_rec2 | lEnemiesForGameOfThorns = enemies_player_rec.lEnemiesForGameOfThorns ++ [ en ] }
+
+            Nothing ->
+                ai_helper_func currentDisplay currentFloorId enemyid enemies_player_rec2
 
 
 attackIfClose_OtherwiseMove : Beings.Enemy -> Beings.Player -> Int -> Grid.Grid Tile -> List Int -> { enemy : Beings.Enemy, player : Beings.Player, mbEnemyForGameOfThorns : Maybe Beings.Enemy, textMsg : String, lrandInts : List Int }

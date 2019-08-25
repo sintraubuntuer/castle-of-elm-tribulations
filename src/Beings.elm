@@ -103,10 +103,12 @@ type alias OtherCharacter =
     , id : CharacterId
     , textAvatar : String --Element.Element
     , name : String
+    , direction : Direction
     , species : String
     , health : Int
     , indexOfLight : Int
     , mana : Int
+    , enlSpellEffect : EnlightenmentSpellEffect
     , inventory : Inventory
     , stealth : Int
     , armor : Int
@@ -114,7 +116,11 @@ type alias OtherCharacter =
     , coordination : Int
     , power : Int
     , initiative : Int
+    , attacksUsingGameOfThorns : Bool
     , indexOfLightMax : Int
+    , disappearsWhenHealthIsZero : Bool
+    , playerCanWalkOverIfDead : Bool
+    , disappearsWhenIndexOfLightMax : Bool
     , maxNrEnemyMovesPerTurn : Int -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn : Int
     , placed : Bool
@@ -128,10 +134,12 @@ otherCharacterCreationFunc id_ ename floor_id_ =
     , id = id_
     , textAvatar = "" --Element.Element
     , name = ename
+    , direction = Down
     , species = "otherYou"
     , health = 30
     , indexOfLight = 8
     , mana = 100
+    , enlSpellEffect = IncreaseIndexOfLight
     , inventory = Dict.empty
     , stealth = 20
     , armor = 1
@@ -139,7 +147,11 @@ otherCharacterCreationFunc id_ ename floor_id_ =
     , coordination = 20
     , power = 10
     , initiative = 100
+    , attacksUsingGameOfThorns = False
     , indexOfLightMax = 30
+    , disappearsWhenHealthIsZero = True
+    , playerCanWalkOverIfDead = True
+    , disappearsWhenIndexOfLightMax = False
     , maxNrEnemyMovesPerTurn = 1 -- to prevent possible infinite recursion in ai
     , nrMovesInCurrentTurn = 0
     , placed = True
