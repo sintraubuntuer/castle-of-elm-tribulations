@@ -6,7 +6,7 @@ module Thorns.OpponentInteraction exposing
     , get_interaction_options
     )
 
-import Beings exposing (FightingCharacter, Player)
+import Beings.Beings as Beings exposing (FightingCharacter, Player)
 import Dict exposing (Dict)
 import Grid
 import Item exposing (Item)

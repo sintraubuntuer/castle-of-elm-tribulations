@@ -48,7 +48,7 @@ module GameDefinitions.Common exposing
     , setTeleportersInGrid
     )
 
-import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameModel exposing (RoomRectangle, TunnelRectangle)
 import Grid

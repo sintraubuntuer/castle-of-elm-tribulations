@@ -2,7 +2,7 @@ module GameView exposing (view)
 
 --import Element exposing (..)
 
-import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Collage exposing (..)
 import Collage.Events
 import Collage.Layout exposing (..)

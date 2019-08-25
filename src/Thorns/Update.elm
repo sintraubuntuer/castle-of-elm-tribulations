@@ -3,7 +3,7 @@ module Thorns.Update exposing
     , update
     )
 
-import Beings
+import Beings.Beings as Beings
 import Dict exposing (Dict)
 import Grid
 import Html exposing (Html, a, br, div, h1, h2, h3, p, span, text)

@@ -5,7 +5,7 @@ module Thorns.Types exposing
     , initialModel
     )
 
-import Beings
+import Beings.Beings as Beings
 import Dict exposing (Dict)
 import Grid
 import Thorns.ThornGrid as ThornGrid

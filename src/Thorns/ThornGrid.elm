@@ -8,7 +8,7 @@ module Thorns.ThornGrid exposing
     , thornToString
     )
 
-import Beings exposing (OPPONENT_INTERACTION_OPTIONS(..))
+import Beings.Beings as Beings exposing (OPPONENT_INTERACTION_OPTIONS(..))
 import Dict exposing (Dict)
 import Grid
 import Thorns.OpponentInteraction as OpponentInteraction

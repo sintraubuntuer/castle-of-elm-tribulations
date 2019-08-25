@@ -1,4 +1,4 @@
-module Beings exposing
+module Beings.Beings exposing
     ( CharacterId
     , Direction(..)
     , EnlightenmentSpellEffect(..)

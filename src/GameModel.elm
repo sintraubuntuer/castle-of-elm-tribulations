@@ -10,7 +10,6 @@ module GameModel exposing
     , RoomRectangle
     , RoomsInfo
     , TunnelRectangle
-    , currDisplayToString
     , defaultBlackDoorInfo
     , defaultBlueDoorInfo
     , defaultBrickWallInfo
@@ -44,21 +43,13 @@ module GameModel exposing
     , getRoomTopY
     , getTileVisibility
     , isConverterTile
-    ,  isFloor
-       -- , isHorizontalWall
-       --, isMbTileHorizontalToTheLeft
-       --, isMbTileHorizontalToTheRight
-       --, isMbTileHorizontalWall
-       --, isMbTileVerticalWall
-
+    , isFloor
     , isMbTileWall
     , isModelTileExplored
     , isModelTileTransparent
     , isNoTileYet
     , isTileExplored
-    ,  isTileTransparent
-       -- , isVerticalWall
-
+    , isTileTransparent
     , isWall
     , itemToString
     , location
@@ -80,7 +71,7 @@ module GameModel exposing
     , walkableWaterInfo
     )
 
-import Beings
+import Beings.Beings as Beings
     exposing
         ( CharacterId
         , Direction(..)
@@ -106,31 +97,6 @@ type CurrentDisplay
     | DisplayOpponentReport
     | DisplayHelpScreen
     | DisplayInventory
-
-
-currDisplayToString : CurrentDisplay -> String
-currDisplayToString cDisplay =
-    case cDisplay of
-        DisplayRegularGame ->
-            "DisplayRegularGame"
-
-        DisplayGameOver ->
-            "DisplayGameOver"
-
-        DisplayGameCompleted ->
-            "DisplayGameCompleted"
-
-        DisplayGameOfThorns ->
-            "DisplayGameOfThorns"
-
-        DisplayOpponentReport ->
-            "DisplayOpponentReport"
-
-        DisplayHelpScreen ->
-            "DisplayHelpScreen"
-
-        DisplayInventory ->
-            "DisplayInventory"
 
 
 type ModelChangerFuncs
@@ -519,69 +485,6 @@ isMbTileWall mbtile =
 
         _ ->
             False
-
-
-
-{- }
-   isHorizontalWall : Tile -> Bool
-   isHorizontalWall tile =
-       case tile of
-           Wall infoRec ->
-               infoRec.orientation == "horizontal"
-
-           _ ->
-               False
-
-
-   isMbTileHorizontalWall : Maybe Tile -> Bool
-   isMbTileHorizontalWall mbTile =
-       case mbTile of
-           Just (Wall infoRec) ->
-               infoRec.orientation == "horizontal"
-
-           _ ->
-               False
-
-
-   isMbTileHorizontalToTheLeft : Maybe Tile -> Bool
-   isMbTileHorizontalToTheLeft mbTile =
-       case mbTile of
-           Just (Wall infoRec) ->
-               infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_right_corner" || infoRec.orientation == "top_right_corner"
-
-           _ ->
-               False
-
-
-   isMbTileHorizontalToTheRight : Maybe Tile -> Bool
-   isMbTileHorizontalToTheRight mbTile =
-       case mbTile of
-           Just (Wall infoRec) ->
-               infoRec.orientation == "horizontal" || infoRec.orientation == "bottom_left_corner" || infoRec.orientation == "top_left_corner"
-
-           _ ->
-               False
-
-
-   isVerticalWall : Tile -> Bool
-   isVerticalWall tile =
-       case tile of
-           Wall infoRec ->
-               infoRec.orientation == "up"
-
-           _ ->
-               False
-
-
-   isMbTileVerticalWall : Maybe Tile -> Bool
-   isMbTileVerticalWall mbTile =
-       case mbTile of
-           Just (Wall infoRec) ->
-               infoRec.orientation == "up"
-
-           _ ->
-               False
--}
 
 
 setWallTileOrientation : String -> Tile -> Tile

@@ -1,6 +1,6 @@
 module GameDefinitions.Game2.Game2Definitions exposing (initialModelFunc)
 
-import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameDefinitions.Common exposing (ItemCreationInfo, get_total_height, get_total_width, setAllAsUnexplored, setItemsInGrid)
 import GameDefinitions.Game2.Basement as Basement

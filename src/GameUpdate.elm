@@ -29,8 +29,9 @@ module GameUpdate exposing
 --import Collage
 --import Collage.Layout
 
-import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
-import BeingsInTileGrid
+import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings.BeingsInTileGrid as BeingsInTileGrid
+import Beings.FightingCharacterInTileGrid as FightingCharacterInTileGrid
 import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
@@ -1120,7 +1121,7 @@ fightingCharacter_AI : Model -> ( Model, List FightingCharacter )
 fightingCharacter_AI model =
     let
         fightingCharactersPlayerRec =
-            BeingsInTileGrid.fightingCharacter_AI model.currentDisplay model.currentFloorId (BeingsInTileGrid.OpponentsAndPlayerRec model.fightingCharacters model.player model.level [] [] model.pseudoRandomIntsPool)
+            FightingCharacterInTileGrid.fightingCharacter_AI model.currentDisplay model.currentFloorId (FightingCharacterInTileGrid.OpponentsAndPlayerRec model.fightingCharacters model.player model.level [] [] model.pseudoRandomIntsPool)
 
         newModel =
             -- fightingCharactersPlayerRec |> eprecToModel
@@ -1142,7 +1143,7 @@ attackIfClose_OtherwiseMove fightingCharacter model =
     let
         --{ updatedFightingCharacter, updatedPlayer, mbFightingCharacterForGameOfThorns , updatedRandInts }
         outputRecord =
-            BeingsInTileGrid.attackIfClose_OtherwiseMove fightingCharacter model.player model.currentFloorId model.level model.pseudoRandomIntsPool
+            FightingCharacterInTileGrid.attackIfClose_OtherwiseMove fightingCharacter model.player model.currentFloorId model.level model.pseudoRandomIntsPool
     in
     ( log outputRecord.textMsg
         { model
@@ -1158,7 +1159,7 @@ fightingCharacterMove : FightingCharacter -> Model -> Model
 fightingCharacterMove fightingCharacter model =
     let
         ( updatedFightingCharacter, updatedRandInts ) =
-            BeingsInTileGrid.fightingCharacterMove fightingCharacter model.player.location model.level model.pseudoRandomIntsPool
+            FightingCharacterInTileGrid.fightingCharacterMove fightingCharacter model.player.location model.level model.pseudoRandomIntsPool
     in
     { model
         | fightingCharacters = Dict.insert fightingCharacter.id updatedFightingCharacter model.fightingCharacters

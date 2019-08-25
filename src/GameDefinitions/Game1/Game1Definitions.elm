@@ -1,6 +1,6 @@
 module GameDefinitions.Game1.Game1Definitions exposing (initialModelFunc)
 
-import Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
+import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameModel
 import Grid
