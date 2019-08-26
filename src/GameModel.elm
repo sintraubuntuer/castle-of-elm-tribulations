@@ -6,6 +6,7 @@ module GameModel exposing
     , Model
     , ModelChangerFuncs(..)
     , RoomRectangle
+    , RoomType(..)
     , RoomsInfo
     , TunnelRectangle
     , getCurrentFloorInfoToStore
@@ -24,8 +25,6 @@ module GameModel exposing
     , randomlyPlaceExistingFightingCharacters
     , setModelTileAsExplored
     , setModelTileVisibility
-    , tupleFloatsToLocation
-    , tupleIntsToLocation
     , validLocation
     , visibility
     , visible
@@ -115,6 +114,12 @@ getCurrentFloorInfoToStore model =
     }
 
 
+type RoomType
+    = SquareRoom
+    | HorizontalRoom
+    | VerticalRoom
+
+
 type alias RoomRectangle =
     { top_left_x : Int
     , top_left_y : Int
@@ -171,16 +176,6 @@ type alias RoomsInfo =
 
 type alias Location =
     Grid.Coordinate
-
-
-tupleIntsToLocation : ( Int, Int ) -> Location
-tupleIntsToLocation ( x, y ) =
-    Grid.Coordinate x y
-
-
-tupleFloatsToLocation : ( Float, Float ) -> Location
-tupleFloatsToLocation ( x, y ) =
-    Grid.Coordinate (round x) (round y)
 
 
 type Input
@@ -260,35 +255,6 @@ setModelTileVisibility location_ visibility_ model =
                     Tile.setTileVisibility visibility_ tile
             in
             { model | level = Grid.set location_ newTile model.level }
-
-
-
-{-
-   getRandomPathable : Model  -> ( Location, Model  )
-   getRandomPathable model =
-       let
-           ( x, gen' ) =
-               Generator.int32Range ( 1, model.level.size.width ) model.generator
-
-           ( y, gen'' ) =
-               Generator.int32Range ( 1, model.level.size.height ) gen'
-
-           locn =
-               location x y
-
-           model' =
-               { model | generator = gen'' }
-       in
-       case pathable locn model' of
-           True ->
-               ( locn, model' )
-
-           False ->
-               getRandomPathable model'
-
-
-
--}
 
 
 mbUpdateFightingCharacterInitiativeByMbFCharId : Int -> Maybe FightingCharacterId -> Model -> Model

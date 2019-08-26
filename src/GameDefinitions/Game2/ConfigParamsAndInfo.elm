@@ -17,6 +17,7 @@ import GameDefinitions.Common
     exposing
         ( ConfigParams
         , HoleId
+        , HoleInfoWithLocation
         , HorizontalTunnelOrientation(..)
         , ItemCreationInfo
         , ItemId
@@ -24,9 +25,11 @@ import GameDefinitions.Common
         , StairsOrientation(..)
         , TargetId
         , TeleporterId
+        , TeleporterInfoWithLocation
         , VerticalTunnelOrientation(..)
         , createHoleInfo
-        , createTeleporterInfo
+        , createHoleInfoWithLocation
+        , createTeleporterInfoWithLocation
         , defaultHorizontalGreenDoorOptions
         , defaultHorizontalOpenDoorOptions
         , defaultHorizontalRedDoorOptions
@@ -53,13 +56,13 @@ import GameDefinitions.Common
 import GameModel
     exposing
         ( RoomRectangle
+        , RoomType(..)
         , TunnelRectangle
         )
 import Item exposing (Item(..), KeyInfo)
 import Tile
     exposing
-        ( RoomType(..)
-        , TeleporterInfo
+        ( TeleporterInfo
         , TeleporterType(..)
         )
 
@@ -120,7 +123,7 @@ lastFloor_id =
     5
 
 
-holesDict : Dict HoleId Tile.HoleInfo
+holesDict : Dict HoleId HoleInfoWithLocation
 holesDict =
     let
         ( x1, y1 ) =
@@ -157,18 +160,20 @@ holesDict =
             get_room_position_nr 2 3 6 SquareRoom config_params
     in
     Dict.fromList
-        [ ( 1, createHoleInfo 1 groundFloor_id x1 y1 1 )
-        , ( 2, createHoleInfo 2 groundFloor_id x2 y2 2 )
-        , ( 3, createHoleInfo 3 groundFloor_id x3 y3 3 )
-        , ( 4, createHoleInfo 4 basement_floor_id x4 y4 4 )
-        , ( 5, createHoleInfo 5 firstFloor_id x5 y5 5 )
-        , ( 6, createHoleInfo 6 firstFloor_id x6 y6 6 )
-        , ( 7, createHoleInfo 7 firstFloor_id x7 y7 7 )
-        , ( 8, createHoleInfo 8 theAttic_id x8 y8 8 )
-        , ( 9, createHoleInfo 9 theAttic_id x9 y9 9 )
-        , ( 10, createHoleInfo 10 theAttic_id x10 y10 10 )
-        , ( 11, createHoleInfo 11 theAttic_id x11 y11 11 )
-        ]
+        ([ ( 1, createHoleInfoWithLocation 1 groundFloor_id 1 1 5 HorizontalRoom 1 )
+         , ( 2, createHoleInfoWithLocation 2 groundFloor_id 1 4 8 HorizontalRoom 2 )
+         , ( 3, createHoleInfoWithLocation 3 groundFloor_id 3 5 4 SquareRoom 3 )
+         , ( 4, createHoleInfoWithLocation 4 basement_floor_id 5 5 5 SquareRoom 4 )
+         , ( 5, createHoleInfoWithLocation 5 firstFloor_id 3 4 6 SquareRoom 5 )
+         , ( 6, createHoleInfoWithLocation 6 firstFloor_id 3 3 5 VerticalRoom 6 )
+         , ( 7, createHoleInfoWithLocation 7 firstFloor_id 5 3 2 VerticalRoom 7 )
+         , ( 8, createHoleInfoWithLocation 8 theAttic_id 1 2 8 SquareRoom 8 )
+         , ( 9, createHoleInfoWithLocation 9 theAttic_id 3 4 5 SquareRoom 9 )
+         , ( 10, createHoleInfoWithLocation 10 theAttic_id 2 1 5 SquareRoom 10 )
+         , ( 11, createHoleInfoWithLocation 11 theAttic_id 2 3 6 SquareRoom 11 )
+         ]
+            |> List.map (\( x, func_y ) -> ( x, func_y config_params ))
+        )
 
 
 itemCreationDict : Dict ItemId ItemCreationInfo
@@ -232,39 +237,39 @@ landingTargetsDict =
         ]
 
 
-teleporterInfoDict : Dict TeleporterId TeleporterInfo
+teleporterInfoDict : Dict TeleporterId TeleporterInfoWithLocation
 teleporterInfoDict =
     Dict.fromList
-        [ ( 1, createTeleporterInfo 1 caverns_floor_id Barrel 2 5 SquareRoom "right" 2 ( 1, 0 ) )
-        , ( 2, createTeleporterInfo 2 caverns_floor_id Barrel 1 7 SquareRoom "left" 1 ( -1, 0 ) )
-        , ( 3, createTeleporterInfo 3 caverns_floor_id Barrel 3 5 SquareRoom "down" 4 ( 0, 1 ) )
-        , ( 4, createTeleporterInfo 4 caverns_floor_id Barrel 5 5 SquareRoom "up" 3 ( 0, -1 ) )
-        , ( 5, createTeleporterInfo 5 caverns_floor_id Barrel 1 11 SquareRoom "down" 6 ( 0, 1 ) )
-        , ( 6, createTeleporterInfo 6 caverns_floor_id Barrel 4 11 SquareRoom "up" 5 ( 0, -1 ) )
-        , ( 7, createTeleporterInfo 7 caverns_floor_id BookCase 4 7 VerticalRoom "down" 8 ( 0, 1 ) )
-        , ( 8, createTeleporterInfo 8 caverns_floor_id BookCase 6 7 SquareRoom "up" 7 ( 0, -1 ) )
-        , ( 9, createTeleporterInfo 9 caverns_floor_id BookCase 7 7 SquareRoom "right" 10 ( 0, -1 ) )
-        , ( 10, createTeleporterInfo 10 caverns_floor_id BookCase 6 10 SquareRoom "down" 9 ( -1, 0 ) )
-        , ( 11, createTeleporterInfo 11 caverns_floor_id Clock 7 2 SquareRoom "right" 12 ( 1, 0 ) )
-        , ( 12, createTeleporterInfo 12 caverns_floor_id Clock 7 9 SquareRoom "left" 11 ( -1, 0 ) )
-        , ( 13, createTeleporterInfo 13 basement_floor_id BookCase 2 1 SquareRoom "down" 14 ( 0, 1 ) )
-        , ( 14, createTeleporterInfo 14 basement_floor_id BookCase 6 1 SquareRoom "up" 13 ( 0, -1 ) )
-        , ( 15, createTeleporterInfo 15 basement_floor_id Clock 1 2 SquareRoom "right" 16 ( 1, 0 ) )
-        , ( 16, createTeleporterInfo 16 basement_floor_id Clock 1 5 SquareRoom "left" 15 ( -1, 0 ) )
-        , ( 17, createTeleporterInfo 17 groundFloor_id Barrel 3 3 SquareRoom "down" 18 ( 0, 1 ) )
-        , ( 18, createTeleporterInfo 18 groundFloor_id Barrel 5 3 SquareRoom "up" 17 ( 0, -1 ) )
-        , ( 19, createTeleporterInfo 19 groundFloor_id Barrel 6 6 VerticalRoom "left" 20 ( -1, 0 ) )
-        , ( 20, createTeleporterInfo 20 firstFloor_id Barrel 6 4 SquareRoom "right" 19 ( 1, 0 ) )
-        , ( 21, createTeleporterInfo 21 groundFloor_id BookCase 1 5 HorizontalRoom "down" 22 ( 0, 1 ) )
-        , ( 22, createTeleporterInfo 22 groundFloor_id BookCase 7 5 HorizontalRoom "up" 21 ( 0, -1 ) )
-        , ( 23, createTeleporterInfo 23 groundFloor_id BookCase 3 4 SquareRoom "down" 24 ( 0, 1 ) )
-        , ( 24, createTeleporterInfo 24 groundFloor_id BookCase 5 4 SquareRoom "up" 23 ( 0, -1 ) )
-        , ( 25, createTeleporterInfo 25 groundFloor_id Clock 1 2 SquareRoom "down" 26 ( 0, 1 ) )
-        , ( 26, createTeleporterInfo 26 groundFloor_id Clock 7 2 SquareRoom "up" 25 ( 0, -1 ) )
-        , ( 27, createTeleporterInfo 27 groundFloor_id Clock 1 6 SquareRoom "down" 28 ( 0, 1 ) )
-        , ( 28, createTeleporterInfo 28 groundFloor_id Clock 7 6 SquareRoom "up" 27 ( 0, -1 ) )
-        , ( 29, createTeleporterInfo 29 firstFloor_id Clock 5 3 VerticalRoom "right" 30 ( 1, 0 ) )
-        , ( 30, createTeleporterInfo 30 firstFloor_id Clock 4 4 VerticalRoom "left" 29 ( -1, 0 ) )
-        , ( 31, createTeleporterInfo 31 theAttic_id Clock 1 1 SquareRoom "down" 32 ( 0, 1 ) )
-        , ( 32, createTeleporterInfo 32 theAttic_id Clock 2 1 SquareRoom "up" 31 ( 0, -1 ) )
+        [ ( 1, createTeleporterInfoWithLocation 1 caverns_floor_id Barrel 2 5 SquareRoom "right" 2 ( 1, 0 ) )
+        , ( 2, createTeleporterInfoWithLocation 2 caverns_floor_id Barrel 1 7 SquareRoom "left" 1 ( -1, 0 ) )
+        , ( 3, createTeleporterInfoWithLocation 3 caverns_floor_id Barrel 3 5 SquareRoom "down" 4 ( 0, 1 ) )
+        , ( 4, createTeleporterInfoWithLocation 4 caverns_floor_id Barrel 5 5 SquareRoom "up" 3 ( 0, -1 ) )
+        , ( 5, createTeleporterInfoWithLocation 5 caverns_floor_id Barrel 1 11 SquareRoom "down" 6 ( 0, 1 ) )
+        , ( 6, createTeleporterInfoWithLocation 6 caverns_floor_id Barrel 4 11 SquareRoom "up" 5 ( 0, -1 ) )
+        , ( 7, createTeleporterInfoWithLocation 7 caverns_floor_id BookCase 4 7 VerticalRoom "down" 8 ( 0, 1 ) )
+        , ( 8, createTeleporterInfoWithLocation 8 caverns_floor_id BookCase 6 7 SquareRoom "up" 7 ( 0, -1 ) )
+        , ( 9, createTeleporterInfoWithLocation 9 caverns_floor_id BookCase 7 7 SquareRoom "right" 10 ( 0, -1 ) )
+        , ( 10, createTeleporterInfoWithLocation 10 caverns_floor_id BookCase 6 10 SquareRoom "down" 9 ( -1, 0 ) )
+        , ( 11, createTeleporterInfoWithLocation 11 caverns_floor_id Clock 7 2 SquareRoom "right" 12 ( 1, 0 ) )
+        , ( 12, createTeleporterInfoWithLocation 12 caverns_floor_id Clock 7 9 SquareRoom "left" 11 ( -1, 0 ) )
+        , ( 13, createTeleporterInfoWithLocation 13 basement_floor_id BookCase 2 1 SquareRoom "down" 14 ( 0, 1 ) )
+        , ( 14, createTeleporterInfoWithLocation 14 basement_floor_id BookCase 6 1 SquareRoom "up" 13 ( 0, -1 ) )
+        , ( 15, createTeleporterInfoWithLocation 15 basement_floor_id Clock 1 2 SquareRoom "right" 16 ( 1, 0 ) )
+        , ( 16, createTeleporterInfoWithLocation 16 basement_floor_id Clock 1 5 SquareRoom "left" 15 ( -1, 0 ) )
+        , ( 17, createTeleporterInfoWithLocation 17 groundFloor_id Barrel 3 3 SquareRoom "down" 18 ( 0, 1 ) )
+        , ( 18, createTeleporterInfoWithLocation 18 groundFloor_id Barrel 5 3 SquareRoom "up" 17 ( 0, -1 ) )
+        , ( 19, createTeleporterInfoWithLocation 19 groundFloor_id Barrel 6 6 VerticalRoom "left" 20 ( -1, 0 ) )
+        , ( 20, createTeleporterInfoWithLocation 20 firstFloor_id Barrel 6 4 SquareRoom "right" 19 ( 1, 0 ) )
+        , ( 21, createTeleporterInfoWithLocation 21 groundFloor_id BookCase 1 5 HorizontalRoom "down" 22 ( 0, 1 ) )
+        , ( 22, createTeleporterInfoWithLocation 22 groundFloor_id BookCase 7 5 HorizontalRoom "up" 21 ( 0, -1 ) )
+        , ( 23, createTeleporterInfoWithLocation 23 groundFloor_id BookCase 3 4 SquareRoom "down" 24 ( 0, 1 ) )
+        , ( 24, createTeleporterInfoWithLocation 24 groundFloor_id BookCase 5 4 SquareRoom "up" 23 ( 0, -1 ) )
+        , ( 25, createTeleporterInfoWithLocation 25 groundFloor_id Clock 1 2 SquareRoom "down" 26 ( 0, 1 ) )
+        , ( 26, createTeleporterInfoWithLocation 26 groundFloor_id Clock 7 2 SquareRoom "up" 25 ( 0, -1 ) )
+        , ( 27, createTeleporterInfoWithLocation 27 groundFloor_id Clock 1 6 SquareRoom "down" 28 ( 0, 1 ) )
+        , ( 28, createTeleporterInfoWithLocation 28 groundFloor_id Clock 7 6 SquareRoom "up" 27 ( 0, -1 ) )
+        , ( 29, createTeleporterInfoWithLocation 29 firstFloor_id Clock 5 3 VerticalRoom "right" 30 ( 1, 0 ) )
+        , ( 30, createTeleporterInfoWithLocation 30 firstFloor_id Clock 4 4 VerticalRoom "left" 29 ( -1, 0 ) )
+        , ( 31, createTeleporterInfoWithLocation 31 theAttic_id Clock 1 1 SquareRoom "down" 32 ( 0, 1 ) )
+        , ( 32, createTeleporterInfoWithLocation 32 theAttic_id Clock 2 1 SquareRoom "up" 31 ( 0, -1 ) )
         ]

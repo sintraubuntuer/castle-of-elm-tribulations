@@ -22,7 +22,7 @@ import String
 
 title : String
 title =
-    "Chimera"
+    "Castle of Elm Tribulations"
 
 
 seed : Int

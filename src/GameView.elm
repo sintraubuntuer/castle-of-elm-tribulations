@@ -26,13 +26,13 @@ import Tile exposing (Tile(..), Visibility(..))
 xScale : Int
 xScale =
     --15 * 3
-    40
+    64
 
 
 yScale : Int
 yScale =
     --20 * 3
-    40
+    64
 
 
 

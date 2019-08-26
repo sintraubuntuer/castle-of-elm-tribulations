@@ -1,16 +1,21 @@
 module GameDefinitions.Common exposing
     ( ConfigParams
     , HoleId
+    , HoleInfoWithLocation
     , HorizontalTunnelOrientation(..)
     , ItemCreationInfo
     , ItemId
     , LandingTargetInfo
+    , LocationInfo
     , StairsOrientation(..)
     , TargetId
     , TeleporterId
+    , TeleporterInfoWithLocation
     , VerticalTunnelOrientation(..)
     , createHoleInfo
+    , createHoleInfoWithLocation
     , createTeleporterInfo
+    , createTeleporterInfoWithLocation
     , defaultHorizontalBlueDoorOptions
     , defaultHorizontalGreenDoorOptions
     , defaultHorizontalOpenDoorOptions
@@ -50,11 +55,11 @@ module GameDefinitions.Common exposing
 
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
-import GameModel exposing (RoomRectangle, TunnelRectangle)
+import GameModel exposing (RoomRectangle, RoomType(..), TunnelRectangle)
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import Thorns.Types
-import Tile exposing (HoleInfo, RoomType(..), TeleporterInfo, TeleporterType(..), Tile(..), Visibility(..))
+import Tile exposing (HoleInfo, TeleporterInfo, TeleporterType(..), Tile(..), Visibility(..))
 
 
 type alias HoleId =
@@ -654,7 +659,7 @@ createItemFloorInfo i_c_info =
     Tile.FloorInfo (Just i_c_info.item) Nothing True True False Unexplored ""
 
 
-setTeleportersInGrid : ConfigParams -> Dict TeleporterId TeleporterInfo -> Grid.Grid Tile -> Grid.Grid Tile
+setTeleportersInGrid : ConfigParams -> Dict TeleporterId TeleporterInfoWithLocation -> Grid.Grid Tile -> Grid.Grid Tile
 setTeleportersInGrid config_params teleporterDict_ grid =
     let
         lcoordsAndInfo =
@@ -684,9 +689,36 @@ setTeleportersInGrid config_params teleporterDict_ grid =
     List.foldl (\( ( x_coord, y_coord ), tinfo ) gridacc -> setTileTeleporter x_coord y_coord tinfo gridacc) grid lcoordsAndInfo
 
 
-createTeleporterInfo : Int -> Int -> TeleporterType -> Int -> Int -> RoomType -> String -> Int -> ( Int, Int ) -> Tile.TeleporterInfo
-createTeleporterInfo teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift =
-    Tile.TeleporterInfo teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift False Unexplored
+type alias LocationInfo =
+    { room_row_nr : Int
+    , room_col_nr : Int
+    , room_type : RoomType
+    , position_in_room : String
+    }
+
+
+type alias TeleporterInfoWithLocation =
+    { teleporterInfo : Tile.TeleporterInfo
+    , teleporterLocation : LocationInfo
+    }
+
+
+createTeleporterInfo : Int -> Int -> TeleporterType -> Int -> ( Int, Int ) -> Tile.TeleporterInfo
+createTeleporterInfo teleporterId floorId teleportertype targetId shift =
+    --Tile.TeleporterInfo teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift False Unexplored
+    Tile.TeleporterInfo teleporterId floorId teleportertype targetId shift False Unexplored
+
+
+createTeleporterInfoWithLocation : Int -> Int -> TeleporterType -> Int -> Int -> RoomType -> String -> Int -> ( Int, Int ) -> TeleporterInfoWithLocation
+createTeleporterInfoWithLocation teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift =
+    let
+        teleporterInfo =
+            Tile.TeleporterInfo teleporterId floorId teleportertype targetId shift False Unexplored
+
+        teleporterLocation =
+            LocationInfo row_nr col_nr room_type wall
+    in
+    TeleporterInfoWithLocation teleporterInfo teleporterLocation
 
 
 createTeleporterWallInfo : Tile.WallInfo -> TeleporterInfo -> Tile.WallInfo
@@ -694,21 +726,21 @@ createTeleporterWallInfo winfo tel_info =
     { winfo | mbTeleporterObject = Just tel_info }
 
 
-getTeleportersByFloorId : Int -> Dict TeleporterId TeleporterInfo -> Dict TeleporterId TeleporterInfo
+getTeleportersByFloorId : Int -> Dict TeleporterId TeleporterInfoWithLocation -> Dict TeleporterId TeleporterInfoWithLocation
 getTeleportersByFloorId floorId dTeleporters =
-    Dict.filter (\k v -> v.floor_id == floorId) dTeleporters
+    Dict.filter (\k v -> v.teleporterInfo.floor_id == floorId) dTeleporters
 
 
-getTeleportersCoordsAndTeleportersInfo : ConfigParams -> TeleporterInfo -> ( ( Int, Int ), TeleporterInfo )
-getTeleportersCoordsAndTeleportersInfo config_params teleporterInfo =
+getTeleportersCoordsAndTeleportersInfo : ConfigParams -> TeleporterInfoWithLocation -> ( ( Int, Int ), TeleporterInfo )
+getTeleportersCoordsAndTeleportersInfo config_params teleporterInfLoc =
     let
         ( x_coord, y_coord ) =
-            get_xy_coords_from_room_row_col teleporterInfo.room_row_nr teleporterInfo.room_col_nr teleporterInfo.room_type teleporterInfo.position_in_room config_params
+            get_xy_coords_from_room_row_col teleporterInfLoc.teleporterLocation.room_row_nr teleporterInfLoc.teleporterLocation.room_col_nr teleporterInfLoc.teleporterLocation.room_type teleporterInfLoc.teleporterLocation.position_in_room config_params
 
         ( x_c, y_c ) =
-            case teleporterInfo.teleporterType of
+            case teleporterInfLoc.teleporterInfo.teleporterType of
                 Clock ->
-                    if String.toLower teleporterInfo.position_in_room == "up" || String.toLower teleporterInfo.position_in_room == "down" then
+                    if String.toLower teleporterInfLoc.teleporterLocation.position_in_room == "up" || String.toLower teleporterInfLoc.teleporterLocation.position_in_room == "down" then
                         ( x_coord - 2, y_coord )
 
                     else
@@ -717,7 +749,7 @@ getTeleportersCoordsAndTeleportersInfo config_params teleporterInfo =
                 _ ->
                     ( x_coord, y_coord )
     in
-    ( ( x_c, y_c ), teleporterInfo )
+    ( ( x_c, y_c ), teleporterInfLoc.teleporterInfo )
 
 
 get_xy_coords_from_room_row_col : Int -> Int -> RoomType -> String -> ConfigParams -> ( Int, Int )
@@ -887,12 +919,12 @@ getLandingTargetsByFloorId floorId dlandingTargets =
     Dict.filter (\k v -> v.floor_id == floorId) dlandingTargets
 
 
-getHoleCoordsAndHoleInfo : HoleInfo -> ( ( Int, Int ), HoleInfo )
-getHoleCoordsAndHoleInfo holeinfo =
-    ( ( holeinfo.x, holeinfo.y ), holeinfo )
+getHoleCoordsAndHoleInfo : HoleInfoWithLocation -> ( ( Int, Int ), HoleInfo )
+getHoleCoordsAndHoleInfo holeInfLoc =
+    ( ( holeInfLoc.holeLocation.x, holeInfLoc.holeLocation.y ), holeInfLoc.holeInfo )
 
 
-setHolesInGrid : Dict HoleId HoleInfo -> Grid.Grid Tile -> Grid.Grid Tile
+setHolesInGrid : Dict HoleId HoleInfoWithLocation -> Grid.Grid Tile -> Grid.Grid Tile
 setHolesInGrid holesDict_ grid =
     let
         lcoordsAndInfo =
@@ -908,11 +940,33 @@ setHolesInGrid holesDict_ grid =
     List.foldl (\( ( x_coord, y_coord ), hinfo ) gridacc -> setTileHole x_coord y_coord hinfo gridacc) grid lcoordsAndInfo
 
 
-getHolesByFloorId : Int -> Dict HoleId HoleInfo -> Dict HoleId HoleInfo
+getHolesByFloorId : Int -> Dict HoleId HoleInfoWithLocation -> Dict HoleId HoleInfoWithLocation
 getHolesByFloorId floorId dHoles =
-    Dict.filter (\k v -> v.floorId == floorId) dHoles
+    Dict.filter (\k v -> v.holeInfo.floorId == floorId) dHoles
 
 
-createHoleInfo : Int -> Int -> Int -> Int -> Int -> HoleInfo
-createHoleInfo holeId floorId x y targetId =
-    HoleInfo holeId floorId x y targetId False Unexplored
+type alias HoleInfoWithLocation =
+    { holeInfo : HoleInfo
+    , holeLocation : Grid.Coordinate
+    }
+
+
+createHoleInfo : Int -> Int -> Int -> HoleInfo
+createHoleInfo holeId floorId targetId =
+    HoleInfo holeId floorId targetId False Unexplored
+
+
+createHoleInfoWithLocation : Int -> Int -> Int -> Int -> Int -> RoomType -> Int -> ConfigParams -> HoleInfoWithLocation
+createHoleInfoWithLocation holeId floorId row_nr col_nr pos_nr roomType targetId config_params =
+    let
+        ( pos_x, pos_y ) =
+            get_room_position_nr row_nr col_nr pos_nr roomType config_params
+    in
+    { holeInfo = HoleInfo holeId floorId targetId False Unexplored
+    , holeLocation = Grid.Coordinate pos_x pos_y
+    }
+
+
+
+-- get_room_position_nr row_nr col_nr pos_nr roomType config_params =
+--1 groundFloor_id 1 1 5 HorizontalRoom

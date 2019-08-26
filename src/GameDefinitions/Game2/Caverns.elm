@@ -11,6 +11,7 @@ import GameDefinitions.Common
         , StairsOrientation(..)
         , TargetId
         , TeleporterId
+        , TeleporterInfoWithLocation
         , VerticalTunnelOrientation(..)
         , defaultHorizontalBlueDoorOptions
         , defaultHorizontalGreenDoorOptions
@@ -55,14 +56,14 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
+        , RoomType(..)
         , TunnelRectangle
         )
 import Grid
 import MapGen
 import Tile
     exposing
-        ( RoomType(..)
-        , TeleporterInfo
+        ( TeleporterInfo
         , TeleporterType(..)
         , Tile(..)
         , WallInfo
@@ -105,7 +106,7 @@ cavernsItems =
     getItemsByFloorId caverns_floor_id itemCreationDict
 
 
-cavernsTeleporters : Dict TeleporterId TeleporterInfo
+cavernsTeleporters : Dict TeleporterId TeleporterInfoWithLocation
 cavernsTeleporters =
     getTeleportersByFloorId caverns_floor_id teleporterInfoDict
 

@@ -12,7 +12,6 @@ module Tile exposing
     , HoleInfo
     , LeverId
     , LeverInfo
-    , RoomType(..)
     , StairsInfo
     , TeleporterInfo
     , TeleporterType(..)
@@ -207,8 +206,6 @@ type alias StairsInfo =
 type alias HoleInfo =
     { holeId : Int
     , floorId : Int
-    , x : Int
-    , y : Int
     , target_id : Int
     , isExplored : Bool
     , visibility : Visibility
@@ -225,21 +222,11 @@ type alias TeleporterInfo =
     { teleporter_id : Int
     , floor_id : Int
     , teleporterType : TeleporterType
-    , room_row_nr : Int
-    , room_col_nr : Int
-    , room_type : RoomType
-    , position_in_room : String --(in WallUp , L R or D )
     , target_id : Int
     , shift : ( Int, Int )
     , isExplored : Bool
     , visibility : Visibility
     }
-
-
-type RoomType
-    = SquareRoom
-    | HorizontalRoom
-    | VerticalRoom
 
 
 defaultFloorInfo : FloorInfo
@@ -699,51 +686,3 @@ setTileAsExplored tile =
 
         NoTileYet ->
             NoTileYet
-
-
-
-{- }
-   showTile : Tile -> Text.Text
-   showTile tile =
-       let
-           c =
-               case tile of
-                   Floor floorinfo ->
-                       " "
-
-                   Grass ginfo ->
-                       "g"
-
-                   Tree treeinfo ->
-                       "t"
-
-                   Stairs sinfo ->
-                       "/"
-
-                   Hole hinfo ->
-                       "h"
-
-                   Wall winfo ->
-                       "#"
-
-                   WallOver wj ->
-                       "#"
-
-                   Door doorinfo ->
-                       "+"
-
-                   ConverterTile it ct ->
-                       "c"
-
-                   NoTileYet ->
-                       "n"
-
-                   _ ->
-                       "na"
-       in
-       c
-           |> Text.fromString
-
--}
---|> Text.monospace
---Element.centered << Text.monospace << Text.fromString <| c

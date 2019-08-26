@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import GameDefinitions.Common
     exposing
         ( HoleId
+        , HoleInfoWithLocation
         , HorizontalTunnelOrientation(..)
         , ItemCreationInfo
         , ItemId
@@ -11,6 +12,7 @@ import GameDefinitions.Common
         , StairsOrientation(..)
         , TargetId
         , TeleporterId
+        , TeleporterInfoWithLocation
         , VerticalTunnelOrientation(..)
         , defaultHorizontalBlueDoorOptions
         , defaultHorizontalGreenDoorOptions
@@ -52,14 +54,14 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
+        , RoomType(..)
         , TunnelRectangle
         )
 import Grid
 import MapGen
 import Tile
     exposing
-        ( RoomType(..)
-        , TeleporterInfo
+        ( TeleporterInfo
         , TeleporterType(..)
         , Tile(..)
         , WallInfo
@@ -94,7 +96,7 @@ addFirstFloorCustomRoomsAndTunnels grid =
         |> MapGen.correctSomeWallCorners
 
 
-firstFloorHoles : Dict HoleId Tile.HoleInfo
+firstFloorHoles : Dict HoleId HoleInfoWithLocation
 firstFloorHoles =
     getHolesByFloorId firstFloor_id holesDict
 
@@ -104,7 +106,7 @@ firstFloorLandingTargets =
     getLandingTargetsByFloorId firstFloor_id landingTargetsDict
 
 
-firstFloorTeleporters : Dict TeleporterId TeleporterInfo
+firstFloorTeleporters : Dict TeleporterId TeleporterInfoWithLocation
 firstFloorTeleporters =
     getTeleportersByFloorId firstFloor_id teleporterInfoDict
 

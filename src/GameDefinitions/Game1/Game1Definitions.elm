@@ -22,11 +22,6 @@ initialPlayer =
     let
         elem =
             "@"
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
     in
     Beings.playerCreationFunc elem "You"
 
@@ -36,11 +31,6 @@ initialFightingCharacter fcharId floorId =
     let
         elem =
             "e" ++ String.fromInt fcharId
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
     in
     Beings.fightingCharacterCreationFunc elem fcharId ("fightingCharacter" ++ String.fromInt fcharId) "ghost" floorId
 

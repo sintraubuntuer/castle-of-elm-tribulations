@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import GameDefinitions.Common
     exposing
         ( HoleId
+        , HoleInfoWithLocation
         , HorizontalTunnelOrientation(..)
         , ItemCreationInfo
         , ItemId
@@ -11,6 +12,7 @@ import GameDefinitions.Common
         , StairsOrientation(..)
         , TargetId
         , TeleporterId
+        , TeleporterInfoWithLocation
         , VerticalTunnelOrientation(..)
         , defaultHorizontalBlueDoorOptions
         , defaultHorizontalGreenDoorOptions
@@ -55,14 +57,14 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
 import GameModel
     exposing
         ( RoomRectangle
+        , RoomType(..)
         , TunnelRectangle
         )
 import Grid
 import MapGen
 import Tile
     exposing
-        ( RoomType(..)
-        , TeleporterInfo
+        ( TeleporterInfo
         , TeleporterType(..)
         , Tile(..)
         , WallInfo
@@ -102,7 +104,7 @@ basementItems =
     getItemsByFloorId basement_floor_id itemCreationDict
 
 
-basementHoles : Dict HoleId Tile.HoleInfo
+basementHoles : Dict HoleId HoleInfoWithLocation
 basementHoles =
     getHolesByFloorId basement_floor_id holesDict
 
@@ -112,7 +114,7 @@ basementLandingTargets =
     getLandingTargetsByFloorId basement_floor_id landingTargetsDict
 
 
-basementTeleporters : Dict TeleporterId TeleporterInfo
+basementTeleporters : Dict TeleporterId TeleporterInfoWithLocation
 basementTeleporters =
     getTeleportersByFloorId basement_floor_id teleporterInfoDict
 

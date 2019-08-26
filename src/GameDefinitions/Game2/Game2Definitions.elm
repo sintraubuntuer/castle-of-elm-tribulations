@@ -26,6 +26,7 @@ import GameDefinitions.Game2.TheAttic as TheAttic
 import GameModel
     exposing
         ( RoomRectangle
+        , RoomType(..)
         , TunnelRectangle
         )
 import Grid
@@ -35,7 +36,6 @@ import Thorns.Types
 import Tile
     exposing
         ( HoleInfo
-        , RoomType(..)
         , TeleporterInfo
         , TeleporterType(..)
         , Tile(..)
