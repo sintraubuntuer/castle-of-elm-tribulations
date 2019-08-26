@@ -3,6 +3,7 @@ module Item exposing
     , KeyInfo
     , PaperInfo
     , itemToImgSrc
+    , itemToString
     )
 
 
@@ -50,3 +51,31 @@ itemToImgSrc item =
         _ ->
             -- not important for now
             ""
+
+
+itemToString : Item -> String
+itemToString item =
+    case item of
+        Chest s ->
+            "chest_" ++ String.fromInt s
+
+        Skull ->
+            "skull"
+
+        Key kinfo ->
+            "key_" ++ kinfo.keyColor
+
+        Money ->
+            "money"
+
+        Box ->
+            "box"
+
+        Ash ->
+            "ash"
+
+        Paper paperinfo ->
+            "a piece of paper : " ++ paperinfo.description ++ " , with some written text : " ++ paperinfo.text
+
+        Food fdescription ->
+            "a piece of food : " ++ fdescription

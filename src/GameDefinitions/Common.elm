@@ -752,102 +752,102 @@ get_xy_coords_from_room_row_col row_nr col_nr rtype pos_in_room config_params =
     coords
 
 
-defaultVerticalYellowDoorOptions : GameModel.DoorWallOptions
+defaultVerticalYellowDoorOptions : Tile.DoorWallOptions
 defaultVerticalYellowDoorOptions =
-    { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToDown)
-    , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToUp)
+    { left = Tile.NoDoorNoWall
+    , top = Tile.UseDoor (Tile.defaultYellowDoorInfo Tile.DoorToDown)
+    , right = Tile.NoDoorNoWall
+    , bottom = Tile.UseDoor (Tile.defaultYellowDoorInfo Tile.DoorToUp)
     }
 
 
-defaultNoDoorOptions : GameModel.DoorWallOptions
+defaultNoDoorOptions : Tile.DoorWallOptions
 defaultNoDoorOptions =
-    { left = GameModel.NoDoorNoWall
-    , top = GameModel.NoDoorNoWall
-    , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.NoDoorNoWall
+    { left = Tile.NoDoorNoWall
+    , top = Tile.NoDoorNoWall
+    , right = Tile.NoDoorNoWall
+    , bottom = Tile.NoDoorNoWall
     }
 
 
-defaultHorizontalOpenDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalOpenDoorOptions : Tile.DoorWallOptions
 defaultHorizontalOpenDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToTheRight)
-    , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToTheLeft)
-    , bottom = GameModel.NoDoorNoWall
+    { left = Tile.UseDoor (Tile.defaultOpenDoorInfo Tile.DoorToTheRight)
+    , top = Tile.NoDoorNoWall
+    , right = Tile.UseDoor (Tile.defaultOpenDoorInfo Tile.DoorToTheLeft)
+    , bottom = Tile.NoDoorNoWall
     }
 
 
-defaultVerticalOpenDoorOptions : GameModel.DoorWallOptions
+defaultVerticalOpenDoorOptions : Tile.DoorWallOptions
 defaultVerticalOpenDoorOptions =
-    { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToDown)
-    , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultOpenDoorInfo Tile.DoorToUp)
+    { left = Tile.NoDoorNoWall
+    , top = Tile.UseDoor (Tile.defaultOpenDoorInfo Tile.DoorToDown)
+    , right = Tile.NoDoorNoWall
+    , bottom = Tile.UseDoor (Tile.defaultOpenDoorInfo Tile.DoorToUp)
     }
 
 
-defaultHorizontalBlueDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalBlueDoorOptions : Tile.DoorWallOptions
 defaultHorizontalBlueDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToTheRight)
-    , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToTheLeft)
-    , bottom = GameModel.NoDoorNoWall
+    { left = Tile.UseDoor (Tile.defaultBlueDoorInfo Tile.DoorToTheRight)
+    , top = Tile.NoDoorNoWall
+    , right = Tile.UseDoor (Tile.defaultBlueDoorInfo Tile.DoorToTheLeft)
+    , bottom = Tile.NoDoorNoWall
     }
 
 
-defaultVerticalBlueDoorOptions : GameModel.DoorWallOptions
+defaultVerticalBlueDoorOptions : Tile.DoorWallOptions
 defaultVerticalBlueDoorOptions =
-    { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToDown)
-    , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToUp)
+    { left = Tile.NoDoorNoWall
+    , top = Tile.UseDoor (Tile.defaultBlueDoorInfo Tile.DoorToDown)
+    , right = Tile.NoDoorNoWall
+    , bottom = Tile.UseDoor (Tile.defaultBlueDoorInfo Tile.DoorToUp)
     }
 
 
-defaultHorizontalRedDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalRedDoorOptions : Tile.DoorWallOptions
 defaultHorizontalRedDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToTheRight)
-    , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToTheLeft)
-    , bottom = GameModel.NoDoorNoWall
+    { left = Tile.UseDoor (Tile.defaultRedDoorInfo Tile.DoorToTheRight)
+    , top = Tile.NoDoorNoWall
+    , right = Tile.UseDoor (Tile.defaultRedDoorInfo Tile.DoorToTheLeft)
+    , bottom = Tile.NoDoorNoWall
     }
 
 
-defaultVerticalRedDoorOptions : GameModel.DoorWallOptions
+defaultVerticalRedDoorOptions : Tile.DoorWallOptions
 defaultVerticalRedDoorOptions =
-    { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToDown)
-    , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultRedDoorInfo Tile.DoorToUp)
+    { left = Tile.NoDoorNoWall
+    , top = Tile.UseDoor (Tile.defaultRedDoorInfo Tile.DoorToDown)
+    , right = Tile.NoDoorNoWall
+    , bottom = Tile.UseDoor (Tile.defaultRedDoorInfo Tile.DoorToUp)
     }
 
 
-defaultHorizontalGreenDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalGreenDoorOptions : Tile.DoorWallOptions
 defaultHorizontalGreenDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToTheRight)
-    , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToTheLeft)
-    , bottom = GameModel.NoDoorNoWall
+    { left = Tile.UseDoor (Tile.defaultGreenDoorInfo Tile.DoorToTheRight)
+    , top = Tile.NoDoorNoWall
+    , right = Tile.UseDoor (Tile.defaultGreenDoorInfo Tile.DoorToTheLeft)
+    , bottom = Tile.NoDoorNoWall
     }
 
 
-defaultVerticalGreenDoorOptions : GameModel.DoorWallOptions
+defaultVerticalGreenDoorOptions : Tile.DoorWallOptions
 defaultVerticalGreenDoorOptions =
-    { left = GameModel.NoDoorNoWall
-    , top = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToDown)
-    , right = GameModel.NoDoorNoWall
-    , bottom = GameModel.UseDoor (GameModel.defaultGreenDoorInfo Tile.DoorToUp)
+    { left = Tile.NoDoorNoWall
+    , top = Tile.UseDoor (Tile.defaultGreenDoorInfo Tile.DoorToDown)
+    , right = Tile.NoDoorNoWall
+    , bottom = Tile.UseDoor (Tile.defaultGreenDoorInfo Tile.DoorToUp)
     }
 
 
-defaultHorizontalYellowDoorOptions : GameModel.DoorWallOptions
+defaultHorizontalYellowDoorOptions : Tile.DoorWallOptions
 defaultHorizontalYellowDoorOptions =
-    { left = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToTheRight)
-    , top = GameModel.NoDoorNoWall
-    , right = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToTheLeft)
-    , bottom = GameModel.NoDoorNoWall
+    { left = Tile.UseDoor (Tile.defaultYellowDoorInfo Tile.DoorToTheRight)
+    , top = Tile.NoDoorNoWall
+    , right = Tile.UseDoor (Tile.defaultYellowDoorInfo Tile.DoorToTheLeft)
+    , bottom = Tile.NoDoorNoWall
     }
 
 

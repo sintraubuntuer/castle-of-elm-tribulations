@@ -56,11 +56,6 @@ import GameModel
     exposing
         ( RoomRectangle
         , TunnelRectangle
-        , defaultBrickWallInfo
-        , defaultFloorInfo
-        , defaultWallInfo
-        , defaultWallUpInfo
-        , defaultWaterInfo
         )
 import Grid
 import MapGen
@@ -71,6 +66,11 @@ import Tile
         , TeleporterType(..)
         , Tile(..)
         , WallInfo
+        , defaultBrickWallInfo
+        , defaultFloorInfo
+        , defaultWallInfo
+        , defaultWallUpInfo
+        , defaultWaterInfo
         )
 
 
@@ -183,7 +183,7 @@ cavernsInitialRoomRectangles =
         |> List.map (\xfunc -> xfunc config_params)
 
 
-cavernsInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+cavernsInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 cavernsInitialHorizontalTunnelRectanglesWithOptions =
     [ ( getCommonHorizontalTunnel 1 7, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 1 8, defaultHorizontalOpenDoorOptions )
@@ -234,7 +234,7 @@ cavernsInitialHorizontalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) cavernsInitialHorizontalTunnelRectanglesWithOptions
 
 
-cavernsInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+cavernsInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 cavernsInitialVerticalTunnelRectanglesWithOptions =
     [ ( getCommonVerticalTunnel 2 2, defaultVerticalOpenDoorOptions )
     , ( getCommonVerticalTunnel 3 2, defaultVerticalOpenDoorOptions )

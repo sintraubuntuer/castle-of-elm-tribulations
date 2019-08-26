@@ -23,12 +23,23 @@ import GameDefinitions.Game2.FirstFloor as FirstFloor
 import GameDefinitions.Game2.GroundFloor as GroundFloor
 import GameDefinitions.Game2.LastFloor as LastFloor
 import GameDefinitions.Game2.TheAttic as TheAttic
-import GameModel exposing (RoomRectangle, TunnelRectangle)
+import GameModel
+    exposing
+        ( RoomRectangle
+        , TunnelRectangle
+        )
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
 import Thorns.Types
-import Tile exposing (HoleInfo, RoomType(..), TeleporterInfo, TeleporterType(..), Tile(..))
+import Tile
+    exposing
+        ( HoleInfo
+        , RoomType(..)
+        , TeleporterInfo
+        , TeleporterType(..)
+        , Tile(..)
+        )
 
 
 initialPlayer : Player

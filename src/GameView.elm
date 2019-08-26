@@ -803,7 +803,7 @@ mainScreen model =
                 []
 
         visibilitySubGrid =
-            Grid.map (\t -> GameModel.getTileVisibility t) subgrid
+            Grid.map (\t -> Tile.getTileVisibility t) subgrid
 
         fogger =
             mkLayer (Grid.toList visibilitySubGrid) (row fogT)

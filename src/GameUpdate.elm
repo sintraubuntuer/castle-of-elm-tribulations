@@ -37,11 +37,7 @@ import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
-import GameModel
-    exposing
-        ( Model
-        , defaultGrassInfo
-        )
+import GameModel exposing (Model)
 import Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
@@ -291,7 +287,7 @@ update msg model =
                                             )
 
                                         _ ->
-                                            ( Dict.update (GameModel.itemToString item) (\_ -> Just item) model.player.inventory
+                                            ( Dict.update (Item.itemToString item) (\_ -> Just item) model.player.inventory
                                             , Grid.set pcoords (Tile.Floor { floorinfo | item = Nothing }) model.level
                                             , model.player.health
                                             )
@@ -864,7 +860,7 @@ turnNeighbourWallCellstoAshes { x, y } model =
                 Just (Tile.Wall wallinfo) ->
                     let
                         floorinfo =
-                            GameModel.defaultFloorInfo
+                            Tile.defaultFloorInfo
                     in
                     { themodel | level = Grid.set cellCoords (Tile.Floor { floorinfo | item = Just Ash }) themodel.level }
                         |> turnNeighbourWallCellstoAshes cellCoords
@@ -1207,8 +1203,8 @@ reveal model =
         intermediateModelGrid =
             Grid.map
                 (\t ->
-                    if GameModel.getTileVisibility t == Visible then
-                        GameModel.setTileVisibility Explored t
+                    if Tile.getTileVisibility t == Visible then
+                        Tile.setTileVisibility Explored t
 
                     else
                         t

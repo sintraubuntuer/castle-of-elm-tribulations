@@ -17,8 +17,14 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
         , theAttic_id
         )
 import GameModel
+import Grid
+import Tile
     exposing
-        ( defaultBrickWallInfo
+        ( StairsInfo
+        , Tile(..)
+        , Visibility(..)
+        , WallInfo
+        , defaultBrickWallInfo
         , defaultFloorInfo
         , defaultGrassInfo
         , defaultLeverInfo
@@ -29,14 +35,6 @@ import GameModel
         , defaultWaterInfo
         , defaultWaterWallLeftInfo
         , defaultWaterWallUpInfo
-        )
-import Grid
-import Tile
-    exposing
-        ( StairsInfo
-        , Tile(..)
-        , Visibility(..)
-        , WallInfo
         )
 
 
@@ -66,16 +64,16 @@ modelChangerFuncsForLever1 =
         if reqsCompleted model then
             { model
                 | level =
-                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
-                        |> Grid.set (Grid.Coordinate 16 2) (Tile.Water GameModel.walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 17 2) (Tile.Water GameModel.walkableWaterInfo)
+                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo) model.level
+                        |> Grid.set (Grid.Coordinate 16 2) (Tile.Water Tile.walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 17 2) (Tile.Water Tile.walkableWaterInfo)
                         |> Grid.set (Grid.Coordinate 20 13) (Tile.Grass defaultGrassInfo)
             }
 
         else
             { model
                 | level =
-                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor GameModel.defaultFloorInfo) model.level
+                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo) model.level
                         |> Grid.set coords (Lever customLeverInfo)
             }
     ]

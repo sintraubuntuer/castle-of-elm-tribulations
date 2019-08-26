@@ -53,11 +53,6 @@ import GameModel
     exposing
         ( RoomRectangle
         , TunnelRectangle
-        , defaultBrickWallInfo
-        , defaultFloorInfo
-        , defaultWallInfo
-        , defaultWallUpInfo
-        , defaultWaterInfo
         )
 import Grid
 import MapGen
@@ -68,6 +63,11 @@ import Tile
         , TeleporterType(..)
         , Tile(..)
         , WallInfo
+        , defaultBrickWallInfo
+        , defaultFloorInfo
+        , defaultWallInfo
+        , defaultWallUpInfo
+        , defaultWaterInfo
         )
 
 
@@ -151,7 +151,7 @@ theAtticInitialVerticalTunnelRectangles =
     List.map (\( tunnel, opts ) -> tunnel) theAtticInitialVerticalTunnelRectanglesWithOptions
 
 
-theAtticInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+theAtticInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 theAtticInitialVerticalTunnelRectanglesWithOptions =
     [ ( getCommonVerticalTunnel 1 1 config_params, defaultVerticalOpenDoorOptions )
     , ( getCommonVerticalTunnel 2 1 config_params, defaultVerticalOpenDoorOptions )
@@ -175,7 +175,7 @@ theAtticInitialHorizontalTunnelRectangles =
     List.map (\( tunnel, opts ) -> tunnel) theAtticInitialHorizontalTunnelRectanglesWithOptions
 
 
-theAtticInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+theAtticInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 theAtticInitialHorizontalTunnelRectanglesWithOptions =
     [ ( getCommonHorizontalTunnel 1 1, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 1 2, defaultHorizontalGreenDoorOptions )

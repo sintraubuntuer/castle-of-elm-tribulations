@@ -53,11 +53,6 @@ import GameModel
     exposing
         ( RoomRectangle
         , TunnelRectangle
-        , defaultBrickWallInfo
-        , defaultFloorInfo
-        , defaultWallInfo
-        , defaultWallUpInfo
-        , defaultWaterInfo
         )
 import Grid
 import MapGen
@@ -68,6 +63,11 @@ import Tile
         , TeleporterType(..)
         , Tile(..)
         , WallInfo
+        , defaultBrickWallInfo
+        , defaultFloorInfo
+        , defaultWallInfo
+        , defaultWallUpInfo
+        , defaultWaterInfo
         )
 
 
@@ -164,7 +164,7 @@ firstFloorInitialVerticalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) firstFloorInitialVerticalTunnelRectanglesWithOptions
 
 
-firstFloorInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+firstFloorInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 firstFloorInitialVerticalTunnelRectanglesWithOptions =
     [ ( getCommonVerticalTunnel 1 1, defaultVerticalOpenDoorOptions )
     , ( getCommonVerticalTunnel 6 1, defaultVerticalOpenDoorOptions )
@@ -197,7 +197,7 @@ firstFloorInitialHorizontalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) firstFloorInitialHorizontalTunnelRectanglesWithOptions
 
 
-firstFloorInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+firstFloorInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 firstFloorInitialHorizontalTunnelRectanglesWithOptions =
     [ ( getCommonHorizontalTunnel 1 1, defaultHorizontalGreenDoorOptions )
 
@@ -235,14 +235,14 @@ firstFloorStairsTunnel =
     List.map (\( tun, opt ) -> tun) firstFloorStairsTunnelWithOptions
 
 
-firstFloorStairsTunnelWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+firstFloorStairsTunnelWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 firstFloorStairsTunnelWithOptions =
     [ ( getVerticalTunnel 5 5 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) Nothing Nothing config_params, defaultNoDoorOptions )
     , ( getVerticalTunnel 3 5 TunnelDown Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) Nothing Nothing config_params
-      , { left = GameModel.NoDoorNoWall
-        , top = GameModel.UseDoor (GameModel.defaultYellowDoorInfo Tile.DoorToDown)
-        , right = GameModel.NoDoorNoWall
-        , bottom = GameModel.NoDoorNoWall
+      , { left = Tile.NoDoorNoWall
+        , top = Tile.UseDoor (Tile.defaultYellowDoorInfo Tile.DoorToDown)
+        , right = Tile.NoDoorNoWall
+        , bottom = Tile.NoDoorNoWall
         }
       )
     ]

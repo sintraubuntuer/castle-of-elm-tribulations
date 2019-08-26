@@ -60,12 +60,12 @@ getNeighborsOrElse2 x grid coord =
 
 getNeighbors : Grid.Grid Tile -> Grid.Coordinate -> List Tile
 getNeighbors =
-    getNeighborsOrElse (Tile.Wall GameModel.defaultWallInfo)
+    getNeighborsOrElse (Tile.Wall Tile.defaultWallInfo)
 
 
 getNeighbors2 : Grid.Grid Tile -> Grid.Coordinate -> List Tile
 getNeighbors2 =
-    getNeighborsOrElse2 (Tile.Wall GameModel.defaultWallInfo)
+    getNeighborsOrElse2 (Tile.Wall Tile.defaultWallInfo)
 
 
 numberOfWalls : Grid.Grid Tile -> Grid.Coordinate -> Int
@@ -104,10 +104,10 @@ randomTile rfloat =
         tile =
             --if rfloat < 0.4 then
             if rfloat < 0.4 then
-                Tile.Wall GameModel.defaultWallInfo
+                Tile.Wall Tile.defaultWallInfo
 
             else
-                Tile.Floor GameModel.defaultFloorInfo
+                Tile.Floor Tile.defaultFloorInfo
     in
     tile
 
@@ -139,10 +139,10 @@ iterate grid =
                 (\coord ->
                     ( coord
                     , if numberOfWalls grid coord >= 5 then
-                        Tile.Wall GameModel.defaultWallInfo
+                        Tile.Wall Tile.defaultWallInfo
 
                       else
-                        Tile.Floor GameModel.defaultFloorInfo
+                        Tile.Floor Tile.defaultFloorInfo
                     )
                 )
                 coords
@@ -158,13 +158,13 @@ iterate2 grid =
 
         rule coord =
             if numberOfWalls grid coord >= 5 then
-                Tile.Wall GameModel.defaultWallInfo
+                Tile.Wall Tile.defaultWallInfo
 
             else if numberOfWalls2 grid coord <= 2 then
-                Tile.Wall GameModel.defaultWallInfo
+                Tile.Wall Tile.defaultWallInfo
 
             else
-                Tile.Floor GameModel.defaultFloorInfo
+                Tile.Floor Tile.defaultFloorInfo
 
         x =
             List.map (\coord -> ( coord, rule coord )) coords
@@ -370,7 +370,7 @@ installLeversInCoords lcoords grid =
             List.indexedMap (\i coord -> ( i, coord )) lcoords
 
         setLeverFunc idx coords grid_ =
-            Grid.set coords (Tile.Lever (GameModel.defaultLeverInfo idx)) grid_
+            Grid.set coords (Tile.Lever (Tile.defaultLeverInfo idx)) grid_
     in
     List.foldl (\( idx, coords ) gridacc -> setLeverFunc idx coords gridacc) grid lindexAndCoords
 
@@ -439,10 +439,10 @@ determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect topBotLeftR
         (\cellcoords gridacc ->
             if Grid.get cellcoords gridacc == Just Tile.NoTileYet then
                 if topBotLeftRightStr == "left-1" || topBotLeftRightStr == "left" || topBotLeftRightStr == "right" || topBotLeftRightStr == "right+1" then
-                    Grid.set cellcoords (Tile.Wall GameModel.defaultWallUpInfo) gridacc
+                    Grid.set cellcoords (Tile.Wall Tile.defaultWallUpInfo) gridacc
 
                 else
-                    Grid.set cellcoords (Tile.Wall GameModel.defaultWallInfo) gridacc
+                    Grid.set cellcoords (Tile.Wall Tile.defaultWallInfo) gridacc
 
             else
                 gridacc
@@ -471,49 +471,49 @@ correctSomeWallCorners grid =
             Grid.toCoordinates grid
 
         isFourWay tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isThreeWayAtBottom tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isThreeWayAtRight tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isThreeWayAtTop tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
 
         isThreeWayAtLeft tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isTopLeftCorner tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
 
         isTopRightCorner tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
 
         isBottomRightCorner tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isBottomLeftCorner tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isInVerticalWall tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isInHorizontalWall tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_) && Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_)
 
         isCulDeSacAtBottom tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y - 1 } grid_)
 
         isCulDeSacAtTop tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x, y = coords.y + 1 } grid_)
 
         isCulDeSacAtLeft tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x + 1, y = coords.y } grid_)
 
         isCulDeSacAtRight tile coords grid_ =
-            GameModel.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_)
+            Tile.isMbTileWall (Grid.get { x = coords.x - 1, y = coords.y } grid_)
 
         checkAndUpdateGriCoord coord grid_ =
             case Grid.get coord grid_ of
@@ -522,49 +522,49 @@ correctSomeWallCorners grid =
 
                 Just tile ->
                     if isFourWay tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "four_way" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "four_way" tile) grid_
 
                     else if isThreeWayAtBottom tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "three_way_at_bottom" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "three_way_at_bottom" tile) grid_
 
                     else if isThreeWayAtRight tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "three_way_at_right" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "three_way_at_right" tile) grid_
 
                     else if isThreeWayAtTop tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "three_way_at_top" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "three_way_at_top" tile) grid_
 
                     else if isThreeWayAtLeft tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "three_way_at_left" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "three_way_at_left" tile) grid_
 
                     else if isTopLeftCorner tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "corner_top_left" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "corner_top_left" tile) grid_
 
                     else if isTopRightCorner tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "corner_top_right" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "corner_top_right" tile) grid_
 
                     else if isBottomRightCorner tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "corner_bottom_right" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "corner_bottom_right" tile) grid_
 
                     else if isBottomLeftCorner tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "corner_bottom_left" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "corner_bottom_left" tile) grid_
 
                     else if isInVerticalWall tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "up" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "up" tile) grid_
 
                     else if isInHorizontalWall tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "horizontal" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "horizontal" tile) grid_
 
                     else if isCulDeSacAtBottom tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "cul_de_sac_at_bottom" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "cul_de_sac_at_bottom" tile) grid_
 
                     else if isCulDeSacAtTop tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "cul_de_sac_at_top" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "cul_de_sac_at_top" tile) grid_
 
                     else if isCulDeSacAtLeft tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "cul_de_sac_at_left" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "cul_de_sac_at_left" tile) grid_
 
                     else if isCulDeSacAtRight tile coord grid_ then
-                        Grid.set coord (GameModel.setWallTileOrientation "cul_de_sac_at_right" tile) grid_
+                        Grid.set coord (Tile.setWallTileOrientation "cul_de_sac_at_right" tile) grid_
 
                     else
                         grid_
@@ -598,10 +598,10 @@ transformFloorToWallOnDisplayBoundaries grid =
             case Grid.get coord grid_ of
                 Just (Tile.Floor _) ->
                     if lrtd == "l" || lrtd == "r" then
-                        Grid.set coord (Tile.Wall GameModel.defaultWallUpInfo) grid_
+                        Grid.set coord (Tile.Wall Tile.defaultWallUpInfo) grid_
 
                     else
-                        Grid.set coord (Tile.Wall GameModel.defaultWallInfo) grid_
+                        Grid.set coord (Tile.Wall Tile.defaultWallInfo) grid_
 
                 _ ->
                     grid_
@@ -768,13 +768,13 @@ listTunnelRectangleToGridFunc ltunnels grid =
     listDungeonRectangleToGridFunc (List.map (\tun -> ( tun, noDoornoWallOption )) ltunnels) (Just "orange") grid
 
 
-listTunnelRectangleWithOptionsToGridFunc : List ( GameModel.TunnelRectangle, GameModel.DoorWallOptions ) -> Grid.Grid Tile -> Grid.Grid Tile
+listTunnelRectangleWithOptionsToGridFunc : List ( GameModel.TunnelRectangle, Tile.DoorWallOptions ) -> Grid.Grid Tile -> Grid.Grid Tile
 listTunnelRectangleWithOptionsToGridFunc ltunnelsWithOptions grid =
     -- for now , still have to write this
     listDungeonRectangleToGridFunc ltunnelsWithOptions (Just "orange") grid
 
 
-dungeonRectangleToGridFunc : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> GameModel.DoorWallOptions -> Maybe String -> Grid.Grid Tile -> Grid.Grid Tile
+dungeonRectangleToGridFunc : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> Tile.DoorWallOptions -> Maybe String -> Grid.Grid Tile -> Grid.Grid Tile
 dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
     let
         left_x =
@@ -799,21 +799,21 @@ dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
             mbFloorColor |> Maybe.withDefault "default"
 
         defaultFloorInfoWithColor =
-            GameModel.defaultFloorInfo |> (\x -> { x | color = floorColor })
+            Tile.defaultFloorInfo |> (\x -> { x | color = floorColor })
 
         useWalls =
             False
 
-        getDoorWallOrFloor : GameModel.DoorWallOption -> Tile
+        getDoorWallOrFloor : Tile.DoorWallOption -> Tile
         getDoorWallOrFloor doorWallOption =
             case doorWallOption of
-                GameModel.UseWall ->
-                    Tile.Wall GameModel.defaultWallInfo
+                Tile.UseWall ->
+                    Tile.Wall Tile.defaultWallInfo
 
-                GameModel.UseDoor dinfo ->
+                Tile.UseDoor dinfo ->
                     Tile.Door dinfo
 
-                GameModel.NoDoorNoWall ->
+                Tile.NoDoorNoWall ->
                     Tile.Floor defaultFloorInfoWithColor
 
         generateTile : Int -> Int -> Tile
@@ -843,12 +843,12 @@ dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor grid =
     new_grid
 
 
-noDoornoWallOption : GameModel.DoorWallOptions
+noDoornoWallOption : Tile.DoorWallOptions
 noDoornoWallOption =
-    GameModel.DoorWallOptions GameModel.NoDoorNoWall GameModel.NoDoorNoWall GameModel.NoDoorNoWall GameModel.NoDoorNoWall
+    Tile.DoorWallOptions Tile.NoDoorNoWall Tile.NoDoorNoWall Tile.NoDoorNoWall Tile.NoDoorNoWall
 
 
-listDungeonRectangleToGridFunc : List ( { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int }, GameModel.DoorWallOptions ) -> Maybe String -> Grid.Grid Tile -> Grid.Grid Tile
+listDungeonRectangleToGridFunc : List ( { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int }, Tile.DoorWallOptions ) -> Maybe String -> Grid.Grid Tile -> Grid.Grid Tile
 listDungeonRectangleToGridFunc lroomrectsWithOptions mbFloorColor grid =
     List.foldl (\( roomrect, doorWallOptions ) gridacc -> dungeonRectangleToGridFunc roomrect doorWallOptions mbFloorColor gridacc) grid lroomrectsWithOptions
 

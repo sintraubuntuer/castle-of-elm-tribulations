@@ -57,11 +57,6 @@ import GameModel
     exposing
         ( RoomRectangle
         , TunnelRectangle
-        , defaultBrickWallInfo
-        , defaultFloorInfo
-        , defaultWallInfo
-        , defaultWallUpInfo
-        , defaultWaterInfo
         )
 import Grid
 import Item
@@ -74,6 +69,11 @@ import Tile
         , Tile(..)
         , Visibility(..)
         , WallInfo
+        , defaultBrickWallInfo
+        , defaultFloorInfo
+        , defaultWallInfo
+        , defaultWallUpInfo
+        , defaultWaterInfo
         )
 
 
@@ -189,7 +189,7 @@ groundFloorInitialVerticalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) groundFloorInitialVerticalTunnelRectanglesWithOptions
 
 
-groundFloorInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+groundFloorInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 groundFloorInitialVerticalTunnelRectanglesWithOptions =
     [ ( getCommonVerticalTunnel 1 2 config_params, defaultVerticalOpenDoorOptions )
     , ( getCommonVerticalTunnel 2 2 config_params, defaultVerticalOpenDoorOptions )
@@ -225,7 +225,7 @@ groundFloorInitialHorizontalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) groundFloorInitialHorizontalTunnelRectanglesWithOptions
 
 
-groundFloorInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+groundFloorInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 groundFloorInitialHorizontalTunnelRectanglesWithOptions =
     [ ( getCommonHorizontalTunnel 1 1, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 1 2, defaultHorizontalOpenDoorOptions )
@@ -265,7 +265,7 @@ groundFloorInitialHorizontalTunnelRectanglesWithOptions =
         |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))
 
 
-groundFloorStairsTunnelWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+groundFloorStairsTunnelWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 groundFloorStairsTunnelWithOptions =
     [ ( getVerticalTunnel 9 2 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) Nothing Nothing (Just ( -6, 0 )), defaultNoDoorOptions )
     , ( getVerticalTunnel 5 6 TunnelUp Nothing (Just (config_params.horizontal_wall_height + 1)) (Just HorizontalRoom) (Just HorizontalRoom) Nothing, defaultNoDoorOptions )
@@ -275,12 +275,12 @@ groundFloorStairsTunnelWithOptions =
     , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
       , defaultNoDoorOptions
         {-
-           , { left = GameModel.UseDoor (customBlackDoorInfo Tile.DoorToTheRight)
+           , { left = Tile.UseDoor (customBlackDoorInfo Tile.DoorToTheRight)
 
-             --left = GameModel.UseDoor (GameModel.defaultBlueDoorInfo Tile.DoorToTheRight)
-             , top = GameModel.NoDoorNoWall
-             , right = GameModel.NoDoorNoWall
-             , bottom = GameModel.NoDoorNoWall
+             --left = Tile.UseDoor (Tile.defaultBlueDoorInfo Tile.DoorToTheRight)
+             , top = Tile.NoDoorNoWall
+             , right = Tile.NoDoorNoWall
+             , bottom = Tile.NoDoorNoWall
              }
         -}
       )

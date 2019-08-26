@@ -56,11 +56,6 @@ import GameModel
     exposing
         ( RoomRectangle
         , TunnelRectangle
-        , defaultBrickWallInfo
-        , defaultFloorInfo
-        , defaultWallInfo
-        , defaultWallUpInfo
-        , defaultWaterInfo
         )
 import Grid
 import MapGen
@@ -71,6 +66,11 @@ import Tile
         , TeleporterType(..)
         , Tile(..)
         , WallInfo
+        , defaultBrickWallInfo
+        , defaultFloorInfo
+        , defaultWallInfo
+        , defaultWallUpInfo
+        , defaultWaterInfo
         )
 
 
@@ -155,7 +155,7 @@ basementInitialHorizontalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) basementInitialHorizontalTunnelRectanglesWithOptions
 
 
-basementInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+basementInitialHorizontalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 basementInitialHorizontalTunnelRectanglesWithOptions =
     [ ( getCommonHorizontalTunnel 2 1, defaultHorizontalYellowDoorOptions )
     , ( getCommonHorizontalTunnel 2 2, defaultHorizontalOpenDoorOptions )
@@ -187,7 +187,7 @@ basementInitialVerticalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) basementInitialVerticalTunnelRectanglesWithOptions
 
 
-basementInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+basementInitialVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 basementInitialVerticalTunnelRectanglesWithOptions =
     [ ( getCommonVerticalTunnel 1 2, defaultVerticalBlueDoorOptions )
     , ( getCommonVerticalTunnel 1 5, defaultVerticalOpenDoorOptions )
@@ -212,7 +212,7 @@ basementCustomVerticalTunnelRectangles =
     List.map (\( tun, opt ) -> tun) basementCustomVerticalTunnelRectanglesWithOptions
 
 
-basementCustomVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, GameModel.DoorWallOptions )
+basementCustomVerticalTunnelRectanglesWithOptions : List ( TunnelRectangle, Tile.DoorWallOptions )
 basementCustomVerticalTunnelRectanglesWithOptions =
     [ ( getVerticalTunnel 3 2 TunnelDown Nothing (Just (4 * config_params.horizontal_wall_height + 2 * config_params.vertical_space_between_rooms + config_params.square_room_side)) Nothing Nothing (Just ( 0, 0 )), defaultVerticalBlueDoorOptions )
     , ( getVerticalTunnel 3 5 TunnelDown Nothing (Just (4 * config_params.horizontal_wall_height + 2 * config_params.vertical_space_between_rooms + config_params.square_room_side)) Nothing Nothing (Just ( 0, 0 )), defaultVerticalOpenDoorOptions )

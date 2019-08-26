@@ -40,7 +40,7 @@ turnNeighbourWallCellstoAshes { x, y } grid =
                 Just (Tile.Wall wallinfo) ->
                     let
                         floorinfo =
-                            GameModel.defaultFloorInfo
+                            Tile.defaultFloorInfo
                     in
                     Grid.set cellCoords (Tile.Floor { floorinfo | item = Just Ash }) grid_
                         |> turnNeighbourWallCellstoAshes cellCoords
@@ -105,7 +105,7 @@ randomlySelectPositionFromListAndSimulateWallToAshes lwallCoords lrandints grid 
                 lrelevantNeighbourCells =
                     [ Grid.Coordinate (coords.x + 1) coords.y, Grid.Coordinate coords.x (coords.y + 1), Grid.Coordinate (coords.x - 1) coords.y, Grid.Coordinate coords.x (coords.y - 1) ]
             in
-            List.foldl (\cell bacc -> GameModel.isFloor (Grid.get cell grid_ |> Maybe.withDefault Tile.NoTileYet) || bacc) False lrelevantNeighbourCells
+            List.foldl (\cell bacc -> Tile.isFloor (Grid.get cell grid_ |> Maybe.withDefault Tile.NoTileYet) || bacc) False lrelevantNeighbourCells
 
         filterWalls =
             List.filter (\coords -> cellHasAtLeastOneFloorNeighbour coords grid) lwallCoords
