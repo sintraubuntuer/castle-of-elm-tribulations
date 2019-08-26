@@ -5,8 +5,6 @@ module MapGen exposing
     , correctSomeWallCorners
     , createHorizontalAndVerticalTunnels
     , createWallBoundaries
-    , determineCornerAndInstallLever
-    , determineLeverNearCornerRoom1Coords
     , determineRectangularRegionBoundaries
     , determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet
     , dungeonRectangleToGridFunc
@@ -37,13 +35,7 @@ module MapGen exposing
     , transformFloorToWallOnDisplayBoundaries
     )
 
---import Generator
---import Generator.Standard
---import Graphics.Input as Input
---import GameView
-
 import GameModel
-import GameSimulation
 import Grid
 import Tile exposing (Tile(..))
 
@@ -102,7 +94,6 @@ randomTile : Float -> Tile
 randomTile rfloat =
     let
         tile =
-            --if rfloat < 0.4 then
             if rfloat < 0.4 then
                 Tile.Wall Tile.defaultWallInfo
 
@@ -273,10 +264,6 @@ randomRoomGenerator totalwidth totalheight roomMaxSize roomMinSize ( lroomrectan
         ( lroomrectangles, lrandIntsAfterXandY )
 
     else
-        --let
-        --    _ =
-        --        Debug.log " adding new Room to Map : " newRoom
-        --in
         ( newRoom :: lroomrectangles, lrandIntsAfterXandY )
 
 
@@ -308,59 +295,13 @@ randomMapGeneratorWithRooms totalwidth totalheight maxRooms roomMaxSize roomMinS
                 |> listRoomRectangleToGridFunc lroomrectangles
                 |> createHorizontalAndVerticalTunnels unused_lrandomints lroomrectangles
 
-        ( newnewgrid, lLeverCoords ) =
-            --fillTunnelSidesWithWalls newGrid ltunnelrectangles
-            --createWallBoundary newGrid
+        newnewgrid =
             newGrid
                 |> createWallBoundaries (ltunnelrectangles ++ lroomrectangles)
-                --|> make sure if cell with x == 0 is a Floor transform to a Wall transformFloorToWallForXEqualsZero
                 |> transformFloorToWallOnDisplayBoundaries
                 |> correctSomeWallCorners
-                |> determineCornerAndInstallLever lroomrectangles
-
-        --|> fillTunnelSidesWithWalls ltunnelrectangles Nothing
-        --|> fillTunnelSidesWithWalls lroomrectangles (Just "horizontal")
-        --|> fillTunnelSidesWithWalls lroomrectangles (Just "vertical")
-        ( simGrid, lLeverCoords2, lremainingrandints ) =
-            GameSimulation.simulationToGetLeverPositions 20 ( newnewgrid |> GameSimulation.mbTurnNeighbourWallCellstoAshes (List.head lLeverCoords), [], lunusedrandints )
-
-        gridAfterInstallLevers =
-            newnewgrid |> installLeversInCoords lLeverCoords2
-
-        --_ =
-        --    Debug.log "list of lever coords position : " (lLeverCoords ++ lLeverCoords2)
     in
-    { tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
-
-
-determineCornerAndInstallLever : List GameModel.RoomRectangle -> Grid.Grid Tile -> ( Grid.Grid Tile, List Grid.Coordinate )
-determineCornerAndInstallLever lrrects grid =
-    let
-        lcoords =
-            determineLeverNearCornerRoom1Coords lrrects grid
-    in
-    ( installLeversInCoords lcoords grid, lcoords )
-
-
-determineLeverNearCornerRoom1Coords : List GameModel.RoomRectangle -> Grid.Grid Tile -> List Grid.Coordinate
-determineLeverNearCornerRoom1Coords lroomrectangles grid =
-    let
-        mbXYpos1 =
-            lroomrectangles
-                |> List.head
-                |> Maybe.map (\rrect -> ( rrect.top_left_x + rrect.width - 1, rrect.top_left_y + rrect.height - 1 ))
-                |> Maybe.map (\tup -> Grid.Coordinate (Tuple.first tup) (Tuple.second tup))
-
-        mbXYpos2 =
-            lroomrectangles
-                |> List.head
-                |> Maybe.map (\rrect -> ( rrect.top_left_x, rrect.top_left_y ))
-                |> Maybe.map (\tup -> Grid.Coordinate (Tuple.first tup) (Tuple.second tup))
-
-        lcoords =
-            []
-    in
-    addMbElemToList mbXYpos1 lcoords
+    { tileGrid = newnewgrid, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lunusedrandints }
 
 
 installLeversInCoords : List Grid.Coordinate -> Grid.Grid Tile -> Grid.Grid Tile
@@ -373,10 +314,6 @@ installLeversInCoords lcoords grid =
             Grid.set coords (Tile.Lever (Tile.defaultLeverInfo idx)) grid_
     in
     List.foldl (\( idx, coords ) gridacc -> setLeverFunc idx coords gridacc) grid lindexAndCoords
-
-
-
---|> setLeverFunc mbXYpos2
 
 
 determineRectangularRegionBoundaries : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> String -> List Grid.Coordinate
@@ -456,7 +393,6 @@ createWallBoundaries lrrect grid =
     let
         fillBoundariesIfNecessary rrect grid_ =
             determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "top-1andCorners" grid_
-                --determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "top-1" grid_
                 |> determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "bottom+1andCorners"
                 |> determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "left-1"
                 |> determineRectangularRegionBoundariesAndFillWithWallIfNoTileYet rrect "right+1"
@@ -594,7 +530,6 @@ transformFloorToWallOnDisplayBoundaries grid =
             List.map (\x_ -> { x = x_, y = h - 1 }) (List.range 0 (w - 1))
 
         getNewGrid coord lrtd grid_ =
-            --get { x, y } grid
             case Grid.get coord grid_ of
                 Just (Tile.Floor _) ->
                     if lrtd == "l" || lrtd == "r" then
@@ -606,7 +541,6 @@ transformFloorToWallOnDisplayBoundaries grid =
                 _ ->
                     grid_
     in
-    --if grid.get (x ,y) == Floor
     List.foldl (\coord gacc -> getNewGrid coord "l" gacc) grid lcoordsLeft
         |> (\gr -> List.foldl (\coord gacc -> getNewGrid coord "r" gacc) gr lcoordsRight)
         |> (\gr -> List.foldl (\coord gacc -> getNewGrid coord "t" gacc) gr lcoordsTop)
@@ -670,7 +604,6 @@ createHorizontalAndVerticalTunnels lrandomints lroomrectangles grid =
 
                 ( mbnewTunnel1, mbnewTunnel2 ) =
                     if newRandom < 50 then
-                        --createMbHorizontalAndMbVerticalTunnels roomrect1 roomrect2
                         ( mbCreateHorizontalTunnel roomrect1 roomrect2 |> mbFilteredTunnel
                         , mbCreateVerticalTunnel roomrect2 roomrect1 |> mbFilteredTunnel
                         )
@@ -728,7 +661,6 @@ mbCreateHorizontalTunnel roomrect1 roomrect2 =
     in
     if tunnel_length > 0 then
         GameModel.TunnelRectangle start_x (GameModel.getRoomCenterY roomrect1) tunnel_length horizontal_tunnel_height
-            --|> Debug.log "Creating Horizontal tunnel : "
             |> Just
 
     else
@@ -755,7 +687,6 @@ mbCreateVerticalTunnel roomrect1 roomrect2 =
     in
     if tunnel_height > 0 then
         GameModel.TunnelRectangle (GameModel.getRoomCenterX roomrect1) start_y vertical_tunnel_width tunnel_height
-            --|> Debug.log "Creating vertical tunnel : "
             |> Just
 
     else
@@ -764,13 +695,11 @@ mbCreateVerticalTunnel roomrect1 roomrect2 =
 
 listTunnelRectangleToGridFunc : List GameModel.TunnelRectangle -> Grid.Grid Tile -> Grid.Grid Tile
 listTunnelRectangleToGridFunc ltunnels grid =
-    -- for now , still have to write this
     listDungeonRectangleToGridFunc (List.map (\tun -> ( tun, noDoornoWallOption )) ltunnels) (Just "orange") grid
 
 
 listTunnelRectangleWithOptionsToGridFunc : List ( GameModel.TunnelRectangle, Tile.DoorWallOptions ) -> Grid.Grid Tile -> Grid.Grid Tile
 listTunnelRectangleWithOptionsToGridFunc ltunnelsWithOptions grid =
-    -- for now , still have to write this
     listDungeonRectangleToGridFunc ltunnelsWithOptions (Just "orange") grid
 
 
@@ -856,10 +785,6 @@ listDungeonRectangleToGridFunc lroomrectsWithOptions mbFloorColor grid =
 listRoomRectangleToGridFunc : List GameModel.RoomRectangle -> Grid.Grid Tile -> Grid.Grid Tile
 listRoomRectangleToGridFunc lroomrects grid =
     listDungeonRectangleToGridFunc (List.map (\rrect -> ( rrect, noDoornoWallOption )) lroomrects) Nothing grid
-
-
-
-------------------------------------
 
 
 getRectangularRegionCellCoordinates : { a | top_left_x : Int, top_left_y : Int, width : Int, height : Int } -> List Grid.Coordinate

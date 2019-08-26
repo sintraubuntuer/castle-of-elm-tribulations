@@ -1,8 +1,5 @@
 module GameUpdate exposing
-    (  Msg(..)
-       --,  attack
-       --, attackIfClose
-
+    ( Msg(..)
     , checkAndAlterDisplayAnchorIfNecessary
     , cleanup
     , cmdFillRandomIntsPool
@@ -21,19 +18,13 @@ module GameUpdate exposing
     , randIntPairsList
     , resetFightingCharacterMovesCurrentTurn
     , reveal
-    , turnNeighbourWallCellstoAshes
     , update
     )
-
---import Generator
---import Collage
---import Collage.Layout
 
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Beings.BeingsInTileGrid as BeingsInTileGrid
 import Beings.FightingCharacterInTileGrid as FightingCharacterInTileGrid
 import Beings.OtherCharacterInTileGrid as OtherCharacterInTileGrid
-import Collage
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
@@ -280,7 +271,7 @@ update msg model =
                                             )
 
                                         Food fdescription ->
-                                            -- consume imediatly the item which adds to the player health
+                                            -- consume immediatly the item which adds to the player health
                                             ( model.player.inventory
                                             , Grid.set pcoords (Tile.Floor { floorinfo | item = Nothing }) model.level
                                             , model.player.health + 4
@@ -321,19 +312,15 @@ update msg model =
                     ( x + x_, y + y_ )
 
                 newModel =
-                    --GameModel.location x2 y2
                     case Grid.get (GameModel.location x2 y2) model.level of
                         Just (Tile.Lever leverinfo) ->
                             if leverinfo.isUp then
                                 model
-                                --|> Debug.log " you just interacted with an up lever "
 
                             else
                                 { model | level = Grid.set (GameModel.location x2 y2) (Tile.Lever { leverinfo | isUp = True }) model.level }
                                     |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2) modacc) xmodel (getModelChangerFuncs leverinfo.leverId model))
 
-                        --|> turnNeighbourWallCellstoAshes (GameModel.location x2 y2)
-                        --  |> Debug.log " you just interacted with a down lever "
                         _ ->
                             model
                                 |> (\model_ ->
@@ -363,7 +350,6 @@ update msg model =
                                 ( { newModel | player = move ( x_, y_ ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
-                                    --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
                                 , CleanUpAndFightingCharacterLogic
                                 )
@@ -376,7 +362,6 @@ update msg model =
                                 ( { newModel | player = move ( x_, y_ ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
-                                    --|> checkIfPlayerStandsOnStairsAndMoveToNewFloor
                                     |> checkAndAlterDisplayAnchorIfNecessary
                                 , CleanUpAndFightingCharacterLogic
                                 )
@@ -428,8 +413,7 @@ update msg model =
                 ( newThornsModel, thornsCmd ) =
                     ThornsUpdate.update (Thorns.Types.SetOpponentAndPlayerAndInitializeGrid fightingCharacter model.player) model.gameOfThornsModel
 
-                -- ThornsUpdate.update (Thorns.Types.SetOpponent fightingCharacter)
-                {- }
+                {-
                    attackOutput =
                        attack model.player fightingCharacter model.pseudoRandomIntsPool
 
@@ -443,7 +427,7 @@ update msg model =
                 -}
                 newModel =
                     { model
-                        | currentDisplay = GameModel.DisplayGameOfThorns --gameOfThornsModeisOn = True
+                        | currentDisplay = GameModel.DisplayGameOfThorns
                         , gameOfThornsModel = newThornsModel
                         , listeningToKeyInput = False
                     }
@@ -480,9 +464,6 @@ update msg model =
                 --|> Debug.log "grid bounds are : "
                 newPlayer =
                     { oldPlayer | location = newLocation, placed = True }
-
-                --_ =
-                --    Debug.log "new player position is walkable = " (GameModel.isModelTileWalkable newLocation model)
             in
             case BeingsInTileGrid.isGridTileWalkable newLocation newPlayer model.level of
                 True ->
@@ -527,10 +508,8 @@ update msg model =
                             ( { model | fightingCharacters = GameModel.placeExistingFightingCharacter fcharId newLocation model.fightingCharacters }, Cmd.none )
 
                         False ->
-                            --( { model | player = newPlayer }, Cmd.none )
                             ( model, cmdGetRandomPositionedFightingCharacter actualFightChar fcharId gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
-        --randomlyPlaceExistingFightCharacters : List ( Location, FightingCharacterId ) -> Model -> Model
         NewRandomFloatsForGenCave lfloats ->
             let
                 theSize =
@@ -578,7 +557,6 @@ update msg model =
                 minRoomSize =
                     model.roomsInfo |> Maybe.map .minRoomSize |> Maybe.withDefault 0
 
-                --( newGrid, lrectangles, ltunnelrectangles, unused_prand_lints ) =
                 genOutputRecord =
                     --{ tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
                     MapGen.randomMapGeneratorWithRooms model.total_width model.total_height maxNrOfRooms maxRoomSize minRoomSize lints model.level
@@ -840,41 +818,6 @@ position_display_anchor_in_order_to_center_player model =
         |> reveal
 
 
-turnNeighbourWallCellstoAshes : Grid.Coordinate -> Model -> Model
-turnNeighbourWallCellstoAshes { x, y } model =
-    let
-        upCell =
-            GameModel.location x (y - 1)
-
-        downCell =
-            GameModel.location x (y + 1)
-
-        leftCell =
-            GameModel.location (x - 1) y
-
-        rightCell =
-            GameModel.location (x + 1) y
-
-        convertCellsFunc cellCoords themodel =
-            case Grid.get cellCoords themodel.level of
-                Just (Tile.Wall wallinfo) ->
-                    let
-                        floorinfo =
-                            Tile.defaultFloorInfo
-                    in
-                    { themodel | level = Grid.set cellCoords (Tile.Floor { floorinfo | item = Just Ash }) themodel.level }
-                        |> turnNeighbourWallCellstoAshes cellCoords
-
-                _ ->
-                    themodel
-    in
-    convertCellsFunc upCell model
-        |> convertCellsFunc downCell
-        |> convertCellsFunc leftCell
-        |> convertCellsFunc rightCell
-        |> updateWallPercentageValue
-
-
 updateWallPercentageValue : Model -> Model
 updateWallPercentageValue model =
     let
@@ -921,7 +864,6 @@ checkAndAlterDisplayAnchorIfNecessary model =
                 max 0 (model.x_display_anchor - (model.window_width - p_x_dist))
 
             else if model.player.location.x >= (model.x_display_anchor + (model.window_width - 1)) then
-                --min (model.x_display_anchor + (model.window_width - 2)) (model.total_width - 1)
                 min (model.x_display_anchor + (model.window_width - p_x_dist)) (model.total_width - (model.window_width - p_x_dist))
 
             else
@@ -935,7 +877,6 @@ checkAndAlterDisplayAnchorIfNecessary model =
                 max 0 (model.y_display_anchor - (model.window_height - p_y_dist))
 
             else if model.player.location.y >= (model.y_display_anchor + (model.window_height - 1)) then
-                --min (model.y_display_anchor + (model.window_height - 2)) (model.total_height - 1)
                 min (model.y_display_anchor + (model.window_height - p_y_dist)) (model.total_height - (model.window_height - p_y_dist))
 
             else
@@ -1099,7 +1040,6 @@ cleanup model =
             else
                 Just (Dict.foldl (\id nstr acc -> acc ++ nstr) "" <| Dict.map (\fcharId fightingCharacter -> fightingCharacter.name ++ " died. ") dead_and_disappears)
 
-        --newModel =  { model | fightingCharacters = ( alive ++ dead_and_doesnt_disappear ++ alive_no_enlightenment ++  alive_enlightened_doesnt_disappear )  }
         newModel =
             { model | fightingCharacters = Dict.filter (\k v -> not (inList k keys_to_remove)) model.fightingCharacters }
     in
@@ -1132,7 +1072,6 @@ fightingCharacter_AI model =
             FightingCharacterInTileGrid.fightingCharacter_AI model.currentDisplay model.currentFloorId (FightingCharacterInTileGrid.OpponentsAndPlayerRec model.fightingCharacters model.player model.level [] [] model.pseudoRandomIntsPool)
 
         newModel =
-            -- fightingCharactersPlayerRec |> eprecToModel
             { model
                 | fightingCharacters = fightingCharactersPlayerRec.fightingCharacters
                 , player = fightingCharactersPlayerRec.player
@@ -1153,7 +1092,6 @@ otherCharacters_AI model =
             OtherCharacterInTileGrid.otherCharacter_AI model.currentDisplay model.currentFloorId (OtherCharacterInTileGrid.OthersAndPlayerRec model.otherCharacters model.player model.level [] model.pseudoRandomIntsPool)
 
         newModel =
-            -- fightingCharactersPlayerRec |> eprecToModel
             { model
                 | otherCharacters = otherCharactersPlayerRec.otherCharacters
                 , player = otherCharactersPlayerRec.player
@@ -1225,28 +1163,3 @@ inList a_val la =
     List.filter (\elem -> elem == a_val) la
         |> List.length
         |> (\x -> x > 0)
-
-
-
-{- }
-   -- Right now this just reveals a box around the player
-
-
-   reveal : Model -> Model
-   reveal model =
-       let
-           exploredAcc =
-               Grid.map
-                   (\t ->
-                       if t == Visible then
-                           Explored
-                       else
-                           t
-                   )
-                   model.explored
-
-           explored_ =
-               List.foldl (\l explored -> Grid.set l Visible explored) exploredAcc (GameModel.visible model)
-       in
-       { model | explored = explored_ }
--}

@@ -1,7 +1,5 @@
 module GameView exposing (view)
 
---import Element exposing (..)
-
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Collage exposing (..)
 import Collage.Events
@@ -41,20 +39,16 @@ yScale =
 
 noForm : Collage Msg
 noForm =
-    --toForm empty
     Collage.circle 0 |> filled (uniform red)
 
 
 floor_ :
     Tile.FloorInfo
-    -> Collage Msg --Form
+    -> Collage Msg
 floor_ floorinfo =
-    --rect (toFloat xScale) (toFloat yScale) |> filled black
     let
         fileStr =
             if floorinfo.color == "orange" then
-                -- "orange" then
-                --"img/floor/floor_01_orange.png"
                 "img/floor/floor_01.png"
 
             else
@@ -65,22 +59,11 @@ floor_ floorinfo =
 
 floor : Tile.FloorInfo -> Collage Msg
 floor floorinfo =
-    {- }
-       let
-           theGradient =
-               linear ( 1.0, 30.0 ) ( 60.0, 30.0 ) [ ( 0, rgb 100 100 100 ), ( 0.3, rgb 150 100 100 ), ( 0.5, rgb 200 100 100 ), ( 0.7, rgb 220 100 100 ), ( 1, rgb 250 100 100 ) ]
-       in
-    -}
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform blue)
-
-
-
---|> gradient theGradient
 
 
 floorOverlay : String -> Collage Msg
 floorOverlay elemStr =
-    --guy { avatar = "." |> Text.fromString |> Text.monospace |> Text.color white |> centered } Tile.Visible
     if elemStr == "ash" then
         Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_ash.png"
 
@@ -179,7 +162,6 @@ wall orientationStr =
 
 wallOverlay : Tile.WallInfo -> Collage Msg
 wallOverlay wallinfo =
-    --guy { avatar = "#" |> Text.fromString |> Text.monospace |> Text.color black |> centered } Tile.Visible
     let
         woverlay =
             case wallinfo.mbTeleporterObject of
@@ -243,10 +225,6 @@ door doorinfo =
             noForm
 
 
-
---rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (doorinfo.color |> Maybe.withDefault "white" |> stringToColor))
-
-
 stringToColor : String -> Color
 stringToColor theColorStr =
     if String.toLower theColorStr == "blue" then
@@ -298,19 +276,7 @@ acidOverlay =
 
 notileyet : Collage Msg
 notileyet =
-    --rect (toFloat xScale) (toFloat yScale) |> filled blue
-    --gradient : Gradient -> Shape -> Form
-    {- }
-       let
-           theGradient =
-               linear ( 1.0, 1.0 ) ( 50.0, 50.0 ) [ ( 0, rgb 100 100 100 ), ( 0.3, rgb 150 100 100 ), ( 0.5, rgb 200 100 100 ), ( 0.7, rgb 220 100 100 ), ( 1, rgb 250 100 100 ) ]
-       in
-    -}
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform black)
-
-
-
---|> gradient theGradient
 
 
 notileyetOverlay : Collage Msg
@@ -332,7 +298,6 @@ tile : Int -> Tile -> Collage Msg
 tile currentFloorId t =
     case t of
         Tile.Floor floorinfo ->
-            --floor floorinfo
             floor_ floorinfo
 
         Tile.Stairs sinfo ->
@@ -551,13 +516,8 @@ tCollageFromStr : String -> Collage Msg
 tCollageFromStr elemStr =
     elemStr
         |> Text.fromString
-        --|> Text.monospace
         |> Text.color black
         |> Collage.rendered
-
-
-
---|> centered
 
 
 playerImg : Player -> Tile.Visibility -> Collage Msg
@@ -646,16 +606,12 @@ guy r visibility =
                 form =
                     r.textAvatar |> tCollageFromStr
 
-                --|> toForm
                 ( xSize, ySize ) =
-                    --sizeOf r.textAvatar
                     ( 16, 16 )
 
-                --x /// y = toFloat x / toFloat y -- This is a convenience function to divide two ints
                 divInts x y =
                     toFloat x / toFloat y
 
-                --factor = min (xScale /// xSize) (yScale /// ySize)
                 factor =
                     min (divInts xScale xSize) (divInts yScale ySize)
             in
@@ -665,14 +621,6 @@ guy r visibility =
             noForm
 
 
-
-{- }
-   text : String -> Collage Msg
-   text =
-       Text.fromString >> Text.monospace >> Text.color white >> centered
--}
-
-
 mainScreen : Model -> Collage Msg
 mainScreen model =
     let
@@ -680,11 +628,7 @@ mainScreen model =
             model.level
                 |> Grid.getSubGrid model.x_display_anchor (model.x_display_anchor + model.window_width - 1) model.y_display_anchor (model.y_display_anchor + model.window_height - 1)
 
-        --subgridList =
-        --    subgrid
-        --        |> Grid.toList
         ( wwidth, wheight ) =
-            --( model.window_width, model.window_height )
             ( subgrid.size.width, subgrid.size.height )
 
         ( w, h ) =
@@ -719,7 +663,6 @@ mainScreen model =
                 forms =
                     List.concatMap mapRow rows
             in
-            --collage (w + xScale) (h + yScale) forms
             Collage.group forms
 
         row : (a -> Collage Msg) -> ( Int, List a ) -> List (Collage Msg)
@@ -734,7 +677,6 @@ mainScreen model =
             List.map makeTile tiles_
 
         player_ =
-            --guy model.player Tile.Visible |> shift (location model.player)
             playerImg model.player Tile.Visible
                 |> shift (location model.player)
 
@@ -744,8 +686,6 @@ mainScreen model =
                     Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= model.x_display_anchor && fightChar.location.x - model.x_display_anchor < model.window_width) && (fightChar.location.y >= model.y_display_anchor && fightChar.location.y - model.y_display_anchor < model.window_height)) model.fightingCharacters
 
                 mkfightingCharacter fcharId anfightingCharacter =
-                    --guy fightingCharacter (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location fightingCharacter)) subgrid)
-                    --guy anfightingCharacter (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
                     fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
                         |> shift (location anfightingCharacter)
             in
@@ -757,20 +697,13 @@ mainScreen model =
                     Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.x_display_anchor && char.location.x - model.x_display_anchor < model.window_width) && (char.location.y >= model.y_display_anchor && char.location.y - model.y_display_anchor < model.window_height)) model.otherCharacters
 
                 mkOtherChar ch_id achar =
-                    --guy fightingCharacter (GameModel.getGridTileVisibility (GameModel.tupleFloatsToLocation (location fightingCharacter)) subgrid)
-                    --guy anfightingCharacter (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
                     otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level)
                         |> shift (location achar)
             in
             group <| (Dict.map mkOtherChar relevantOtherCharsDict |> Dict.values)
 
-        --grid =
-        --Grid.toList model.level
         bg : Collage Msg
         bg =
-            --background model.level model
-            --background subgrid model
-            --layers [ mkLayer (Grid.toList subgrid) (row tile), mkLayer (Grid.toList subgrid) (row tileOverlay) ]
             Collage.group
                 [ mkLayer (Grid.toList subgrid) (row tileOverlay)
                 , mkLayer (Grid.toList subgrid) (row (tile model.currentFloorId))
@@ -781,13 +714,9 @@ mainScreen model =
             locate "background" topLeft bg
                 |> Maybe.withDefault ( -100000, -100000 )
 
-        --|> Debug.log "background topLeft is : "
         pg =
-            --collage (w + xScale) (h + yScale) [ player_, fightingCharacter_ ]
             Collage.group
                 [ player_ |> shift ( 0, 0 )
-
-                --  , fightingCharacter_ |> shift ( 0, 0 )
                 ]
 
         eg =
@@ -829,57 +758,6 @@ mainScreen model =
 inViewRange : FightingCharacter -> Bool
 inViewRange fightingCharacter_ =
     False
-
-
-
-{-
-   background : Grid.Grid Tile -> Model -> Element
-   background subgrid model =
-       let
-           grid =
-               subgrid
-                   |> Grid.toList
-
-           ( wwidth, wheight ) =
-               --( model.window_width, model.window_height )
-               ( subgrid.size.width, subgrid.size.height )
-
-           ( w, h ) =
-               ( wwidth * xScale, wheight * yScale )
-
-           xOffset : Int -> Float
-           xOffset n =
-               (toFloat n - toFloat wwidth / 2) * toFloat xScale
-
-           yOffset : Int -> Float
-           yOffset n =
-               (toFloat n - toFloat wheight / 2) * toFloat yScale
-
-           mkLayer : List (List a) -> (( Int, List a ) -> List Form) -> Element
-           mkLayer grid mapRow =
-               let
-                   rows =
-                       List.map2 (,) (List.reverse (List.range 0 (wheight - 1))) grid
-
-                   forms =
-                       List.concatMap mapRow rows
-               in
-               collage (w + xScale) (h + yScale) forms
-
-           row : (a -> Form) -> ( Int, List a ) -> List Form
-           row mkTile ( n, tiles ) =
-               let
-                   tiles_ =
-                       List.map2 (,) (List.range 0 (wwidth - 1)) tiles
-
-                   makeTile ( n_, t ) =
-                       move ( xOffset n_, yOffset n ) <| mkTile t
-               in
-               List.map makeTile tiles_
-       in
-       layers [ mkLayer grid (row tile), mkLayer grid (row tileOverlay) ]
-
--}
 
 
 sidebar : Model -> ( Float, Float ) -> Collage Msg
@@ -1217,14 +1095,9 @@ viewGameOfThorns model =
 
 viewStartMenuChoices : Model -> Html GameUpdate.Msg
 viewStartMenuChoices model =
-    Html.div []
+    Html.div [ Attr.align "center" ]
         [ {-
-                Html.div []
-                 [ Html.h3 []
-                     [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
-                     ]
-                 ]
-             , Html.br [] []
+
           -}
           Html.div [ Attr.align "center" ]
             [ Html.h3 []
@@ -1237,4 +1110,11 @@ viewStartMenuChoices model =
                     [ Html.img [ Attr.src "img/game/casteleOfElmTribulations_.png" ] [] ]
                 ]
             ]
+        , Html.br [] []
+        , Html.div []
+            [ Html.h3 []
+                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
+                ]
+            ]
+        , Html.br [] []
         ]

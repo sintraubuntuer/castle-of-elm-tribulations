@@ -1,11 +1,12 @@
 module Main exposing (main)
 
+--import Collage.Text as Text
+
 import Browser
 import Browser.Events
     exposing
         ( onKeyDown
         )
-import Collage.Text as Text
 import Dict exposing (Dict)
 import GameDefinitions.Common
 import GameDefinitions.Game1.Game1Definitions
@@ -81,10 +82,6 @@ fromCode keyCode =
 
         _ ->
             GameModel.Nop
-
-
-
---|> Debug.log ("keyCode is " ++ String.fromInt keyCode)
 
 
 type alias Flags =

@@ -2,19 +2,25 @@ module GameDefinitions.Game1.Game1Definitions exposing (initialModelFunc)
 
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
+import GameDefinitions.Common exposing (setAllAsUnexplored)
 import GameModel
 import Grid
 import Thorns.Types
 import Tile exposing (Tile(..), Visibility(..))
 
 
-setAllAsUnexplored : Grid.Grid Tile -> Grid.Grid Tile.Visibility
-setAllAsUnexplored level =
-    let
-        grid =
-            Grid.toList level
-    in
-    List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid.fromList
+
+{- }
+
+   setAllAsUnexplored : Grid.Grid Tile -> Grid.Grid Tile.Visibility
+   setAllAsUnexplored level =
+       let
+           grid =
+               Grid.toList level
+       in
+       List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid.fromList
+
+-}
 
 
 initialPlayer : Player

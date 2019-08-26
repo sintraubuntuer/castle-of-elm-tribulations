@@ -47,11 +47,6 @@ initialPlayer =
     let
         elem =
             "@"
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
     in
     Beings.playerCreationFunc elem "You"
 
@@ -61,21 +56,12 @@ initialFightingCharacter fcharId species floorId =
     let
         elem =
             "e" ++ String.fromInt fcharId
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
     in
     Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species floorId
 
 
 otherCharacterFunc =
     Beings.otherCharacterCreationFunc 1 "otherYou" lastFloor_id
-
-
-
---( 92, 60 )
 
 
 customGameCompletionFunc : Int -> Grid.Coordinate -> Bool
@@ -129,15 +115,12 @@ initialModelFunc lrandints =
         otherCharacter =
             otherCharacterFunc
 
-        --_ =
-        --    Debug.log " size of lrands after placing pieces of paper is  " (List.length lrands)
         randomlyPositionPlayer =
             False
 
         createRandomMap =
             False
     in
-    -- GameModel.Model
     ( { player = { player | location = { x = 67, y = 36 } }
       , fightingCharacters =
             Dict.fromList
@@ -157,8 +140,6 @@ initialModelFunc lrandints =
                 [ ( 1, otherCharacter )
                 ]
       , level = Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .level |> Maybe.withDefault GroundFloor.gridGroundFloor -- Grid.Grid Tile
-
-      --, levers = levers --Dict LeverId LeverInfo
       , explored = setAllAsUnexplored GroundFloor.gridGroundFloor -- Grid.Grid Visibility
       , log = [ "you enter the dungeons Ground Floor " ] --List String
       , gameOfThornsModel = Thorns.Types.initialModel player Nothing
@@ -251,7 +232,7 @@ dStore =
             , explored = setAllAsUnexplored LastFloor.gridLastFloor
             , window_width = 18
             , window_height = 18
-            , total_width = get_total_width config_params 23 -- theAttic has 17 room columns
+            , total_width = get_total_width config_params 23 -- LastFloor has 23 room columns
             , total_height = get_total_height config_params 17 -- 17 room rows
             }
           )
@@ -290,8 +271,6 @@ generate_three_random_nrs_between_zero_and_four lrandints =
 place_one_item_in_random_coords : Int -> Item.Item -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
 place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
     let
-        --grid1 =
-        --    Grid.get floorId
         auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec floorid ( storeDict, lrands, try_nr ) =
             if try_nr > 100 then
                 ( storeDict, lrands )
@@ -321,16 +300,12 @@ place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
                                     |> (\mbtile ->
                                             case mbtile of
                                                 Nothing ->
-                                                    --tryAgainWithNewCoords
-                                                    --auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec ( storeDict, lrem_rands, try_nr + 1 )
                                                     Nothing
 
                                                 Just atile ->
                                                     case atile of
                                                         Floor finfo ->
                                                             let
-                                                                --newItem =
-                                                                --    Item.Paper (Item.PaperInfo paperid "" "" "")
                                                                 tileWithItem =
                                                                     Floor { finfo | item = Just newItem }
                                                             in
@@ -362,7 +337,6 @@ place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
                     Just newFloor ->
                         ( Dict.update floorid (\_ -> Just newFloor) storeDict, lrem_rands )
 
-        -- or  auxFuncCheckIfEmptyAndPlaceOrRepeat floorid coords (storeDict , try_nr + 1 )
         floorInfo =
             Dict.get floorId storedict
 

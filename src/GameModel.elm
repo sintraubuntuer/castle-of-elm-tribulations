@@ -40,7 +40,6 @@ import Beings.Beings as Beings
         , OtherCharacter
         , Player
         )
-import Collage.Text as Text
 import Dict exposing (Dict)
 import Grid
 import Item exposing (Item(..), KeyInfo)

@@ -153,30 +153,6 @@ get { x, y } grid =
             Array.get x row
 
 
-
-{- }
-   getOrFail : Coordinate -> Grid a -> a
-   getOrFail { x, y } grid =
-       let
-           row =
-               --Array.getOrFail y grid.grid
-               case Array.get y grid.grid of
-                   Just r ->
-                       r
-
-                   Nothing ->
-                       []
-       in
-       --Array.getOrFail x row
-       case Array.get y grid.grid of
-           Just elem ->
-               elem
-
-           Nothing ->
-               []
--}
-
-
 getWithDefault : a -> Coordinate -> Grid a -> a
 getWithDefault default coordinate grid =
     case get coordinate grid of
@@ -292,40 +268,6 @@ setColumn n adef lelems grid =
 getElemWithDefault : Int -> a -> List a -> a
 getElemWithDefault y aval lelems =
     List.drop y lelems |> List.head |> Maybe.withDefault aval
-
-
-
-{-
-   getColumn : Int -> Grid a -> Maybe (List a)
-   getColumn n grid =
-       if n < 0 then
-           Nothing
-       else if n >= grid.size.width then
-           Nothing
-       else
-           Just << getColumnOrFail n <| grid
-
-
-   getColumnOrFail : Int -> Grid a -> List a
-   getColumnOrFail n grid =
-       --List.map (Array.getOrFail n) << Array.toList << .grid
-       --getElem arr = case
-       --lgrid = Array.toList grid.grid
-       toCoordinates grid
-           |> List.filter (\( x, y ) -> x == n)
-           |> List.map (\( x, y ) -> getOrElse GameModel.NoTileYet (Coordinate x y) grid)
-           |> List.filter (\x -> x /= GameModel.NoTileYet)
-
-
-   getColumnOrElse : List a -> Int -> Grid a -> List a
-   getColumnOrElse default n grid =
-       case getColumn n grid of
-           Nothing ->
-               default
-
-           Just column ->
-               column
--}
 
 
 inGrid : Coordinate -> Grid a -> Bool
