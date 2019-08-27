@@ -1069,13 +1069,14 @@ fightingCharacter_AI : Model -> ( Model, List FightingCharacter )
 fightingCharacter_AI model =
     let
         fightingCharactersPlayerRec =
-            FightingCharacterInTileGrid.fightingCharacter_AI model.currentDisplay model.currentFloorId (FightingCharacterInTileGrid.OpponentsAndPlayerRec model.fightingCharacters model.player model.level [] [] model.pseudoRandomIntsPool)
+            FightingCharacterInTileGrid.fightingCharacter_AI model.currentDisplay model.currentFloorId (FightingCharacterInTileGrid.OpponentsAndPlayerRec model.fightingCharacters model.player model.level model.floorDict [] [] model.pseudoRandomIntsPool)
 
         newModel =
             { model
                 | fightingCharacters = fightingCharactersPlayerRec.fightingCharacters
                 , player = fightingCharactersPlayerRec.player
                 , level = fightingCharactersPlayerRec.grid
+                , floorDict = fightingCharactersPlayerRec.floorDict
                 , pseudoRandomIntsPool = fightingCharactersPlayerRec.lrandInts
             }
 
@@ -1089,13 +1090,14 @@ otherCharacters_AI : Model -> Model
 otherCharacters_AI model =
     let
         otherCharactersPlayerRec =
-            OtherCharacterInTileGrid.otherCharacter_AI model.currentDisplay model.currentFloorId (OtherCharacterInTileGrid.OthersAndPlayerRec model.otherCharacters model.player model.level [] model.pseudoRandomIntsPool)
+            OtherCharacterInTileGrid.otherCharacter_AI model.currentDisplay model.currentFloorId (OtherCharacterInTileGrid.OthersAndPlayerRec model.otherCharacters model.player model.level model.floorDict [] model.pseudoRandomIntsPool)
 
         newModel =
             { model
                 | otherCharacters = otherCharactersPlayerRec.otherCharacters
                 , player = otherCharactersPlayerRec.player
                 , level = otherCharactersPlayerRec.grid
+                , floorDict = otherCharactersPlayerRec.floorDict
                 , pseudoRandomIntsPool = otherCharactersPlayerRec.lrandInts
             }
     in
@@ -1107,7 +1109,7 @@ attackIfClose_OtherwiseMove fightingCharacter model =
     let
         --{ updatedFightingCharacter, updatedPlayer, mbFightingCharacterForGameOfThorns , updatedRandInts }
         outputRecord =
-            FightingCharacterInTileGrid.attackIfClose_OtherwiseMove fightingCharacter model.player model.currentFloorId model.level model.pseudoRandomIntsPool
+            FightingCharacterInTileGrid.attackIfClose_OtherwiseMove fightingCharacter model.player model.currentFloorId model.level model.floorDict model.pseudoRandomIntsPool
     in
     ( log outputRecord.textMsg
         { model
@@ -1123,7 +1125,7 @@ fightingCharacterMove : FightingCharacter -> Model -> Model
 fightingCharacterMove fightingCharacter model =
     let
         ( updatedFightingCharacter, updatedRandInts ) =
-            FightingCharacterInTileGrid.fightingCharacterMove fightingCharacter model.player.location model.level model.pseudoRandomIntsPool
+            FightingCharacterInTileGrid.fightingCharacterMove fightingCharacter model.player model.currentFloorId model.level model.floorDict model.pseudoRandomIntsPool
     in
     { model
         | fightingCharacters = Dict.insert fightingCharacter.id updatedFightingCharacter model.fightingCharacters

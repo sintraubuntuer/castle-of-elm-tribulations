@@ -1096,10 +1096,7 @@ viewGameOfThorns model =
 viewStartMenuChoices : Model -> Html GameUpdate.Msg
 viewStartMenuChoices model =
     Html.div [ Attr.align "center" ]
-        [ {-
-
-          -}
-          Html.div [ Attr.align "center" ]
+        [ Html.div [ Attr.align "center" ]
             [ Html.h3 []
                 [ Html.a
                     [ Html.Events.onClick (GameUpdate.StartGameNr 2) ]
@@ -1110,6 +1107,7 @@ viewStartMenuChoices model =
                     [ Html.img [ Attr.src "img/game/casteleOfElmTribulations_.png" ] [] ]
                 ]
             ]
+        , Html.br [] []
         , Html.br [] []
         , Html.div []
             [ Html.h3 []

@@ -1,7 +1,5 @@
 module Main exposing (main)
 
---import Collage.Text as Text
-
 import Browser
 import Browser.Events
     exposing

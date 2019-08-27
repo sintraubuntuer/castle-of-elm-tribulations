@@ -21,6 +21,7 @@ type alias OthersAndPlayerRec =
     { otherCharacters : Dict Beings.OtherCharacterId Beings.OtherCharacter
     , player : Beings.Player
     , grid : Grid.Grid Tile
+    , floorDict : Dict Int GameModel.FloorStore
     , textMsgs : List String
     , lrandInts : List Int
     }
