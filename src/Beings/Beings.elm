@@ -6,6 +6,7 @@ module Beings.Beings exposing
     , FightingCharacterId
     , Inventory
     , Location
+    , MovingStrategy(..)
     , OPPONENT_INTERACTION_OPTIONS(..)
     , OtherCharacter
     , OtherCharacterId
@@ -61,6 +62,7 @@ type alias Player =
     , power : Int
     , initiative : Int
     , indexOfLightMax : Int
+    , movingStrategy : Maybe MovingStrategy
     , placed : Bool
     }
 
@@ -70,6 +72,12 @@ type Direction
     | Down
     | Left
     | Right
+
+
+type MovingStrategy
+    = MoveTowardsPlayer
+    | MoveRandomly
+    | DontMove
 
 
 type alias FightingCharacter =
@@ -93,6 +101,7 @@ type alias FightingCharacter =
     , initiative : Int
     , attacksUsingGameOfThorns : Bool
     , indexOfLightMax : Int
+    , movingStrategy : Maybe MovingStrategy
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
@@ -117,6 +126,7 @@ type alias OtherCharacter =
     , inventory : Inventory
     , initiative : Int
     , indexOfLightMax : Int
+    , movingStrategy : Maybe MovingStrategy
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
@@ -142,6 +152,7 @@ otherCharacterCreationFunc id_ ename floor_id_ =
     , inventory = Dict.empty
     , initiative = 100
     , indexOfLightMax = 30
+    , movingStrategy = Just DontMove
     , disappearsWhenHealthIsZero = True
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False
@@ -182,6 +193,7 @@ playerCreationFunc elem pname =
     , power = 2
     , initiative = 2 -- this will be altered by generating a random int between 1 and 100
     , indexOfLightMax = 20
+    , movingStrategy = Nothing
     , placed = False
     }
 
@@ -208,6 +220,7 @@ fightingCharacterCreationFunc elem fcharId ename species_ floor_id =
     , initiative = 1 -- this will be altered by generating a random int between 1 and 100
     , attacksUsingGameOfThorns = True
     , indexOfLightMax = 11
+    , movingStrategy = Just MoveTowardsPlayer
     , disappearsWhenHealthIsZero = False
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False

@@ -3,7 +3,6 @@ module Thorns.ThornGrid exposing
     , checkSegments
     , fall
     , findSegment
-    , inList
     , randomizeGrid
     , thornToString
     )
@@ -100,7 +99,7 @@ extractSegment coords_ grid_ =
 
         auxFuncExtract : Grid.Coordinate -> ( List Grid.Coordinate, Grid.Grid (Maybe Thorn) ) -> ( List Grid.Coordinate, Grid.Grid (Maybe Thorn) )
         auxFuncExtract coords ( lextracted, grid ) =
-            if coords.x < 0 || coords.y < 0 || coords.x >= grid.size.width || coords.y >= grid.size.height || inList coords lextracted then
+            if coords.x < 0 || coords.y < 0 || coords.x >= grid.size.width || coords.y >= grid.size.height || List.member coords lextracted then
                 ( lextracted, grid )
 
             else
@@ -147,15 +146,8 @@ listSegmentComparison l1 l2 =
 findSegment : Grid.Coordinate -> Grid.Grid (Maybe Thorn) -> Maybe (List Grid.Coordinate)
 findSegment coords grid =
     getAllSegments grid
-        |> List.filter (\lcoords -> inList coords lcoords)
+        |> List.filter (\lcoords -> List.member coords lcoords)
         |> List.head
-
-
-inList : a -> List a -> Bool
-inList a_val la =
-    List.filter (\elem -> elem == a_val) la
-        |> List.length
-        |> (\x -> x > 0)
 
 
 checkSegments : Beings.Player -> ( Grid.Grid (Maybe Thorn), List RandomVal ) -> ( Grid.Grid (Maybe Thorn), List RandomVal )

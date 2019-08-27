@@ -310,10 +310,3 @@ visible model =
 visibility : Model -> Location -> Tile.Visibility
 visibility model location_ =
     getModelTileVisibility location_ model
-
-
-inList : a -> List a -> Bool
-inList a_val la =
-    List.filter (\elem -> elem == a_val) la
-        |> List.length
-        |> (\x -> x > 0)

@@ -5,7 +5,7 @@ module Beings.OtherCharacterInTileGrid exposing
     )
 
 import Beings.Beings as Beings
-import Beings.BeingsInTileGrid
+import Beings.BeingsInTileGrid as BeingsInTileGrid
     exposing
         ( isGridTileWalkable
         , isTileWalkable
@@ -77,7 +77,7 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
 
                     Just otherCharacter ->
                         if otherCharacter.health > 0 && currentDisplay /= DisplayGameOfThorns then
-                            otherCharacterMove otherCharacter opponents_and_player_rec.player.location opponents_and_player_rec.grid opponents_and_player_rec.lrandInts
+                            otherCharacterMove otherCharacter opponents_and_player_rec.player currentFloorId opponents_and_player_rec.grid opponents_and_player_rec.floorDict opponents_and_player_rec.lrandInts
                                 |> (\( fchar, lrand ) -> { opponents_and_player_rec | otherCharacters = Dict.update fcharId (\_ -> Just fchar) opponents_and_player_rec.otherCharacters, lrandInts = lrand })
                                 |> (\x -> increseNrOfOtherCharacterMovesInCurrentTurn fcharId x)
 
@@ -87,81 +87,22 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
         ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec2
 
 
-otherCharacterMove : Beings.OtherCharacter -> Grid.Coordinate -> Grid.Grid Tile -> List Int -> ( Beings.OtherCharacter, List Int )
-otherCharacterMove otherCharacter player_location grid lRandomInts =
-    let
-        ( xrand, yrand, updatedRandInts ) =
-            ( List.head lRandomInts |> Maybe.withDefault 0
-            , List.drop 1 lRandomInts
-                |> List.head
-                |> Maybe.withDefault 0
-            , List.drop 2 lRandomInts
-            )
+otherCharacterMove : Beings.OtherCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int GameModel.FloorStore -> List Int -> ( Beings.OtherCharacter, List Int )
+otherCharacterMove otherCharacter player currentFloorId grid floorDict lRandomInts =
+    if otherCharacter.floorId /= currentFloorId then
+        --BeingsInTileGrid.characterMove_differentFloor fightingCharacter player grid floorDict lRandomInts
+        BeingsInTileGrid.characterMove_RandomMove otherCharacter player grid floorDict lRandomInts
 
-        x_delta_toPlayer =
-            player_location.x - otherCharacter.location.x
+    else
+        case otherCharacter.movingStrategy of
+            Just Beings.MoveTowardsPlayer ->
+                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer otherCharacter player currentFloorId grid floorDict lRandomInts
 
-        y_delta_toPlayer =
-            player_location.y - otherCharacter.location.y
+            Just Beings.MoveRandomly ->
+                BeingsInTileGrid.characterMove_RandomMove otherCharacter player grid floorDict lRandomInts
 
-        xscaled =
-            if x_delta_toPlayer > 0 then
-                if xrand <= 85 then
-                    -- 85% probability
-                    1
+            Just Beings.DontMove ->
+                ( otherCharacter, lRandomInts )
 
-                else
-                    -1
-
-            else if x_delta_toPlayer < 0 then
-                if xrand <= 85 then
-                    -- 85% probability
-                    -1
-
-                else
-                    1
-
-            else if xrand <= 33 then
-                -1
-
-            else if xrand > 33 && xrand <= 66 then
-                0
-
-            else
-                1
-
-        yscaled =
-            if y_delta_toPlayer > 0 then
-                if yrand <= 85 then
-                    1
-
-                else
-                    -1
-
-            else if y_delta_toPlayer < 0 then
-                if yrand <= 85 then
-                    -1
-
-                else
-                    1
-
-            else if yrand <= 33 then
-                -1
-
-            else if yrand > 33 && yrand <= 66 then
-                0
-
-            else
-                1
-
-        fCharacter_ =
-            move ( xscaled, yscaled ) grid isGridTileWalkable otherCharacter
-                |> (\fchar ->
-                        if fchar.location == player_location then
-                            otherCharacter
-
-                        else
-                            fchar
-                   )
-    in
-    ( fCharacter_, updatedRandInts )
+            Nothing ->
+                ( otherCharacter, lRandomInts )

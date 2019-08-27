@@ -7,7 +7,7 @@ module Beings.FightingCharacterInTileGrid exposing
     )
 
 import Beings.Beings as Beings
-import Beings.BeingsInTileGrid
+import Beings.BeingsInTileGrid as BeingsInTileGrid
     exposing
         ( isGridTileWalkable
         , isTileWalkable
@@ -218,140 +218,19 @@ attack dude1 dude2 lprandInts =
 fightingCharacterMove : Beings.FightingCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( Beings.FightingCharacter, List Int )
 fightingCharacterMove fightingCharacter player currentFloorId grid floorDict lRandomInts =
     if fightingCharacter.floorId /= currentFloorId then
-        fightingCharacterMove_differentFloor fightingCharacter player grid floorDict lRandomInts
+        --BeingsInTileGrid.characterMove_differentFloor fightingCharacter player grid floorDict lRandomInts
+        BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid floorDict lRandomInts
 
     else
-        fightingCharacterMove_sameFloorAsPlayer fightingCharacter player currentFloorId grid floorDict lRandomInts
+        case fightingCharacter.movingStrategy of
+            Just Beings.MoveTowardsPlayer ->
+                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer fightingCharacter player currentFloorId grid floorDict lRandomInts
 
+            Just Beings.MoveRandomly ->
+                BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid floorDict lRandomInts
 
-fightingCharacterMove_sameFloorAsPlayer : Beings.FightingCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( Beings.FightingCharacter, List Int )
-fightingCharacterMove_sameFloorAsPlayer fightingCharacter player currentFloorId grid floorDict lRandomInts =
-    let
-        player_location =
-            player.location
+            Just Beings.DontMove ->
+                ( fightingCharacter, lRandomInts )
 
-        ( xrand, yrand, updatedRandInts ) =
-            ( List.head lRandomInts |> Maybe.withDefault 0
-            , List.drop 1 lRandomInts
-                |> List.head
-                |> Maybe.withDefault 0
-            , List.drop 2 lRandomInts
-            )
-
-        x_delta_toPlayer =
-            player_location.x - fightingCharacter.location.x
-
-        y_delta_toPlayer =
-            player_location.y - fightingCharacter.location.y
-
-        xscaled =
-            if x_delta_toPlayer > 0 then
-                if xrand <= 85 then
-                    -- 85% probability
-                    1
-
-                else
-                    -1
-
-            else if x_delta_toPlayer < 0 then
-                if xrand <= 85 then
-                    -- 85% probability
-                    -1
-
-                else
-                    1
-
-            else if xrand <= 33 then
-                -1
-
-            else if xrand > 33 && xrand <= 66 then
-                0
-
-            else
-                1
-
-        yscaled =
-            if y_delta_toPlayer > 0 then
-                if yrand <= 85 then
-                    1
-
-                else
-                    -1
-
-            else if y_delta_toPlayer < 0 then
-                if yrand <= 85 then
-                    -1
-
-                else
-                    1
-
-            else if yrand <= 33 then
-                -1
-
-            else if yrand > 33 && yrand <= 66 then
-                0
-
-            else
-                1
-
-        fCharacter_ =
-            move ( xscaled, yscaled ) grid isGridTileWalkable fightingCharacter
-                |> ifOccupiedByPlayerGoBackToInitialPosition fightingCharacter player_location
-    in
-    ( fCharacter_, updatedRandInts )
-
-
-fightingCharacterMove_differentFloor : Beings.FightingCharacter -> Beings.Player -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( Beings.FightingCharacter, List Int )
-fightingCharacterMove_differentFloor fightingCharacter player grid floorDict lRandomInts =
-    --fightingCharacterCompletlyRandomMove : Beings.FightingCharacter -> Beings.Player -> Grid.Grid Tile -> List Int -> ( Beings.FightingCharacter, List Int )
-    --fightingCharacterCompletlyRandomMove fightingCharacter player grid lRandomInts =
-    let
-        ( xrand, yrand, updatedRandInts ) =
-            ( List.head lRandomInts |> Maybe.withDefault 0
-            , List.drop 1 lRandomInts
-                |> List.head
-                |> Maybe.withDefault 0
-            , List.drop 2 lRandomInts
-            )
-
-        xscaled =
-            if xrand <= 33 then
-                -1
-
-            else if xrand > 33 && xrand <= 66 then
-                0
-
-            else
-                1
-
-        yscaled =
-            if yrand <= 33 then
-                -1
-
-            else if yrand > 33 && yrand <= 66 then
-                0
-
-            else
-                1
-
-        mb_relevant_grid =
-            Dict.get fightingCharacter.floorId floorDict
-
-        fCharacter_ =
-            case mb_relevant_grid of
-                Nothing ->
-                    fightingCharacter
-
-                Just fstore ->
-                    move ( xscaled, yscaled ) fstore.level isGridTileWalkable fightingCharacter
-    in
-    ( fCharacter_, updatedRandInts )
-
-
-ifOccupiedByPlayerGoBackToInitialPosition : Beings.FightingCharacter -> Grid.Coordinate -> Beings.FightingCharacter -> Beings.FightingCharacter
-ifOccupiedByPlayerGoBackToInitialPosition initial_fchar player_location fchar =
-    if fchar.location == player_location then
-        initial_fchar
-
-    else
-        fchar
+            Nothing ->
+                ( fightingCharacter, lRandomInts )

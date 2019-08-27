@@ -958,7 +958,7 @@ cmdGenFloatsForRandomCave w h =
     Random.generate NewRandomFloatsForGenCave (Random.list nrFloats (Random.float 0 1))
 
 
-move : ( Int, Int ) -> Grid.Grid Tile -> (GameModel.Location -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> Grid.Grid Tile -> Bool) -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, inventory : Beings.Inventory, initiative : Int }
+move : ( Int, Int ) -> Grid.Grid Tile -> (GameModel.Location -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> Grid.Grid Tile -> Bool) -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }
 move ( x_shift, y_shift ) grid isWalkableFunc a =
     BeingsInTileGrid.move ( x_shift, y_shift ) grid isWalkableFunc a
 
@@ -1041,7 +1041,7 @@ cleanup model =
                 Just (Dict.foldl (\id nstr acc -> acc ++ nstr) "" <| Dict.map (\fcharId fightingCharacter -> fightingCharacter.name ++ " died. ") dead_and_disappears)
 
         newModel =
-            { model | fightingCharacters = Dict.filter (\k v -> not (inList k keys_to_remove)) model.fightingCharacters }
+            { model | fightingCharacters = Dict.filter (\k v -> not (List.member k keys_to_remove)) model.fightingCharacters }
     in
     case msg of
         Nothing ->
@@ -1158,10 +1158,3 @@ reveal model =
             List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc Visible imodel) intermediateModel (GameModel.visible model)
     in
     newModel
-
-
-inList : a -> List a -> Bool
-inList a_val la =
-    List.filter (\elem -> elem == a_val) la
-        |> List.length
-        |> (\x -> x > 0)

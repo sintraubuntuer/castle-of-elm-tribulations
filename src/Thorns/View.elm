@@ -33,7 +33,7 @@ view model =
                                 |> List.map
                                     (\( str, colnr ) ->
                                         span
-                                            (if ThornGrid.inList (Grid.Coordinate colnr rownr) model.currentSegment then
+                                            (if List.member (Grid.Coordinate colnr rownr) model.currentSegment then
                                                 [ Attr.style "color" "blue", Attr.style "font-weight" "bold" ]
 
                                              else
