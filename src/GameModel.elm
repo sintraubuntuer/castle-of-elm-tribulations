@@ -69,11 +69,10 @@ type alias Model =
     , explored : Grid.Grid Tile.Visibility
     , log : List String
     , gameOfThornsModel : Thorns.Types.Model
-    , gameOfThornsModeisOn : Bool
     , listeningToKeyInput : Bool
     , pseudoRandomIntsPool : List Int
-    , x_display_anchor : Int
-    , y_display_anchor : Int
+    , viewport_topleft_x : Int
+    , viewport_topleft_y : Int
     , window_width : Int
     , window_height : Int
     , total_width : Int

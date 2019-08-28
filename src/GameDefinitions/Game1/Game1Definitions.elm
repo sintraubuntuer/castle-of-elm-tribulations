@@ -79,16 +79,13 @@ initialModelFunc =
                 ]
       , otherCharacters = Dict.empty
       , level = firstMap -- Grid.Grid Tile
-
-      --, levers = levers --Dict LeverId LeverInfo
       , explored = firstExplored -- Grid.Grid Visibility
       , log = [ "you enter the dungeon" ] --List String
       , gameOfThornsModel = Thorns.Types.initialModel player Nothing
-      , gameOfThornsModeisOn = False
       , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
-      , x_display_anchor = 3 -- Int
-      , y_display_anchor = 3 --Int
+      , viewport_topleft_x = 3 -- Int
+      , viewport_topleft_y = 3 --Int
       , window_width = 15
       , window_height = 12
       , total_width = Tuple.first dimensions

@@ -477,8 +477,8 @@ update msg model =
                 True ->
                     ( { model
                         | player = newPlayer
-                        , x_display_anchor = max 0 (newLocation.x - round (toFloat model.window_width / 2.0))
-                        , y_display_anchor = max 0 (newLocation.y - round (toFloat model.window_height / 2))
+                        , viewport_topleft_x = max 0 (newLocation.x - round (toFloat model.window_width / 2.0))
+                        , viewport_topleft_y = max 0 (newLocation.y - round (toFloat model.window_height / 2))
                       }
                         |> reveal
                     , Cmd.none
@@ -846,8 +846,8 @@ changeFloorTo model floorId locTuple =
     in
     { newModel
         | player = player_
-        , x_display_anchor = max 0 (Tuple.first locTuple - round (toFloat newModel.window_width / 2.0))
-        , y_display_anchor = max 0 (Tuple.second locTuple - round (toFloat newModel.window_height / 2))
+        , viewport_topleft_x = max 0 (Tuple.first locTuple - round (toFloat newModel.window_width / 2.0))
+        , viewport_topleft_y = max 0 (Tuple.second locTuple - round (toFloat newModel.window_height / 2))
     }
         |> reveal
 
@@ -855,8 +855,8 @@ changeFloorTo model floorId locTuple =
 position_display_anchor_in_order_to_center_player : Model -> Model
 position_display_anchor_in_order_to_center_player model =
     { model
-        | x_display_anchor = max 0 (model.player.location.x - round (toFloat model.window_width / 2.0))
-        , y_display_anchor = max 0 (model.player.location.y - round (toFloat model.window_height / 2))
+        | viewport_topleft_x = max 0 (model.player.location.x - round (toFloat model.window_width / 2.0))
+        , viewport_topleft_y = max 0 (model.player.location.y - round (toFloat model.window_height / 2))
     }
         |> reveal
 
@@ -903,29 +903,29 @@ checkAndAlterDisplayAnchorIfNecessary model =
             5
 
         newXanchor =
-            if model.player.location.x <= model.x_display_anchor then
-                max 0 (model.x_display_anchor - (model.window_width - p_x_dist))
+            if model.player.location.x <= model.viewport_topleft_x then
+                max 0 (model.viewport_topleft_x - (model.window_width - p_x_dist))
 
-            else if model.player.location.x >= (model.x_display_anchor + (model.window_width - 1)) then
-                min (model.x_display_anchor + (model.window_width - p_x_dist)) (model.total_width - (model.window_width - p_x_dist))
+            else if model.player.location.x >= (model.viewport_topleft_x + (model.window_width - 1)) then
+                min (model.viewport_topleft_x + (model.window_width - p_x_dist)) (model.total_width - (model.window_width - p_x_dist))
 
             else
-                model.x_display_anchor
+                model.viewport_topleft_x
 
         p_y_dist =
             5
 
         newYanchor =
-            if model.player.location.y <= model.y_display_anchor then
-                max 0 (model.y_display_anchor - (model.window_height - p_y_dist))
+            if model.player.location.y <= model.viewport_topleft_y then
+                max 0 (model.viewport_topleft_y - (model.window_height - p_y_dist))
 
-            else if model.player.location.y >= (model.y_display_anchor + (model.window_height - 1)) then
-                min (model.y_display_anchor + (model.window_height - p_y_dist)) (model.total_height - (model.window_height - p_y_dist))
+            else if model.player.location.y >= (model.viewport_topleft_y + (model.window_height - 1)) then
+                min (model.viewport_topleft_y + (model.window_height - p_y_dist)) (model.total_height - (model.window_height - p_y_dist))
 
             else
-                model.y_display_anchor
+                model.viewport_topleft_y
     in
-    { model | x_display_anchor = newXanchor, y_display_anchor = newYanchor }
+    { model | viewport_topleft_x = newXanchor, viewport_topleft_y = newYanchor }
 
 
 cmdGetRandomPositionedPlayer : Player -> Int -> Int -> Int -> Int -> Cmd Msg

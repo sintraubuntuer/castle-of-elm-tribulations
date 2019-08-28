@@ -615,7 +615,7 @@ mainScreen model =
     let
         ( subgrid, txtmsg ) =
             model.level
-                |> Grid.getSubGrid model.x_display_anchor (model.x_display_anchor + model.window_width - 1) model.y_display_anchor (model.y_display_anchor + model.window_height - 1)
+                |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
 
         ( wwidth, wheight ) =
             ( subgrid.size.width, subgrid.size.height )
@@ -625,11 +625,11 @@ mainScreen model =
 
         xOffset : Int -> Float
         xOffset n =
-            (toFloat n - toFloat model.x_display_anchor - toFloat wwidth / 2) * toFloat xScale
+            (toFloat n - toFloat model.viewport_topleft_x - toFloat wwidth / 2) * toFloat xScale
 
         yOffset : Int -> Float
         yOffset n =
-            (toFloat n - toFloat model.y_display_anchor - toFloat wheight / 2) * toFloat yScale
+            (toFloat n - toFloat model.viewport_topleft_y - toFloat wheight / 2) * toFloat yScale
 
         xOffset_for_subgrid : Int -> Float
         xOffset_for_subgrid n =
@@ -672,7 +672,7 @@ mainScreen model =
         fightingCharacter_ =
             let
                 relevantFightingCharactersDict =
-                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= model.x_display_anchor && fightChar.location.x - model.x_display_anchor < model.window_width) && (fightChar.location.y >= model.y_display_anchor && fightChar.location.y - model.y_display_anchor < model.window_height)) model.fightingCharacters
+                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= model.viewport_topleft_x && fightChar.location.x - model.viewport_topleft_x < model.window_width) && (fightChar.location.y >= model.viewport_topleft_y && fightChar.location.y - model.viewport_topleft_y < model.window_height)) model.fightingCharacters
 
                 mkfightingCharacter fcharId anfightingCharacter =
                     fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
@@ -683,7 +683,7 @@ mainScreen model =
         otherCharacters_ =
             let
                 relevantOtherCharsDict =
-                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.x_display_anchor && char.location.x - model.x_display_anchor < model.window_width) && (char.location.y >= model.y_display_anchor && char.location.y - model.y_display_anchor < model.window_height)) model.otherCharacters
+                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.viewport_topleft_x && char.location.x - model.viewport_topleft_x < model.window_width) && (char.location.y >= model.viewport_topleft_y && char.location.y - model.viewport_topleft_y < model.window_height)) model.otherCharacters
 
                 mkOtherChar ch_id achar =
                     otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level)
@@ -775,8 +775,8 @@ sidebar model pos =
             , "Coordination: " ++ String.fromInt model.player.coordination ++ "%" |> Text.fromString |> theColor |> Collage.rendered
             , "Power: " ++ String.fromInt model.player.power |> Text.fromString |> theColor |> Collage.rendered
             , "Initiative: " ++ String.fromInt model.player.initiative |> Text.fromString |> theColor |> Collage.rendered
-            , "x_display_anchor: " ++ String.fromInt model.x_display_anchor |> Text.fromString |> theColor |> Collage.rendered
-            , "y_display_anchor: " ++ String.fromInt model.y_display_anchor |> Text.fromString |> theColor |> Collage.rendered
+            , "viewport_topleft_x: " ++ String.fromInt model.viewport_topleft_x |> Text.fromString |> theColor |> Collage.rendered
+            , "viewport_topleft_y: " ++ String.fromInt model.viewport_topleft_y |> Text.fromString |> theColor |> Collage.rendered
             , "current_player_x : " ++ String.fromInt model.player.location.x |> Text.fromString |> theColor |> Collage.rendered
             , "current_player_y : " ++ String.fromInt model.player.location.y |> Text.fromString |> theColor |> Collage.rendered
             , "wall percentage : " ++ String.fromFloat (model.wallPercentage |> Maybe.withDefault 0) |> Text.fromString |> theColor |> Collage.rendered
@@ -924,7 +924,7 @@ viewDebugGrid grid model =
     let
         ( subgrid, txtmsg ) =
             grid
-                |> Grid.getSubGrid model.x_display_anchor (model.x_display_anchor + model.window_width - 1) model.y_display_anchor (model.y_display_anchor + model.window_height - 1)
+                |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
     in
     [ Html.div []
         ([ Html.h1 [] [ Html.text ("viewDebugGrid has been called with : " ++ txtmsg) ] ]
