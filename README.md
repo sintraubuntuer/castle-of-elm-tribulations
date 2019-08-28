@@ -18,10 +18,14 @@ There's still a lot of code cleanup to do but i decided to share it anyway
 Game Hints :
 Find your way through the Caverns, Basement , The Ground Floor , First Floor and the Attic , pick up the three pieces of paper with the codes to unlock the black door and move towards enlightenment !!!
 
-Use Q, A , O , P ( or Arrow keys) to move 
-U to pick up items
-I for inventory
-S for Stats
+Use Q, A , O , P ( or Arrow keys) to move  
+
+U to pick up items  
+
+I for inventory  
+
+S for Stats  
+
 E for Opponent Report
 
 
