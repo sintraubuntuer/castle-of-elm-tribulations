@@ -278,8 +278,6 @@ groundFloorStairsTunnelWithOptions =
       , defaultNoDoorOptions
         {-
            , { left = Tile.UseDoor (customBlackDoorInfo Tile.DoorToTheRight)
-
-             --left = Tile.UseDoor (Tile.defaultBlueDoorInfo Tile.DoorToTheRight)
              , top = Tile.NoDoorNoWall
              , right = Tile.NoDoorNoWall
              , bottom = Tile.NoDoorNoWall

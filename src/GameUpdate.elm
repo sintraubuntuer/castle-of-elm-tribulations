@@ -64,6 +64,7 @@ type Msg
     | StartOpponentInteraction FightingCharacter
     | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
+    | NewGridCoordinatesIndexToPlaceFightingCharacter FightingCharacterId Int
     | NewRandomPointToPlaceFightingCharacter FightingCharacterId ( Int, Int )
     | NewRandomFloatsForGenCave (List Float)
     | RandomInitiativeValue String (Maybe FightingCharacterId) Int
@@ -117,7 +118,6 @@ update msg model =
                                         ( model.fightingCharacters, model.otherCharacters, model.player )
 
                             newDisplay =
-                                --model.gameOfThornsModeisOn && not newThornsModel.interactionHasFinished
                                 if model.currentDisplay == GameModel.DisplayGameOfThorns && not newThornsModel.interactionHasFinished then
                                     GameModel.DisplayGameOfThorns
 
@@ -161,6 +161,15 @@ update msg model =
 
                 gBounds =
                     Grid.getGridBoundsToPlacePlayer initModel.level
+
+                floorGridCoordinates floorId =
+                    if floorId == model.currentFloorId then
+                        Grid.toCoordinates model.level
+
+                    else
+                        Dict.get floorId model.floorDict
+                            |> Maybe.map (\g -> Grid.toCoordinates g.level)
+                            |> Maybe.withDefault []
             in
             ( initModel |> position_display_anchor_in_order_to_center_player
             , Cmd.batch
@@ -177,7 +186,7 @@ update msg model =
                     Cmd.none
                  , Cmd.map ThornsMsg (ThornsUpdate.cmdFillRandomIntsPool True initModel.gameOfThornsModel)
                  ]
-                    ++ (Dict.map (\fcharId fightingCharacter -> cmdGetRandomPositionedFightingCharacter fightingCharacter fcharId gBounds.minX gBounds.maxX gBounds.minY gBounds.maxY) initModel.fightingCharacters
+                    ++ (Dict.map (\fcharId fightingCharacter -> cmdGetRandomPositionedFightingCharacter fightingCharacter fcharId (floorGridCoordinates fightingCharacter.floorId |> List.length)) initModel.fightingCharacters
                             |> Dict.values
                        )
                     ++ (Dict.map (\fcharId fightingCharacter -> cmdGenerateRandomInitiativeValue "fightingCharacter" (Just fcharId) 1 100) initModel.fightingCharacters
@@ -461,7 +470,6 @@ update msg model =
                 gridBounds =
                     Grid.getGridBoundsToPlacePlayer model.level
 
-                --|> Debug.log "grid bounds are : "
                 newPlayer =
                     { oldPlayer | location = newLocation, placed = True }
             in
@@ -479,6 +487,34 @@ update msg model =
                 False ->
                     ( model, cmdGetRandomPositionedPlayer { oldPlayer | placed = False } gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
 
+        NewGridCoordinatesIndexToPlaceFightingCharacter fcharId idxPosition ->
+            let
+                mbActualFightChar =
+                    Dict.get fcharId model.fightingCharacters
+
+                mbFloorGrid =
+                    case mbActualFightChar of
+                        Nothing ->
+                            Nothing
+
+                        Just fchar ->
+                            if fchar.floorId == model.currentFloorId then
+                                Just model.level
+
+                            else
+                                Dict.get fchar.floorId model.floorDict
+                                    |> Maybe.map .level
+
+                gridCoordinates =
+                    mbFloorGrid
+                        |> Maybe.map (\g -> Grid.toCoordinates g)
+                        |> Maybe.withDefault []
+            in
+            List.drop idxPosition gridCoordinates
+                |> List.head
+                |> Maybe.withDefault (Grid.Coordinate 1 1)
+                |> (\coords -> update (NewRandomPointToPlaceFightingCharacter fcharId ( coords.x, coords.y )) model)
+
         NewRandomPointToPlaceFightingCharacter fcharId tupPosition ->
             let
                 mbActualFightChar =
@@ -487,28 +523,35 @@ update msg model =
                 newLocation =
                     GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition)
 
-                gridBounds =
-                    Grid.getGridBoundsToPlaceFightingCharacter model.level
-
-                mbNewFightingCharacter =
+                mbFloorGrid =
                     case mbActualFightChar of
-                        Just actualFightChar ->
-                            Just { actualFightChar | location = newLocation, placed = True }
-
                         Nothing ->
                             Nothing
-            in
-            case mbActualFightChar of
-                Nothing ->
-                    ( model, Cmd.none )
 
-                Just actualFightChar ->
-                    case BeingsInTileGrid.isGridTileWalkable newLocation actualFightChar model.level of
+                        Just fchar ->
+                            if fchar.floorId == model.currentFloorId then
+                                Just model.level
+
+                            else
+                                Dict.get fchar.floorId model.floorDict
+                                    |> Maybe.map .level
+
+                gridCoordinates =
+                    mbFloorGrid
+                        |> Maybe.map (\g -> Grid.toCoordinates g)
+                        |> Maybe.withDefault []
+            in
+            case ( mbActualFightChar, mbFloorGrid ) of
+                ( Just actualFightChar, Just actualFloorGrid ) ->
+                    case BeingsInTileGrid.isGridTileWalkable newLocation actualFightChar actualFloorGrid of
                         True ->
                             ( { model | fightingCharacters = GameModel.placeExistingFightingCharacter fcharId newLocation model.fightingCharacters }, Cmd.none )
 
                         False ->
-                            ( model, cmdGetRandomPositionedFightingCharacter actualFightChar fcharId gridBounds.minX gridBounds.maxX gridBounds.minY gridBounds.maxY )
+                            ( model, cmdGetRandomPositionedFightingCharacter actualFightChar fcharId (gridCoordinates |> List.length) )
+
+                _ ->
+                    ( model, Cmd.none )
 
         NewRandomFloatsForGenCave lfloats ->
             let
@@ -558,7 +601,7 @@ update msg model =
                     model.roomsInfo |> Maybe.map .minRoomSize |> Maybe.withDefault 0
 
                 genOutputRecord =
-                    --{ tileGrid = gridAfterInstallLevers, lroomRectangles = lroomrectangles, ltunnelRectangles = ltunnelrectangles, unusedRandoms = lremainingrandints }
+                    --{ tileGrid , lroomRectangles , ltunnelRectangles , unusedRandoms  }
                     MapGen.randomMapGeneratorWithRooms model.total_width model.total_height maxNrOfRooms maxRoomSize minRoomSize lints model.level
 
                 gridAsList =
@@ -894,13 +937,13 @@ cmdGetRandomPositionedPlayer player minX maxX minY maxY =
         Random.generate NewRandomPointToPlacePlayer (getRandIntPair minX maxX minY maxY)
 
 
-cmdGetRandomPositionedFightingCharacter : FightingCharacter -> FightingCharacterId -> Int -> Int -> Int -> Int -> Cmd Msg
-cmdGetRandomPositionedFightingCharacter actualFightChar fcharId minX maxX minY maxY =
+cmdGetRandomPositionedFightingCharacter : FightingCharacter -> FightingCharacterId -> Int -> Cmd Msg
+cmdGetRandomPositionedFightingCharacter actualFightChar fcharId maxX =
     if actualFightChar.placed then
         Cmd.none
 
     else
-        Random.generate (NewRandomPointToPlaceFightingCharacter fcharId) (getRandIntPair minX maxX minY maxY)
+        Random.generate (NewGridCoordinatesIndexToPlaceFightingCharacter fcharId) (getRandInt 0 (maxX - 1))
 
 
 cmdGenerateRandomInitiativeValue : String -> Maybe FightingCharacterId -> Int -> Int -> Cmd Msg
@@ -942,6 +985,11 @@ randIntList =
 getRandIntPair : Int -> Int -> Int -> Int -> Random.Generator ( Int, Int )
 getRandIntPair minX maxX minY maxY =
     Random.pair (Random.int minX maxX) (Random.int minY maxY)
+
+
+getRandInt : Int -> Int -> Random.Generator Int
+getRandInt minX maxX =
+    Random.int minX maxX
 
 
 randIntPairsList : Int -> Int -> Random.Generator (List ( Int, Int ))
@@ -1102,35 +1150,6 @@ otherCharacters_AI model =
             }
     in
     newModel
-
-
-attackIfClose_OtherwiseMove : FightingCharacter -> Model -> ( Model, Maybe FightingCharacter )
-attackIfClose_OtherwiseMove fightingCharacter model =
-    let
-        --{ updatedFightingCharacter, updatedPlayer, mbFightingCharacterForGameOfThorns , updatedRandInts }
-        outputRecord =
-            FightingCharacterInTileGrid.attackIfClose_OtherwiseMove fightingCharacter model.player model.currentFloorId model.level model.floorDict model.pseudoRandomIntsPool
-    in
-    ( log outputRecord.textMsg
-        { model
-            | player = outputRecord.player
-            , fightingCharacters = Dict.insert fightingCharacter.id outputRecord.fightingCharacter model.fightingCharacters
-            , pseudoRandomIntsPool = outputRecord.lrandInts
-        }
-    , outputRecord.mbFightingCharacterForGameOfThorns
-    )
-
-
-fightingCharacterMove : FightingCharacter -> Model -> Model
-fightingCharacterMove fightingCharacter model =
-    let
-        ( updatedFightingCharacter, updatedRandInts ) =
-            FightingCharacterInTileGrid.fightingCharacterMove fightingCharacter model.player model.currentFloorId model.level model.floorDict model.pseudoRandomIntsPool
-    in
-    { model
-        | fightingCharacters = Dict.insert fightingCharacter.id updatedFightingCharacter model.fightingCharacters
-        , pseudoRandomIntsPool = updatedRandInts
-    }
 
 
 

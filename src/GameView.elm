@@ -23,18 +23,12 @@ import Tile exposing (Tile(..), Visibility(..))
 
 xScale : Int
 xScale =
-    --15 * 3
     64
 
 
 yScale : Int
 yScale =
-    --20 * 3
     64
-
-
-
---Form
 
 
 noForm : Collage Msg
@@ -101,7 +95,6 @@ hole =
 
 wall : String -> Collage Msg
 wall orientationStr =
-    --rect (toFloat xScale) (toFloat yScale) |> filled grey
     let
         fileStr =
             if String.toLower orientationStr == "four_way" then
@@ -154,8 +147,6 @@ wall orientationStr =
 
             else
                 "img/walls/wall.png"
-
-        --"img/walls/empty-flat-empty-flat.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -187,7 +178,6 @@ door doorinfo =
     let
         mbFileStr =
             if doorinfo.isOpen && (doorinfo.orientation == Tile.DoorToUp || doorinfo.orientation == Tile.DoorToDown) then
-                --rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform white)
                 Just "img/doors/doorUp_open_floorBg.png"
 
             else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheLeft then
@@ -442,7 +432,6 @@ tileOverlay t =
                     floorOverlay "ash"
 
                 Just (Key keyinfo) ->
-                    --floorOverlay ( "key_" ++ floorinfo.item.color )
                     floorOverlay ("key_" ++ keyinfo.keyColor)
 
                 Just Box ->
@@ -737,18 +726,12 @@ mainScreen model =
         fogger =
             mkLayer (Grid.toList visibilitySubGrid) (row fogT)
     in
-    --flow down
     Collage.group
-        ([ --layers [ bg, pg, fogger ]
-           fogger
+        ([ fogger
          , pg |> shift ( 0, 0 )
          , eg
          , ocg
          , bg
-
-         --, fogger
-         --layers [ bg, pg ]
-         --flow down <| List.map text (List.take 3 model.log)
          ]
          --  ++ List.map (Text.fromString >> Collage.rendered) (List.take 3 model.log)
         )
@@ -773,7 +756,6 @@ sidebar model pos =
             Text.color red
 
         bar =
-            --flow down
             [ model.player.textAvatar ++ " : " ++ model.player.name |> Text.fromString |> theColor |> Collage.rendered
             , "Health: " ++ String.fromInt model.player.health |> Text.fromString |> theColor |> Collage.rendered
             , "mana: " ++ String.fromInt model.player.mana |> Text.fromString |> theColor |> Collage.rendered
@@ -782,7 +764,6 @@ sidebar model pos =
                 |> Collage.group
 
         barDebugMode =
-            --flow down
             [ model.player.textAvatar ++ " : " ++ model.player.name |> Text.fromString |> theColor |> Collage.rendered
             , "Health: " ++ String.fromInt model.player.health |> Text.fromString |> theColor |> Collage.rendered
             , "Energy: " ++ String.fromInt model.player.energy |> Text.fromString |> theColor |> Collage.rendered
@@ -803,7 +784,6 @@ sidebar model pos =
                 |> List.indexedMap (\i elem -> shift ( -100, 200 - toFloat i * 25 ) elem)
                 |> Collage.group
     in
-    --container (widthOf bar + 20) (heightOf bar) midTop bar
     if model.debugMode then
         barDebugMode
 
@@ -827,7 +807,6 @@ viewGameOverOverlay completed =
             else
                 ""
     in
-    --flow down
     [ "GAME OVER" |> Text.fromString |> theColor |> Collage.rendered
     , completionMsg |> Text.fromString |> theColor |> Collage.rendered
     ]
@@ -900,24 +879,15 @@ viewInventory model =
 
 display :
     Model
-    -> Collage Msg --Element
+    -> Collage Msg
 display model =
     let
         pos =
             locate "mainScreen" topLeft (mainScreen model)
                 |> Maybe.withDefault ( -100000, -100000 )
-
-        --|> Debug.log "mainScreen topLeft is : "
     in
-    --flow right [ sidebar model, mainScreen model ] |> color black
     Collage.group
-        [ {- if model.displayInventory then
-               viewInventoryOverlay model |> shift ( 0, 0 )
-
-             else
-               noForm
-          -}
-          if model.displayStatsOverlay then
+        [ if model.displayStatsOverlay then
             sidebar model pos
 
           else
@@ -930,16 +900,8 @@ display model =
 
           else
             noForm
-
-        --|> shift ( -model.x_display_anchor * xScale |> toFloat >> (\x -> x * 0.5), model.y_display_anchor * yScale |> toFloat )
         , mainScreen model
-
-        --|> shift pos --|> shift ( -model.x_display_anchor * xScale |> toFloat, -model.y_display_anchor * yScale |> toFloat )
         ]
-
-
-
---|> color black
 
 
 gridToHtmlList : Grid.Grid a -> List (Html Msg)
@@ -949,7 +911,6 @@ gridToHtmlList grid =
             Grid.toList grid
 
         funcListToString l =
-            --List.foldl (\x y -> y ++ " , " ++ toString x) "" l
             List.foldl (\x y -> y ++ " , " ++ "Todo ... convert grid element to string ") "" l
 
         lofstrs =
@@ -961,8 +922,6 @@ gridToHtmlList grid =
 viewDebugGrid : Grid.Grid a -> Model -> List (Html Msg)
 viewDebugGrid grid model =
     let
-        --_ =
-        --    Debug.log "viewDebugGrid has been called "
         ( subgrid, txtmsg ) =
             grid
                 |> Grid.getSubGrid model.x_display_anchor (model.x_display_anchor + model.window_width - 1) model.y_display_anchor (model.y_display_anchor + model.window_height - 1)
@@ -1031,7 +990,7 @@ viewHelpMode : Model -> Html GameUpdate.Msg
 viewHelpMode model =
     Html.div [ Attr.align "center" ]
         [ Html.h3 [] [ Html.text "Help Screen" ]
-        , Html.text "Castle of Elm is a minimalistic Rogue like game , inspired by Castle of Elm , Atic Atac , Roguelike in Elm , Sleeping Beauty's Game of Thorns , ... "
+        , Html.text "Castle of Elm Tribulations is a minimalistic Rogue like game , inspired by Castle of Elm , Atic Atac , Roguelike in Elm  , Sleeping Beauty's Game of Thorns , ... "
         , Html.br [] []
         , Html.text "Find your way through the Caverns, Basement , The Ground Floor , First Floor and the Attic , pick up the three pieces of paper with the codes to unlock the black door and move towards enlightenment !!!"
         , Html.br [] []
@@ -1063,7 +1022,6 @@ view model =
                     GameModel.DisplayGameOfThorns ->
                         viewGameOfThorns model
 
-                    --else if model.viewOpponentReportMode then
                     GameModel.DisplayOpponentReport ->
                         viewOpponentReport model
 

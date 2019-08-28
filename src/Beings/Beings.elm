@@ -45,7 +45,7 @@ type EnlightenmentSpellEffect
 
 type alias Player =
     { location : Location
-    , textAvatar : String --Element.Element
+    , textAvatar : String
     , name : String
     , direction : Direction
     , health : Int
@@ -84,7 +84,7 @@ type alias FightingCharacter =
     { location : Location
     , floorId : Int
     , id : FightingCharacterId
-    , textAvatar : String --Element.Element
+    , textAvatar : String
     , name : String
     , direction : Direction
     , species : String
@@ -115,7 +115,7 @@ type alias OtherCharacter =
     { location : Location
     , floorId : Int
     , id : OtherCharacterId
-    , textAvatar : String --Element.Element
+    , textAvatar : String
     , name : String
     , direction : Direction
     , species : String
@@ -141,7 +141,7 @@ otherCharacterCreationFunc id_ ename floor_id_ =
     { location = Grid.Coordinate 9 9
     , floorId = floor_id_
     , id = id_
-    , textAvatar = "" --Element.Element
+    , textAvatar = ""
     , name = ename
     , direction = Down
     , species = "otherYou"

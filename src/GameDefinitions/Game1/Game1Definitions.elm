@@ -9,20 +9,6 @@ import Thorns.Types
 import Tile exposing (Tile(..), Visibility(..))
 
 
-
-{- }
-
-   setAllAsUnexplored : Grid.Grid Tile -> Grid.Grid Tile.Visibility
-   setAllAsUnexplored level =
-       let
-           grid =
-               Grid.toList level
-       in
-       List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid.fromList
-
--}
-
-
 initialPlayer : Player
 initialPlayer =
     let
@@ -32,13 +18,13 @@ initialPlayer =
     Beings.playerCreationFunc elem "You"
 
 
-initialFightingCharacter : FightingCharacterId -> Int -> FightingCharacter
-initialFightingCharacter fcharId floorId =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
+initialFightingCharacter fcharId species floorId =
     let
         elem =
             "e" ++ String.fromInt fcharId
     in
-    Beings.fightingCharacterCreationFunc elem fcharId ("fightingCharacter" ++ String.fromInt fcharId) "ghost" floorId
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species floorId
 
 
 dimensions : ( Int, Int )
@@ -53,10 +39,10 @@ initialModelFunc =
             initialPlayer
 
         fightingCharacter =
-            initialFightingCharacter 1 theFloorId
+            initialFightingCharacter 1 "slime" theFloorId
 
         fightingCharacter2 =
-            initialFightingCharacter 2 theFloorId
+            initialFightingCharacter 2 "small_worm" theFloorId
 
         levers =
             Dict.empty
