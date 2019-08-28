@@ -105,7 +105,7 @@ type alias FightingCharacter =
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
-    , maxNrCharacterMovesPerTurn : Int -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn : Int
     , nrMovesInCurrentTurn : Int
     , placed : Bool
     }
@@ -130,7 +130,7 @@ type alias OtherCharacter =
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
-    , maxNrCharacterMovesPerTurn : Int -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn : Int
     , nrMovesInCurrentTurn : Int
     , placed : Bool
     }
@@ -156,7 +156,7 @@ otherCharacterCreationFunc id_ ename floor_id_ =
     , disappearsWhenHealthIsZero = True
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False
-    , maxNrCharacterMovesPerTurn = 1 -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn = 1
     , nrMovesInCurrentTurn = 0
     , placed = True
     }
@@ -224,7 +224,7 @@ fightingCharacterCreationFunc elem fcharId ename species_ floor_id =
     , disappearsWhenHealthIsZero = False
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False
-    , maxNrCharacterMovesPerTurn = 2 -- to prevent possible infinite recursion in ai
+    , maxNrCharacterMovesPerTurn = 2
     , nrMovesInCurrentTurn = 0
     , placed = False
     }

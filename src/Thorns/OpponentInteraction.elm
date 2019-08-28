@@ -45,8 +45,6 @@ activate coords mbSegment grid =
                                 List.foldl (\coord gridacc -> Grid.set coord Nothing gridacc) grid lcoords
                         in
                         ( newGrid, Just power_value )
-
-        -- fall  ( outGrid   , lrands )
     in
     ( outGrid, mb_thorn_opt, mb_power )
 
@@ -189,7 +187,6 @@ get_interaction_options : List RandomVal -> Player -> ( Maybe Beings.OPPONENT_IN
 get_interaction_options lrandints player =
     let
         lopt =
-            --  [ Beings.COMMON_ATTACK, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_COMMON_ATTACK, Beings.OPPONENT_ENLIGHTENMENT_SPELL ]
             [ Beings.COMMON_ATTACK, Beings.OPPONENT_COMMON_ATTACK, Beings.COMMON_ATTACK, Beings.OPPONENT_COMMON_ATTACK, Beings.COMMON_ATTACK, Beings.OPPONENT_COMMON_ATTACK, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_ENLIGHTENMENT_SPELL, Beings.ENLIGHTENMENT_SPELL, Beings.OPPONENT_ENLIGHTENMENT_SPELL ]
 
         litems =

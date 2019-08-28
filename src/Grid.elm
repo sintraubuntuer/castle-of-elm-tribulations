@@ -129,7 +129,6 @@ set { x, y } a grid =
     else
         let
             row =
-                --Array.getOrFail y grid.grid
                 case Array.get y grid.grid of
                     Just r ->
                         r
@@ -177,7 +176,6 @@ getRow n grid =
 
 getRowOrEmptyList : Int -> Grid a -> List a
 getRowOrEmptyList n grid =
-    --Array.toList << Array.getOrFail n << .grid
     case Array.get n grid.grid of
         Just r ->
             r |> Array.toList
@@ -232,7 +230,6 @@ getSubGrid minCol maxCol minRow maxRow grid =
                 ++ (" rows of the subgrid has " ++ String.fromInt (List.length therows))
     in
     ( List.map (\lrow -> List.drop minCol_ lrow) therows
-        --List.map (\lrow -> List.drop (grid.size.width - (maxCol_ + 1)) lrow) therows
         |> List.map (\lrow -> List.take (maxCol_ - minCol_ + 1) lrow)
         |> fromList
     , txtmsg
@@ -305,7 +302,6 @@ neighborhoodCalc : Int -> Coordinate -> List Coordinate
 neighborhoodCalc d { x, y } =
     let
         linc =
-            --[ 1, 0, -1 ]
             List.range -d d
 
         possible_new_x =

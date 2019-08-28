@@ -54,7 +54,6 @@ initialModelFunc =
             Tuple.second dimensions
 
         firstMap =
-            -- MapGen.randomCave dimensions
             Grid.initialize { width = w, height = h } Tile.NoTileYet
 
         roomsInfo =
@@ -72,7 +71,6 @@ initialModelFunc =
         createRandomMap =
             True
     in
-    -- GameModel.Model
     ( { player = player
       , fightingCharacters =
             Dict.fromList

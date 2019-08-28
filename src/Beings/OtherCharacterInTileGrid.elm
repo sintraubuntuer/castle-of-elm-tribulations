@@ -90,7 +90,6 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
 otherCharacterMove : Beings.OtherCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int GameModel.FloorStore -> List Int -> ( Beings.OtherCharacter, List Int )
 otherCharacterMove otherCharacter player currentFloorId grid floorDict lRandomInts =
     if otherCharacter.floorId /= currentFloorId then
-        --BeingsInTileGrid.characterMove_differentFloor fightingCharacter player grid floorDict lRandomInts
         BeingsInTileGrid.characterMove_RandomMove otherCharacter player grid floorDict lRandomInts
 
     else

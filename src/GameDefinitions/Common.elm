@@ -93,11 +93,6 @@ initialPlayer =
     let
         elem =
             "@"
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
     in
     Beings.playerCreationFunc elem "You"
 
@@ -107,11 +102,6 @@ initialFightingCharacter fcharId species floor_id =
     let
         elem =
             "e" ++ String.fromInt fcharId
-
-        --|> Text.fromString
-        --|> Text.monospace
-        --|> Text.color white
-        --|> centered
     in
     Beings.fightingCharacterCreationFunc elem fcharId ("fightingCharacter" ++ String.fromInt fcharId) species floor_id
 
@@ -143,7 +133,6 @@ initialModelFunc =
             Tuple.second dimensions
 
         firstMap =
-            -- MapGen.randomCave dimensions
             gridInitializer w h cParams
 
         theFloorId =
@@ -152,7 +141,6 @@ initialModelFunc =
         createRandomMap =
             False
     in
-    -- GameModel.Model
     ( { player = player
       , fightingCharacters =
             Dict.fromList
@@ -256,7 +244,7 @@ type alias ItemCreationInfo =
     , room_row_nr : Int
     , room_col_nr : Int
     , room_type : RoomType
-    , position_in_room : Int --(in WallUp , L R or D )
+    , position_in_room : Int
     , mbLocationShift : Maybe ( Int, Int )
     }
 
@@ -345,7 +333,6 @@ getVerticalTunnel : Int -> Int -> VerticalTunnelOrientation -> Maybe Int -> Mayb
 getVerticalTunnel row_nr col_nr orientation mbWidth mbHeight mbFromRoomType mbToRoomType mbShift config_params =
     let
         tunnel_height =
-            --mbHeight |> Maybe.withDefault (2 * horizontal_wall_height + vertical_space_between_rooms)
             case mbHeight of
                 Just aheight ->
                     aheight
@@ -472,11 +459,9 @@ getStairsOnRoom : Int -> Int -> Int -> Int -> Int -> StairsOrientation -> Maybe 
 getStairsOnRoom row_nr col_nr stairsId toFloorId toStairsId orientation mbFromRoomType shiftOnDestinationTuple mbShiftLocationTuple config_params grid =
     let
         tunnel_width =
-            --vertical_wall_width + horizontal_space_between_rooms
             config_params.vertical_wall_width + 1
 
         tunnel_height =
-            --horizontal_wall_height + vertical_space_between_rooms
             config_params.horizontal_wall_height + 1
 
         ( loc_x_shift, loc_y_shift ) =
@@ -552,10 +537,6 @@ get_room_top_left_y row_nr col_nr roomType config_params =
 
         VerticalRoom ->
             small_width_room_top_left_y config_params row_nr col_nr
-
-
-
--- this ( room positions ) will probably have to be revised , and maybe consider roomsize in some other way ...
 
 
 get_width_height_factors : Int -> ( Float, Float )
@@ -705,7 +686,6 @@ type alias TeleporterInfoWithLocation =
 
 createTeleporterInfo : Int -> Int -> TeleporterType -> Int -> ( Int, Int ) -> Tile.TeleporterInfo
 createTeleporterInfo teleporterId floorId teleportertype targetId shift =
-    --Tile.TeleporterInfo teleporterId floorId teleportertype row_nr col_nr room_type wall targetId shift False Unexplored
     Tile.TeleporterInfo teleporterId floorId teleportertype targetId shift False Unexplored
 
 
@@ -965,8 +945,3 @@ createHoleInfoWithLocation holeId floorId row_nr col_nr pos_nr roomType targetId
     { holeInfo = HoleInfo holeId floorId targetId False Unexplored
     , holeLocation = Grid.Coordinate pos_x pos_y
     }
-
-
-
--- get_room_position_nr row_nr col_nr pos_nr roomType config_params =
---1 groundFloor_id 1 1 5 HorizontalRoom

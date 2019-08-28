@@ -51,14 +51,6 @@ view model =
         , viewHealthReport model
         , br [] []
         , br [] []
-
-        {- }
-           , if model.previousGrid /= Nothing then
-               div [] [ a [ onClick UndoLastInteraction ] [ text "Undo" ] ]
-
-             else
-               div [] []
-        -}
         ]
 
 
@@ -98,17 +90,9 @@ viewHealthReport model =
         ]
 
 
-
---(List.map (\coord -> Grid.get coord model.gridInteractionOptions |> Maybe.withDefault Nothing |> mbthornToString |> text) lcoords)
-
-
 rowToListStringIndex : List (Maybe ThornGrid.Thorn) -> List ( String, Int )
 rowToListStringIndex lmbthorns =
     List.indexedMap (\i mbt -> ( mbthornToString mbt, i )) lmbthorns
-
-
-
---|> String.join " "
 
 
 rowToString : List (Maybe ThornGrid.Thorn) -> String

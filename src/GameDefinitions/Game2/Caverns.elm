@@ -280,8 +280,7 @@ cavernsInitialVerticalTunnelRectangles =
 
 cavernsStairsTunnel : List TunnelRectangle
 cavernsStairsTunnel =
-    [ --getHorizontalTunnel 4 8 TunnelToTheLeft (Just (vertical_wall_width + horizontal_space_between_rooms)) Nothing Nothing Nothing Nothing
-      getHorizontalTunnel 4 8 TunnelToTheLeft (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing config_params
+    [ getHorizontalTunnel 4 8 TunnelToTheLeft (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing config_params
     , getVerticalTunnel 7 2 TunnelDown Nothing (Just (config_params.horizontal_wall_height + 1)) Nothing Nothing Nothing config_params
     ]
 

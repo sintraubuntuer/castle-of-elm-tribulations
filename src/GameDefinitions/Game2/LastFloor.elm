@@ -58,7 +58,7 @@ modelChangerFuncsForLever1 =
             Dict.values model.fightingCharacters |> List.filter (\en -> en.health <= 0) |> List.length
 
         reqsCompleted model =
-            nrEnlightenedOpponents model >= 0 && nrDeadOpponents model == 0
+            nrEnlightenedOpponents model >= 3 && nrDeadOpponents model == 0
     in
     [ \coords model ->
         if reqsCompleted model then

@@ -22,7 +22,6 @@ move ( x_shift, y_shift ) grid isWalkableFunc a =
         initiative =
             a.initiative + 100
     in
-    --case GameModel.isModelTileWalkable location a model of
     case isWalkableFunc location a grid of
         False ->
             a
@@ -125,7 +124,7 @@ characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorI
 
 characterMove_RandomMove : { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, floorId : Int, inventory : Beings.Inventory, initiative : Int } -> Beings.Player -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, floorId : Int, inventory : Beings.Inventory, initiative : Int }, List Int )
 characterMove_RandomMove character player grid floorDict lRandomInts =
-    -- for now we will just use a completely RandomMove if character is on a different floor than player
+    -- for now we will just use a completely RandomMove if character is on a different floor relative to player
     let
         ( xrand, yrand, updatedRandInts ) =
             ( List.head lRandomInts |> Maybe.withDefault 0
@@ -215,7 +214,6 @@ isTileWalkable being tile =
             False
 
         Door doorinfo ->
-            --doorinfo.isOpen || List.contains doorinfo.requiresToOpen (Dict.values player.inventory)
             List.foldl (\it bacc -> List.member it (Dict.values being.inventory) && bacc) True doorinfo.requiresToOpen
 
         Lever leverInfo ->

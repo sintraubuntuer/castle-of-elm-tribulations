@@ -196,7 +196,7 @@ dStore =
             , explored = setAllAsUnexplored Basement.gridBasement
             , window_width = common_window_width
             , window_height = common_window_height
-            , total_width = get_total_width config_params 6 -- basement has 11 room columns
+            , total_width = get_total_width config_params 6 -- basement has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
           )
@@ -214,7 +214,7 @@ dStore =
             , explored = setAllAsUnexplored FirstFloor.gridFirstFloor
             , window_width = common_window_width
             , window_height = common_window_height
-            , total_width = get_total_width config_params 6 -- firstFloor has 6room columns
+            , total_width = get_total_width config_params 6 -- firstFloor has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
           )
@@ -232,8 +232,8 @@ dStore =
             , explored = setAllAsUnexplored LastFloor.gridLastFloor
             , window_width = 18
             , window_height = 18
-            , total_width = get_total_width config_params 23 -- LastFloor has 23 room columns
-            , total_height = get_total_height config_params 17 -- 17 room rows
+            , total_width = get_total_width config_params 23 -- LastFloor has 23  columns
+            , total_height = get_total_height config_params 17 -- 17  rows
             }
           )
         ]
@@ -317,8 +317,6 @@ place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
                                                                     Nothing
 
                                                         _ ->
-                                                            --tryAgainWithNewCoords
-                                                            --auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec ( storeDict, lrem_rands, try_nr + 1 )
                                                             Nothing
                                        )
 

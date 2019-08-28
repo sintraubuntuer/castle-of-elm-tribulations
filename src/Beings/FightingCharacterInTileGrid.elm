@@ -218,7 +218,6 @@ attack dude1 dude2 lprandInts =
 fightingCharacterMove : Beings.FightingCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( Beings.FightingCharacter, List Int )
 fightingCharacterMove fightingCharacter player currentFloorId grid floorDict lRandomInts =
     if fightingCharacter.floorId /= currentFloorId then
-        --BeingsInTileGrid.characterMove_differentFloor fightingCharacter player grid floorDict lRandomInts
         BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid floorDict lRandomInts
 
     else

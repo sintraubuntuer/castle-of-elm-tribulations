@@ -23,16 +23,14 @@ update msg model =
 
         NewRandomIntsAddToPool lints ->
             ( { model
-                | previousPseudoRandomIntsPool = model.pseudoRandomIntsPool
-                , pseudoRandomIntsPool = model.pseudoRandomIntsPool ++ lints
+                | pseudoRandomIntsPool = model.pseudoRandomIntsPool ++ lints
               }
             , Cmd.none
             )
 
         NewRandomIntsAddToPoolAndInitializeGrid lints ->
             { model
-                | previousPseudoRandomIntsPool = model.pseudoRandomIntsPool
-                , pseudoRandomIntsPool = model.pseudoRandomIntsPool ++ lints
+                | pseudoRandomIntsPool = model.pseudoRandomIntsPool ++ lints
             }
                 |> update InitializeGrid
 
@@ -113,31 +111,9 @@ update msg model =
                             info_rec.player.health <= 0 || info_rec.opponent.health <= 0 || info_rec.opponent.indexOfLight >= info_rec.opponent.indexOfLightMax
 
                         newModel =
-                            { model | gridInteractionOptions = newGrid, previousGrid = Just previous_grid, currentSegment = [], player = info_rec.player, opponent = Just (Types.FightingCharacter info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_ }
-
-                        --_ =
-                        --    Debug.log "message : " info_rec.txtmsg
+                            { model | gridInteractionOptions = newGrid, currentSegment = [], player = info_rec.player, opponent = Just (Types.FightingCharacter info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_ }
                     in
                     ( newModel, cmdFillRandomIntsPool False newModel )
-
-        UndoLastInteraction ->
-            let
-                modelNewGrid =
-                    case model.previousGrid of
-                        Just pgrid ->
-                            { model | gridInteractionOptions = pgrid, previousGrid = Nothing }
-
-                        Nothing ->
-                            model
-
-                modelNewGridAndRandoms =
-                    if model.previousPseudoRandomIntsPool /= [] then
-                        { modelNewGrid | pseudoRandomIntsPool = model.previousPseudoRandomIntsPool, previousPseudoRandomIntsPool = [] }
-
-                    else
-                        modelNewGrid
-            in
-            ( modelNewGridAndRandoms, Cmd.none )
 
         InitializeGrid ->
             let

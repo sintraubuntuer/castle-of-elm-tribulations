@@ -63,8 +63,6 @@ fallColumn lrands player lmbthorns =
         filteredl =
             lmbthorns |> List.filter (\mbv -> mbv /= Nothing)
 
-        --_ =
-        --    Debug.log ("fall column was called with a column of " ++ (List.length lmbthorns |> String.fromInt) ++ " elements . After filtering out Nothing , number of remaining elements = ") (List.length filteredl)
         getNewl : ( List (Maybe Thorn), List RandomVal ) -> ( List (Maybe Thorn), List RandomVal )
         getNewl ( oldl, lrand ) =
             if List.length oldl < List.length lmbthorns then
@@ -85,8 +83,6 @@ fallColumn lrands player lmbthorns =
 
 getThornFromRandomValue : List RandomVal -> Beings.Player -> ( Maybe Thorn, List RandomVal )
 getThornFromRandomValue lrand player =
-    -- for the time being
-    --Beings.ENLIGHTENMENT_SPELL
     OpponentInteraction.get_interaction_options lrand player
 
 
