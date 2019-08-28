@@ -1,13 +1,15 @@
 # Castle Of Elm Tribulations 
 
-Castle of Elm Tribulations is a minimalistic Rogue like game , inspired by Castle of Elm ( Claudia Doppioslash - https://github.com/doppioslash/CastleOfElm ) , Atic Atac , Roguelike in Elm by deadfoxygrandpa https://github.com/deadfoxygrandpa/Roguelike , Sleeping Beauty's Game of Thorns https://ondras.github.io/sleeping-beauty/ , ... 
+Castle of Elm Tribulations is a minimalistic Rogue like game , inspired by [Claudia Doppioslash](https://github.com/doppioslash/CastleOfElm)  Castle of Elm  , Atic Atac , Roguelike in Elm by [Alex Neslusan](https://github.com/deadfoxygrandpa/Roguelike) , Sleeping Beauty's Game of Thorns by [Ondřej Žára](https://github.com/ondras/sleeping-beauty) , ... 
 
-The game is already functional , and i strongly advise you to try it :-)  , but it can still be improved in some ways ... like for instance adding sound ( if you want to collaborate please let me know )
+It uses art from the original Castle of Elm game , by  http://lpc.opengameart.org/static/lpc-style-guide/assets.html and  by 
+Pedro Medeiros (@saint11)  ...
 
-The project ( on my part ) started as a  conversion of the C# RogueSharp library to Elm  
-and that's what most of  MapGen module is all about ( although some algorithms  are still  missing ) ...
+The game is already functional , and i strongly advise you to play it :-)  , but it can still be improved in some ways ... like for instance by adding sound ( if you want to collaborate please let me know )
 
-... and this year i suddenly decided to also use it to make a nice little game and participate in the 64 game jam : 
+The project ( on my part ) started as an attempt to convert the C# RogueSharp library ( https://github.com/FaronBracy/RogueSharp ) to Elm and that's what most of  MapGen module is all about ( although some algorithms  are still  missing ) ...
+
+... and this year i suddenly decided to also use it to make a nice little game for LOWREZJAM 2019  
 
 
 There's still a lot of code cleanup to do but i decided to share it anyway 
