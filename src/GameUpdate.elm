@@ -151,10 +151,10 @@ update msg model =
                 ( initModel, createRandomMap, randomlyPositionPlayer ) =
                     case nr of
                         1 ->
-                            GameDefinitions.Game1.Game1Definitions.initialModelFunc
+                            GameDefinitions.Game1.Game1Definitions.initialModelFunc model.imgBaseDir
 
                         2 ->
-                            GameDefinitions.Game2.Game2Definitions.initialModelFunc model.pseudoRandomIntsPool
+                            GameDefinitions.Game2.Game2Definitions.initialModelFunc model.pseudoRandomIntsPool model.imgBaseDir
 
                         _ ->
                             ( model, False, False )

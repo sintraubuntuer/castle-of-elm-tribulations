@@ -86,6 +86,7 @@ type alias Model =
     , currentFloorId : Int
     , gameCompletionFunc : Int -> Grid.Coordinate -> Bool
     , leverModelChangerFuncs : Dict Tile.LeverId ModelChangerFuncs
+    , imgBaseDir : Maybe String
     , started : Bool
     , debugMode : Bool
     }

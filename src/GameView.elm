@@ -23,12 +23,12 @@ import Tile exposing (Tile(..), Visibility(..))
 
 xScale : Int
 xScale =
-    64
+    50
 
 
 yScale : Int
 yScale =
-    64
+    50
 
 
 noForm : Collage Msg
@@ -38,15 +38,16 @@ noForm =
 
 floor_ :
     Tile.FloorInfo
+    -> String
     -> Collage Msg
-floor_ floorinfo =
+floor_ floorinfo imgBaseDir =
     let
         fileStr =
             if floorinfo.color == "orange" then
-                "img/floor/floor_01.png"
+                imgBaseDir ++ "/floor/floor_01.png"
 
             else
-                "img/floor/floor_01.png"
+                imgBaseDir ++ "/floor/floor_01.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -56,116 +57,116 @@ floor floorinfo =
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform blue)
 
 
-floorOverlay : String -> Collage Msg
-floorOverlay elemStr =
+floorOverlay : String -> String -> Collage Msg
+floorOverlay elemStr imgBaseDir =
     if elemStr == "ash" then
-        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_ash.png"
+        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) (imgBaseDir ++ "/floor/floor_ash.png")
 
     else if String.startsWith "key" elemStr then
-        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) ("img/items/" ++ elemStr ++ ".png")
+        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) (imgBaseDir ++ "/items/" ++ elemStr ++ ".png")
 
     else if elemStr == "landingTarget" then
-        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) "img/floor/floor_landing_target.png"
+        Collage.image ( toFloat (xScale - 30), toFloat (yScale - 30) ) (imgBaseDir ++ "/floor/floor_landing_target.png")
 
     else
         noForm
 
 
-stairs : String -> Collage Msg
-stairs upOrDownStr =
+stairs : String -> String -> Collage Msg
+stairs upOrDownStr imgBaseDir =
     let
         fileStr =
             if String.toLower upOrDownStr == "up" then
-                "img/floor/floor_stairs_up.png"
+                imgBaseDir ++ "/floor/floor_stairs_up.png"
 
             else
-                "img/floor/floor_stairs_down.png"
+                imgBaseDir ++ "/floor/floor_stairs_down.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-hole : Collage Msg
-hole =
+hole : String -> Collage Msg
+hole imgBaseDir =
     let
         fileStr =
-            "img/floor/floor_hole.png"
+            imgBaseDir ++ "/floor/floor_hole.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-wall : String -> Collage Msg
-wall orientationStr =
+wall : String -> String -> Collage Msg
+wall orientationStr imgBaseDir =
     let
         fileStr =
             if String.toLower orientationStr == "four_way" then
-                "img/walls/empty-empty-empty-empty.png"
+                imgBaseDir ++ "/walls/empty-empty-empty-empty.png"
 
             else if String.toLower orientationStr == "three_way_at_bottom" then
-                "img/walls/empty-empty-empty-flat.png"
+                imgBaseDir ++ "/walls/empty-empty-empty-flat.png"
 
             else if String.toLower orientationStr == "three_way_at_right" then
-                "img/walls/empty-empty-flat-empty.png"
+                imgBaseDir ++ "/walls/empty-empty-flat-empty.png"
 
             else if String.toLower orientationStr == "three_way_at_top" then
-                "img/walls/empty-flat-empty-empty.png"
+                imgBaseDir ++ "/walls/empty-flat-empty-empty.png"
 
             else if String.toLower orientationStr == "three_way_at_left" then
-                "img/walls/flat-empty-empty-empty.png"
+                imgBaseDir ++ "/walls/flat-empty-empty-empty.png"
 
             else if String.toLower orientationStr == "corner_top_right" then
-                "img/walls/empty-flat-flat-empty.png"
+                imgBaseDir ++ "/walls/empty-flat-flat-empty.png"
 
             else if String.toLower orientationStr == "corner_top_left" then
-                "img/walls/flat-flat-empty-empty.png"
+                imgBaseDir ++ "/walls/flat-flat-empty-empty.png"
 
             else if String.toLower orientationStr == "corner_bottom_right" then
-                "img/walls/empty-empty-flat-flat.png"
+                imgBaseDir ++ "/walls/empty-empty-flat-flat.png"
 
             else if String.toLower orientationStr == "corner_bottom_left" then
-                "img/walls/flat-empty-empty-flat.png"
+                imgBaseDir ++ "/walls/flat-empty-empty-flat.png"
 
             else if String.toLower orientationStr == "up" then
-                "img/walls/flat-empty-flat-empty.png"
+                imgBaseDir ++ "/walls/flat-empty-flat-empty.png"
 
             else if String.toLower orientationStr == "horizontal" then
-                "img/walls/empty-flat-empty-flat.png"
+                imgBaseDir ++ "/walls/empty-flat-empty-flat.png"
 
             else if String.toLower orientationStr == "cul_de_sac_at_bottom" then
-                "img/walls/flat-empty-flat-flat.png"
+                imgBaseDir ++ "/walls/flat-empty-flat-flat.png"
 
             else if String.toLower orientationStr == "cul_de_sac_at_top" then
-                "img/walls/flat-flat-flat-empty.png"
+                imgBaseDir ++ "/walls/flat-flat-flat-empty.png"
 
             else if String.toLower orientationStr == "cul_de_sac_at_left" then
-                "img/walls/flat-flat-empty-flat.png"
+                imgBaseDir ++ "/walls/flat-flat-empty-flat.png"
 
             else if String.toLower orientationStr == "cul_de_sac_at_right" then
-                "img/walls/empty-flat-flat-flat.png"
+                imgBaseDir ++ "/walls/empty-flat-flat-flat.png"
 
             else if String.toLower orientationStr == "just_bricks" then
-                "img/walls/wall.png"
+                imgBaseDir ++ "/walls/wall.png"
 
             else
-                "img/walls/wall.png"
+                imgBaseDir ++ "/walls/wall.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-wallOverlay : Tile.WallInfo -> Collage Msg
-wallOverlay wallinfo =
+wallOverlay : Tile.WallInfo -> String -> Collage Msg
+wallOverlay wallinfo imgBaseDir =
     let
         woverlay =
             case wallinfo.mbTeleporterObject of
                 Just tinfo ->
                     case tinfo.teleporterType of
                         Tile.Barrel ->
-                            Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_barrel_up.png"
+                            Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_barrel_up.png")
 
                         Tile.BookCase ->
-                            Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_bookcase_up.png"
+                            Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_bookcase_up.png")
 
                         Tile.Clock ->
-                            Collage.image ( toFloat xScale, toFloat yScale ) "img/walls/wall_overlay_teleporter_clock_up.png"
+                            Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_clock_up.png")
 
                 _ ->
                     noForm
@@ -173,39 +174,39 @@ wallOverlay wallinfo =
     woverlay
 
 
-door : Tile.DoorInfo -> Collage Msg
-door doorinfo =
+door : Tile.DoorInfo -> String -> Collage Msg
+door doorinfo imgBaseDir =
     let
         mbFileStr =
             if doorinfo.isOpen && (doorinfo.orientation == Tile.DoorToUp || doorinfo.orientation == Tile.DoorToDown) then
-                Just "img/doors/doorUp_open_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/doorUp_open_floorBg.png"
 
             else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheLeft then
-                Just "img/doors/doorLeft_open_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/doorLeft_open_floorBg.png"
 
             else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheRight then
-                Just "img/doors/doorRight_open_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/doorRight_open_floorBg.png"
 
             else if doorinfo.isOpen then
-                Just "img/floor/floor_01.png"
+                Just <| imgBaseDir ++ "/floor/floor_01.png"
 
             else if doorinfo.color == Just "blue" then
-                Just "img/doors/blueDoorClosed_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/blueDoorClosed_floorBg.png"
 
             else if doorinfo.color == Just "green" then
-                Just "img/doors/greenDoorClosed_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/greenDoorClosed_floorBg.png"
 
             else if doorinfo.color == Just "red" then
-                Just "img/doors/redDoorClosed_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/redDoorClosed_floorBg.png"
 
             else if doorinfo.color == Just "yellow" then
-                Just "img/doors/yellowDoorClosed_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/yellowDoorClosed_floorBg.png"
 
             else if doorinfo.color == Just "black" then
-                Just "img/doors/blackDoorClosed_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/blackDoorClosed_floorBg.png"
 
             else
-                Just "img/doors/doorClosed_floorBg.png"
+                Just <| imgBaseDir ++ "/doors/doorClosed_floorBg.png"
     in
     case mbFileStr of
         Just fileStr ->
@@ -241,15 +242,15 @@ doorOverlay doorInfo =
     noForm
 
 
-lever : String -> Collage Msg
-lever onOffStr =
+lever : String -> String -> Collage Msg
+lever onOffStr imgBaseDir =
     let
         fileStr =
             if onOffStr == "on" || onOffStr == "On" || onOffStr == "ON" then
-                "img/levers/lever_color_on.png"
+                imgBaseDir ++ "/levers/lever_color_on.png"
 
             else
-                "img/levers/lever_color_off.png"
+                imgBaseDir ++ "/levers/lever_color_off.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -284,192 +285,192 @@ halfFog =
     rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform (rgba 0 0 0 0.6))
 
 
-tile : Int -> Tile -> Collage Msg
-tile currentFloorId t =
+tile : Int -> String -> Tile -> Collage Msg
+tile currentFloorId imgBaseDir t =
     case t of
         Tile.Floor floorinfo ->
-            floor_ floorinfo
+            floor_ floorinfo imgBaseDir
 
         Tile.Stairs sinfo ->
             if sinfo.toFloorId > currentFloorId then
-                stairs "up"
+                stairs "up" imgBaseDir
 
             else
-                stairs "down"
+                stairs "down" imgBaseDir
 
         Tile.Tree treeinfo ->
-            tree treeinfo
+            tree treeinfo imgBaseDir
 
         Tile.Hole hinfo ->
-            hole
+            hole imgBaseDir
 
         Tile.Wall wallinfo ->
             if wallinfo.orientation == "four_way" then
-                wall "four_way"
+                wall "four_way" imgBaseDir
 
             else if wallinfo.orientation == "three_way_at_bottom" then
-                wall "three_way_at_bottom"
+                wall "three_way_at_bottom" imgBaseDir
 
             else if wallinfo.orientation == "three_way_at_right" then
-                wall "three_way_at_right"
+                wall "three_way_at_right" imgBaseDir
 
             else if wallinfo.orientation == "three_way_at_top" then
-                wall "three_way_at_top"
+                wall "three_way_at_top" imgBaseDir
 
             else if wallinfo.orientation == "three_way_at_left" then
-                wall "three_way_at_left"
+                wall "three_way_at_left" imgBaseDir
 
             else if wallinfo.orientation == "corner_top_right" then
-                wall "corner_top_right"
+                wall "corner_top_right" imgBaseDir
 
             else if wallinfo.orientation == "corner_top_left" then
-                wall "corner_top_left"
+                wall "corner_top_left" imgBaseDir
 
             else if wallinfo.orientation == "corner_bottom_right" then
-                wall "corner_bottom_right"
+                wall "corner_bottom_right" imgBaseDir
 
             else if wallinfo.orientation == "corner_bottom_left" then
-                wall "corner_bottom_left"
+                wall "corner_bottom_left" imgBaseDir
 
             else if wallinfo.orientation == "up" then
-                wall "up"
+                wall "up" imgBaseDir
 
             else if wallinfo.orientation == "horizontal" then
-                wall "horizontal"
+                wall "horizontal" imgBaseDir
 
             else if wallinfo.orientation == "cul_de_sac_at_bottom" then
-                wall "cul_de_sac_at_bottom"
+                wall "cul_de_sac_at_bottom" imgBaseDir
 
             else if wallinfo.orientation == "cul_de_sac_at_top" then
-                wall "cul_de_sac_at_top"
+                wall "cul_de_sac_at_top" imgBaseDir
 
             else if wallinfo.orientation == "cul_de_sac_at_left" then
-                wall "cul_de_sac_at_left"
+                wall "cul_de_sac_at_left" imgBaseDir
 
             else if wallinfo.orientation == "cul_de_sac_at_right" then
-                wall "cul_de_sac_at_right"
+                wall "cul_de_sac_at_right" imgBaseDir
 
             else if wallinfo.orientation == "just_bricks" then
-                wall "just_bricks"
+                wall "just_bricks" imgBaseDir
 
             else
-                wall "horizontal"
+                wall "horizontal" imgBaseDir
 
         Tile.Door doorinfo ->
-            door doorinfo
+            door doorinfo imgBaseDir
 
         Tile.NoTileYet ->
             notileyet
 
         Tile.Lever leverinfo ->
             if leverinfo.isUp then
-                lever "on"
+                lever "on" imgBaseDir
 
             else
-                lever "off"
+                lever "off" imgBaseDir
 
         Tile.Water waterinfo ->
-            water waterinfo
+            water waterinfo imgBaseDir
 
         Tile.Grass grassinfo ->
-            grass grassinfo
+            grass grassinfo imgBaseDir
 
         Tile.ConverterTile it ct ->
-            tile currentFloorId it
+            tile currentFloorId imgBaseDir it
 
         _ ->
             notileyet
 
 
-grass : Tile.GrassInfo -> Collage Msg
-grass grassinfo =
+grass : Tile.GrassInfo -> String -> Collage Msg
+grass grassinfo imgBaseDir =
     let
         fileStr =
             if grassinfo.description == "grass_with_dirt" then
-                "img/grass/grass_and_dirt.png"
+                imgBaseDir ++ "/grass/grass_and_dirt.png"
 
             else
-                "img/grass/grass.png"
+                imgBaseDir ++ "/grass/grass.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-tree : Tile.TreeInfo -> Collage Msg
-tree treeinfo =
+tree : Tile.TreeInfo -> String -> Collage Msg
+tree treeinfo imgBaseDir =
     let
         fileStr =
             if treeinfo.treeType == "pinetree" then
-                "img/trees/treetopPineTree_bg.png"
+                imgBaseDir ++ "/trees/treetopPineTree_bg.png"
 
             else
-                "img/trees/treetopRoundTree_bg.png"
+                imgBaseDir ++ "/trees/treetopRoundTree_bg.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-water : Tile.WaterInfo -> Collage Msg
-water waterinfo =
+water : Tile.WaterInfo -> String -> Collage Msg
+water waterinfo imgBaseDir =
     let
         fileStr =
             if waterinfo.description == "water_wall_up" then
-                "img/water/water_wall_up.png"
+                imgBaseDir ++ "/water/water_wall_up.png"
 
             else if waterinfo.description == "water_wall_left" then
-                "img/water/water_wall_left.png"
+                imgBaseDir ++ "/water/water_wall_left.png"
 
             else
-                "img/water/just_water.png"
+                imgBaseDir ++ "/water/just_water.png"
     in
     Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
 
-tileOverlay : Tile -> Collage Msg
-tileOverlay t =
+tileOverlay : String -> Tile -> Collage Msg
+tileOverlay imgBaseDir t =
     case t of
         Tile.Floor floorinfo ->
             case floorinfo.item of
                 Just Ash ->
-                    floorOverlay "ash"
+                    floorOverlay "ash" imgBaseDir
 
                 Just (Key keyinfo) ->
-                    floorOverlay ("key_" ++ keyinfo.keyColor)
+                    floorOverlay ("key_" ++ keyinfo.keyColor) imgBaseDir
 
                 Just Box ->
-                    Collage.image ( toFloat xScale, toFloat yScale ) "img/items/box.png"
+                    Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/box.png")
 
                 Just (Paper paperinfo) ->
                     if paperinfo.id == 1 then
-                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part1.png"
+                        Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/paper_part1.png")
 
                     else if paperinfo.id == 2 then
-                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part2.png"
+                        Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/paper_part2.png")
 
                     else
-                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part3.png"
+                        Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/paper_part3.png")
 
                 Just (Food fdescription) ->
                     if String.toLower fdescription == "bread" then
-                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/health_item.png"
+                        Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/health_item.png")
 
                     else
-                        Collage.image ( toFloat xScale, toFloat yScale ) "img/items/box.png"
+                        Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/box.png")
 
                 _ ->
                     case floorinfo.floorDrawing of
                         Just (Tile.LandingTargetDrawing nr) ->
-                            floorOverlay "landingTarget"
+                            floorOverlay "landingTarget" imgBaseDir
 
                         _ ->
-                            floorOverlay ""
+                            floorOverlay "" imgBaseDir
 
         Tile.Wall wallinfo ->
-            wallOverlay wallinfo
+            wallOverlay wallinfo imgBaseDir
 
         Tile.Door doorinfo ->
             doorOverlay doorinfo
 
         Tile.ConverterTile it ct ->
-            tileOverlay it
+            tileOverlay imgBaseDir it
 
         Tile.NoTileYet ->
             notileyetOverlay
@@ -509,24 +510,24 @@ tCollageFromStr elemStr =
         |> Collage.rendered
 
 
-playerImg : Player -> Tile.Visibility -> Collage Msg
-playerImg player_ visibility =
+playerImg : Player -> Tile.Visibility -> String -> Collage Msg
+playerImg player_ visibility imgBaseDir =
     case visibility of
         Tile.Visible ->
             let
                 fileStr =
                     case player_.direction of
                         Beings.Left ->
-                            "img/pc/left.png"
+                            imgBaseDir ++ "/pc/left.png"
 
                         Beings.Right ->
-                            "img/pc/right.png"
+                            imgBaseDir ++ "/pc/right.png"
 
                         Beings.Up ->
-                            "img/pc/up.png"
+                            imgBaseDir ++ "/pc/up.png"
 
                         Beings.Down ->
-                            "img/pc/down.png"
+                            imgBaseDir ++ "/pc/down.png"
             in
             Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -534,23 +535,23 @@ playerImg player_ visibility =
             noForm
 
 
-fightingCharacterView : Beings.FightingCharacter -> Bool -> Tile.Visibility -> Collage Msg
-fightingCharacterView fightChar showBlood visibility =
+fightingCharacterView : Beings.FightingCharacter -> Bool -> Tile.Visibility -> String -> Collage Msg
+fightingCharacterView fightChar showBlood visibility imgBaseDir =
     case visibility of
         Tile.Visible ->
             let
                 fileStr =
                     if fightChar.indexOfLight >= fightChar.indexOfLightMax then
-                        "img/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
+                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
 
                     else if fightChar.health > 0 then
-                        "img/characters/" ++ String.toLower fightChar.species ++ ".png"
+                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ ".png"
 
                     else if fightChar.health <= 0 && showBlood then
-                        "img/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
+                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
 
                     else
-                        "img/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
+                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
             in
             Collage.image ( toFloat xScale, toFloat yScale ) fileStr
 
@@ -558,26 +559,26 @@ fightingCharacterView fightChar showBlood visibility =
             noForm
 
 
-otherCharacterView : Beings.OtherCharacter -> Bool -> Tile.Visibility -> Collage Msg
-otherCharacterView character showBlood visibility =
+otherCharacterView : Beings.OtherCharacter -> Bool -> Tile.Visibility -> String -> Collage Msg
+otherCharacterView character showBlood visibility imgBaseDir =
     case visibility of
         Tile.Visible ->
             let
                 fileStr =
-                    "img/pc/right.png"
+                    imgBaseDir ++ "/pc/right.png"
 
                 {-
                      if character.indexOfLight >= character.indexOfLightMax then
-                         "img/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
+                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
 
                      else if character.health > 0 then
-                         "img/characters/" ++ String.toLower fightChar.species ++ ".png"
+                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ ".png"
 
                      else if character.health <= 0 && showBlood then
-                         "img/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
+                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
 
                      else
-                         "img/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
+                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
                    -
                 -}
             in
@@ -666,7 +667,7 @@ mainScreen model =
             List.map makeTile tiles_
 
         player_ =
-            playerImg model.player Tile.Visible
+            playerImg model.player Tile.Visible (getImgBaseDir model)
                 |> shift (location model.player)
 
         fightingCharacter_ =
@@ -675,7 +676,7 @@ mainScreen model =
                     Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= model.viewport_topleft_x && fightChar.location.x - model.viewport_topleft_x < model.window_width) && (fightChar.location.y >= model.viewport_topleft_y && fightChar.location.y - model.viewport_topleft_y < model.window_height)) model.fightingCharacters
 
                 mkfightingCharacter fcharId anfightingCharacter =
-                    fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level)
+                    fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level) (getImgBaseDir model)
                         |> shift (location anfightingCharacter)
             in
             group <| (Dict.map mkfightingCharacter relevantFightingCharactersDict |> Dict.values)
@@ -686,7 +687,7 @@ mainScreen model =
                     Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.viewport_topleft_x && char.location.x - model.viewport_topleft_x < model.window_width) && (char.location.y >= model.viewport_topleft_y && char.location.y - model.viewport_topleft_y < model.window_height)) model.otherCharacters
 
                 mkOtherChar ch_id achar =
-                    otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level)
+                    otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level) (getImgBaseDir model)
                         |> shift (location achar)
             in
             group <| (Dict.map mkOtherChar relevantOtherCharsDict |> Dict.values)
@@ -694,8 +695,8 @@ mainScreen model =
         bg : Collage Msg
         bg =
             Collage.group
-                [ mkLayer (Grid.toList subgrid) (row tileOverlay)
-                , mkLayer (Grid.toList subgrid) (row (tile model.currentFloorId))
+                [ mkLayer (Grid.toList subgrid) (row (tileOverlay (getImgBaseDir model)))
+                , mkLayer (Grid.toList subgrid) (row (tile model.currentFloorId (getImgBaseDir model)))
                 ]
                 |> name "background"
 
@@ -814,24 +815,24 @@ viewGameOverOverlay completed =
         |> Collage.group
 
 
-viewItem : Item.Item -> Collage Msg
-viewItem item =
+viewItem : Item.Item -> String -> Collage Msg
+viewItem item imgBaseDir =
     case item of
         Key { keyColor } ->
-            Collage.image ( toFloat xScale, toFloat yScale ) ("img/items/key_" ++ String.toLower keyColor ++ ".png")
+            Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/key_" ++ String.toLower keyColor ++ ".png")
 
         Box ->
-            Collage.image ( toFloat xScale, toFloat yScale ) "img/items/box.png"
+            Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/box.png")
 
         Paper paperinfo ->
             if paperinfo.id == 1 then
-                Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part1.png"
+                Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/paper_part1.png")
 
             else if paperinfo.id == 2 then
-                Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part2.png"
+                Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/paper_part2.png")
 
             else
-                Collage.image ( toFloat xScale, toFloat yScale ) "img/items/paper_part3.png"
+                Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/items/paper_part3.png")
 
         _ ->
             noForm
@@ -847,7 +848,7 @@ viewInventoryOverlay model =
             [ "You have currently in your inventory : " |> Text.fromString |> theColor |> Collage.rendered |> shift ( 0, 70 ) ]
 
         forms =
-            List.map (\it -> viewItem it) (Dict.values model.player.inventory)
+            List.map (\it -> viewItem it (getImgBaseDir model)) (Dict.values model.player.inventory)
 
         topAndForms =
             List.indexedMap (\i item -> item |> shift ( 0, 1 * (0 + toFloat i * 50) )) (top ++ forms)
@@ -1043,7 +1044,13 @@ view model =
                 ]
 
         False ->
-            viewStartMenuChoices model
+            viewStartMenuChoices model (getImgBaseDir model)
+
+
+getImgBaseDir : Model -> String
+getImgBaseDir model =
+    model.imgBaseDir
+        |> Maybe.withDefault "./img"
 
 
 viewGameOfThorns : Model -> Html GameUpdate.Msg
@@ -1051,8 +1058,8 @@ viewGameOfThorns model =
     Html.div [] [ Html.map GameUpdate.ThornsMsg (ThornsView.view model.gameOfThornsModel) ]
 
 
-viewStartMenuChoices : Model -> Html GameUpdate.Msg
-viewStartMenuChoices model =
+viewStartMenuChoices : Model -> String -> Html GameUpdate.Msg
+viewStartMenuChoices model imgBaseDir =
     Html.div [ Attr.align "center" ]
         [ Html.div [ Attr.align "center" ]
             [ Html.h3 []
@@ -1062,7 +1069,7 @@ viewStartMenuChoices model =
                 , Html.br [] []
                 , Html.a
                     [ Html.Events.onClick (GameUpdate.StartGameNr 2) ]
-                    [ Html.img [ Attr.src "img/game/casteleOfElmTribulations_.png" ] [] ]
+                    [ Html.img [ Attr.src (imgBaseDir ++ "/game/casteleOfElmTribulations_.png") ] [] ]
                 ]
             ]
         , Html.br [] []

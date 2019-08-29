@@ -83,14 +83,15 @@ fromCode keyCode =
 
 
 type alias Flags =
-    {}
+    { imgBaseDir : String
+    }
 
 
 init : Flags -> ( GameModel.Model, Cmd GameUpdate.Msg )
 init flags =
     let
         ( initModel, createRandomMap ) =
-            GameDefinitions.Common.initialModelFunc
+            GameDefinitions.Common.initialModelFunc flags.imgBaseDir
 
         gBounds =
             Grid.getGridBoundsToPlacePlayer initModel.level

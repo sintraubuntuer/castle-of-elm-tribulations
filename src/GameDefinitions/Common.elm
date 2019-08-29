@@ -111,8 +111,8 @@ dimensions =
     ( 10, 10 )
 
 
-initialModelFunc : ( GameModel.Model, Bool )
-initialModelFunc =
+initialModelFunc : String -> ( GameModel.Model, Bool )
+initialModelFunc imgBaseDir_ =
     let
         player =
             initialPlayer
@@ -169,6 +169,7 @@ initialModelFunc =
       , currentFloorId = theFloorId
       , gameCompletionFunc = \fid coords -> False
       , leverModelChangerFuncs = Dict.empty
+      , imgBaseDir = Just imgBaseDir_
       , started = False
       , debugMode = False
       }

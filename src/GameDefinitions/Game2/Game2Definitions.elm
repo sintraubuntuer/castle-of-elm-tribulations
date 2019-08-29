@@ -69,8 +69,8 @@ customGameCompletionFunc floorid coords =
     floorid == lastFloor_id && coords.x < 12 && coords.y >= 5
 
 
-initialModelFunc : List Int -> ( GameModel.Model, Bool, Bool )
-initialModelFunc lrandints =
+initialModelFunc : List Int -> Maybe String -> ( GameModel.Model, Bool, Bool )
+initialModelFunc lrandints imgBaseDir_ =
     let
         player =
             initialPlayer
@@ -160,6 +160,7 @@ initialModelFunc lrandints =
       , currentFloorId = groundFloor_id
       , gameCompletionFunc = customGameCompletionFunc
       , leverModelChangerFuncs = LastFloor.leverModelChangerFuncs
+      , imgBaseDir = imgBaseDir_
       , started = True
       , debugMode = False
       }
