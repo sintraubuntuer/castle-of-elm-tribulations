@@ -23,12 +23,12 @@ import Tile exposing (Tile(..), Visibility(..))
 
 xScale : Int
 xScale =
-    50
+    64
 
 
 yScale : Int
 yScale =
-    50
+    64
 
 
 noForm : Collage Msg
@@ -160,10 +160,18 @@ wallOverlay wallinfo imgBaseDir =
                 Just tinfo ->
                     case tinfo.teleporterType of
                         Tile.Barrel ->
-                            Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_barrel_up.png")
+                            if String.toLower wallinfo.orientation == "up" || String.toLower wallinfo.orientation == "down" then
+                                Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_barrel_side.png")
+
+                            else
+                                Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_barrel_up.png")
 
                         Tile.BookCase ->
-                            Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_bookcase_up.png")
+                            if String.toLower wallinfo.orientation == "up" || String.toLower wallinfo.orientation == "down" then
+                                Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_bookcase_side.png")
+
+                            else
+                                Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_bookcase_up.png")
 
                         Tile.Clock ->
                             Collage.image ( toFloat xScale, toFloat yScale ) (imgBaseDir ++ "/walls/wall_overlay_teleporter_clock_up.png")
@@ -867,7 +875,7 @@ viewInventory model =
 
         thelist =
             Html.div []
-                (List.concatMap (\it -> [ Html.a [] [ Html.img [ Attr.size 640, Attr.src (Item.itemToImgSrc it) ] [] ], Html.br [] [] ]) (Dict.values model.player.inventory))
+                (List.concatMap (\it -> [ Html.a [] [ Html.img [ Attr.size 640, Attr.src (getImgBaseDir model ++ Item.itemToImgSrc it) ] [] ], Html.br [] [] ]) (Dict.values model.player.inventory))
     in
     Html.div [ Attr.align "center" ]
         [ top
@@ -975,12 +983,33 @@ viewDebugFightingCharacters model =
 
 viewOpponentReport : Model -> Html GameUpdate.Msg
 viewOpponentReport model =
+    let
+        fileStr fightChar =
+            if fightChar.indexOfLight >= fightChar.indexOfLightMax then
+                getImgBaseDir model ++ "/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
+
+            else if fightChar.health > 0 then
+                getImgBaseDir model ++ "/characters/" ++ String.toLower fightChar.species ++ ".png"
+
+            else if fightChar.health <= 0 && model.showBlood then
+                getImgBaseDir model ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
+
+            else
+                getImgBaseDir model ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
+
+        fcharLine fightChar =
+            [ Html.span [] [ Html.img [ Attr.width 50, Attr.height 50, Attr.src (fileStr fightChar) ] [] ]
+
+            -- "name : " ++ fightChar.name ++
+            , Html.span [] [ Html.text ("    ,    health : " ++ String.fromInt fightChar.health ++ "  ,     IndexOfLight : " ++ String.fromInt fightChar.indexOfLight), Html.br [] [], Html.br [] [], Html.br [] [], Html.br [] [] ]
+            ]
+    in
     Html.div [ Attr.align "center" ]
         [ Html.h3 [] [ Html.text "Opponent Report :" ]
         , Html.br [] []
         , Html.div
             []
-            (Dict.values model.fightingCharacters |> List.concatMap (\fightChar -> [ Html.text ("name : " ++ fightChar.name ++ " , health : " ++ String.fromInt fightChar.health ++ " ,  IndexOfLight : " ++ String.fromInt fightChar.indexOfLight), Html.br [] [], Html.br [] [], Html.br [] [] ]))
+            (Dict.values model.fightingCharacters |> List.concatMap (\fightChar_ -> fcharLine fightChar_))
         , Html.br [] []
         , Html.br [] []
         , Html.text "Press E to leave Opponent Report"
@@ -1074,10 +1103,13 @@ viewStartMenuChoices model imgBaseDir =
             ]
         , Html.br [] []
         , Html.br [] []
-        , Html.div []
-            [ Html.h3 []
-                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
-                ]
-            ]
-        , Html.br [] []
+
+        {- }
+           , Html.div []
+               [ Html.h3 []
+                   [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
+                   ]
+               ]
+           , Html.br [] []
+        -}
         ]

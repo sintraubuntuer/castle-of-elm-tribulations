@@ -10,6 +10,12 @@ import Thorns.ThornGrid as ThornGrid
 import Thorns.Types as Types exposing (Model, Msg(..))
 
 
+getImgBaseDir : Model -> String
+getImgBaseDir model =
+    model.imgBaseDir
+        |> Maybe.withDefault "./img"
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -21,31 +27,57 @@ view model =
 
         lrows =
             List.map (\nr -> Grid.getRow nr model.gridInteractionOptions) lrownrs
+
+        getAttr rownr colnr =
+            if List.member (Grid.Coordinate colnr rownr) model.currentSegment then
+                ( [ Attr.style "font-weight" "bold", Attr.style "text-decoration" "none !important" ]
+                , [ Attr.style "color" "#DD0000", Attr.style "text-decoration" "none !important" ]
+                )
+
+            else
+                ( [ Attr.style "font-weight" "regular" ]
+                , [ Attr.style "color" "black" ]
+                )
+
+        opponentSpecies oppo =
+            case oppo of
+                Types.FightingCharacter fchar ->
+                    fchar.species
+
+                Types.Ochar ochar ->
+                    ochar.species
+
+        imgBaseDir =
+            getImgBaseDir model
     in
     div [ Attr.align "center" ]
         [ div []
             [ h3 [] [ text "How about a nice game of thorns ?" ]
             , div []
-                (List.indexedMap
-                    (\rownr row ->
-                        div [ Attr.style "padding" "1em", Attr.style "font-family" "monospace", Attr.style "font-size" "1em" ]
-                            (rowToListStringIndex row
-                                |> List.map
-                                    (\( str, colnr ) ->
-                                        span
-                                            (if List.member (Grid.Coordinate colnr rownr) model.currentSegment then
-                                                [ Attr.style "color" "blue", Attr.style "font-weight" "bold" ]
+                [ span [] [ Html.img [ Attr.width 64, Attr.height 64, Attr.src (imgBaseDir ++ "/pc/right.png") ] [] ]
+                , case model.opponent of
+                    Just oppon ->
+                        span [] [ Html.img [ Attr.width 50, Attr.height 50, Attr.src ((imgBaseDir ++ "/characters/") ++ String.toLower (opponentSpecies oppon) ++ ".png") ] [] ]
 
-                                             else
-                                                [ Attr.style "color" "black", Attr.style "font-weight" "regular" ]
-                                            )
-                                            [ a [ onMouseOut (MouseOut rownr colnr), onMouseOver (MouseOver rownr colnr), onClick (DoActivate rownr colnr) ] [ text str ]
-                                            ]
-                                    )
-                            )
+                    Nothing ->
+                        span [] []
+                , div []
+                    (List.indexedMap
+                        (\rownr row ->
+                            div [ Attr.style "padding" "1em", Attr.style "font-family" "monospace", Attr.style "font-size" "1em" ]
+                                (rowToListStringIndex row
+                                    |> List.map
+                                        (\( str, colnr ) ->
+                                            span
+                                                (getAttr rownr colnr |> Tuple.first)
+                                                [ a ((getAttr rownr colnr |> Tuple.second) ++ [ onMouseOut (MouseOut rownr colnr), onMouseOver (MouseOver rownr colnr), onClick (DoActivate rownr colnr) ]) [ text str ]
+                                                ]
+                                        )
+                                )
+                        )
+                        lrows
                     )
-                    lrows
-                )
+                ]
             ]
         , viewSuggestion model
         , viewHealthReport model

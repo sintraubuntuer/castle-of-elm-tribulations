@@ -36,11 +36,12 @@ type alias Model =
     , interactionHasFinished : Bool
     , pseudoRandomIntsPool : List Int
     , helpStr : Maybe String
+    , imgBaseDir : Maybe String
     }
 
 
-initialModel : Beings.Player -> Maybe Beings.FightingCharacter -> Model
-initialModel player mbFightCharacter =
+initialModel : Beings.Player -> Maybe Beings.FightingCharacter -> Maybe String -> Model
+initialModel player mbFightCharacter imgBaseDir_ =
     { gridInteractionOptions = Grid.initialize (Grid.Size 6 6) Nothing
     , currentSegment = []
     , player = player
@@ -48,4 +49,5 @@ initialModel player mbFightCharacter =
     , interactionHasFinished = False
     , pseudoRandomIntsPool = []
     , helpStr = Nothing
+    , imgBaseDir = imgBaseDir_
     }

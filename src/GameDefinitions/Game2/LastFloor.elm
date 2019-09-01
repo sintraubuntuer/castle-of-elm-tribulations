@@ -64,7 +64,8 @@ modelChangerFuncsForLever1 =
         if reqsCompleted model then
             { model
                 | level =
-                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo) model.level
+                    model.level
+                        |> Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo)
                         |> Grid.set (Grid.Coordinate 16 2) (Tile.Water Tile.walkableWaterInfo)
                         |> Grid.set (Grid.Coordinate 17 2) (Tile.Water Tile.walkableWaterInfo)
                         |> Grid.set (Grid.Coordinate 20 13) (Tile.Grass defaultGrassInfo)
@@ -73,7 +74,8 @@ modelChangerFuncsForLever1 =
         else
             { model
                 | level =
-                    Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo) model.level
+                    model.level
+                        |> Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo)
                         |> Grid.set coords (Lever customLeverInfo)
             }
     ]
