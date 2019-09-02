@@ -36,7 +36,7 @@ module MapGen exposing
     )
 
 import GameModel
-import Grid
+import Grid2 as Grid
 import Tile exposing (Tile(..))
 
 

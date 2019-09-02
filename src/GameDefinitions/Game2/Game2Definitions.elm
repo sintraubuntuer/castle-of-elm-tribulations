@@ -1,8 +1,19 @@
 module GameDefinitions.Game2.Game2Definitions exposing (initialModelFunc)
 
+import Array
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
-import GameDefinitions.Common exposing (ItemCreationInfo, get_total_height, get_total_width, setAllAsUnexplored, setItemsInGrid)
+import GameDefinitions.Common
+    exposing
+        ( ItemCreationInfo
+        , get_total_height
+        , get_total_width
+        , gridUnexploredInitializer
+        , setAll2dAsUnexplored
+        , setAllAsExplored
+        , setAllAsUnexplored
+        , setItemsInGrid
+        )
 import GameDefinitions.Game2.Basement as Basement
 import GameDefinitions.Game2.Caverns as Caverns
 import GameDefinitions.Game2.ConfigParamsAndInfo
@@ -29,7 +40,8 @@ import GameModel
         , RoomType(..)
         , TunnelRectangle
         )
-import Grid
+import Grid2
+import Grid3 as Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
 import Thorns.Types
@@ -48,20 +60,20 @@ initialPlayer =
         elem =
             "@"
     in
-    Beings.playerCreationFunc elem "You"
+    Beings.playerCreationFunc elem "You" 10 10 0
 
 
-initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
-initialFightingCharacter fcharId species floorId =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> Int -> Int -> FightingCharacter
+initialFightingCharacter fcharId species x_coord y_coord floorId =
     let
         elem =
             "e" ++ String.fromInt fcharId
     in
-    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species floorId
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species x_coord y_coord floorId
 
 
 otherCharacterFunc =
-    Beings.otherCharacterCreationFunc 1 "otherYou" lastFloor_id
+    Beings.otherCharacterCreationFunc 1 "otherYou" 10 10 lastFloor_id
 
 
 customGameCompletionFunc : Int -> Grid.Coordinate -> Bool
@@ -76,42 +88,43 @@ initialModelFunc lrandints imgBaseDir_ =
             initialPlayer
 
         fightingCharacter1 =
-            initialFightingCharacter 1 "ghost" caverns_floor_id
+            initialFightingCharacter 1 "ghost" 5 5 caverns_floor_id
 
         fightingCharacter2 =
-            initialFightingCharacter 2 "snake" caverns_floor_id
+            initialFightingCharacter 2 "snake" 10 10 caverns_floor_id
 
         fightingCharacter3 =
-            initialFightingCharacter 3 "bat" basement_floor_id
+            initialFightingCharacter 3 "bat" 5 5 basement_floor_id
 
         fightingCharacter4 =
-            initialFightingCharacter 4 "slime" basement_floor_id
+            initialFightingCharacter 4 "slime" 10 10 basement_floor_id
 
         fightingCharacter5 =
-            initialFightingCharacter 5 "small_worm" groundFloor_id
+            initialFightingCharacter 5 "small_worm" 5 5 groundFloor_id
 
         fightingCharacter6 =
-            initialFightingCharacter 6 "pumpking" groundFloor_id
+            initialFightingCharacter 6 "pumpking" 10 10 groundFloor_id
 
         fightingCharacter7 =
-            initialFightingCharacter 7 "ghost" firstFloor_id
+            initialFightingCharacter 7 "ghost" 5 5 firstFloor_id
 
         fightingCharacter8 =
-            initialFightingCharacter 8 "pumpking" firstFloor_id
+            initialFightingCharacter 8 "pumpking" 10 10 firstFloor_id
 
         fightingCharacter9 =
-            initialFightingCharacter 9 "ghost" theAttic_id
+            initialFightingCharacter 9 "ghost" 5 5 theAttic_id
 
         fightingCharacter10 =
-            initialFightingCharacter 10 "bat" theAttic_id
+            initialFightingCharacter 10 "bat" 10 10 theAttic_id
 
         levers =
             Dict.empty
 
-        ( storeDictWithPlacedPapers, lrands ) =
-            place_three_pieces_of_paper ( dStore, lrandints )
+        ( gridWithPlacedPapersAndHealthItems, lrands ) =
+            place_three_pieces_of_paper ( grid3, lrandints )
                 |> place_all_health_food_items 5
 
+        --|> (\( x, y ) -> ( Grid.map (\t -> Tile.setTileVisibility Tile.Visible t) x, y ))
         otherCharacter =
             otherCharacterFunc
 
@@ -121,7 +134,7 @@ initialModelFunc lrandints imgBaseDir_ =
         createRandomMap =
             False
     in
-    ( { player = { player | location = { x = 67, y = 36 } }
+    ( { player = { player | location = { x = 67, y = 36, z = 2 } }
       , fightingCharacters =
             Dict.fromList
                 [ ( fightingCharacter1.id, fightingCharacter1 )
@@ -139,8 +152,8 @@ initialModelFunc lrandints imgBaseDir_ =
             Dict.fromList
                 [ ( 1, otherCharacter )
                 ]
-      , level = Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .level |> Maybe.withDefault GroundFloor.gridGroundFloor -- Grid.Grid Tile
-      , explored = setAllAsUnexplored GroundFloor.gridGroundFloor -- Grid.Grid Visibility
+      , level = gridWithPlacedPapersAndHealthItems -- Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .level |> Maybe.withDefault GroundFloor.gridGroundFloor -- Grid.Grid Tile
+      , explored = gridUnexploredInitializer 10 10 5 config_params -- setAllAsExplored grid3 -- GroundFloor.gridGroundFloor -- Grid.Grid Visibility
       , log = [ "you enter the dungeons Ground Floor " ] --List String
       , gameOfThornsModel = Thorns.Types.initialModel player Nothing imgBaseDir_
       , listeningToKeyInput = True
@@ -156,13 +169,13 @@ initialModelFunc lrandints imgBaseDir_ =
       , showBlood = True
       , wallPercentage = Nothing -- Maybe Float
       , roomsInfo = Nothing --  RoomsInfo
-      , floorDict = storeDictWithPlacedPapers
+      , floorDict = dStore --storeDictWithPlacedPapers
       , currentFloorId = groundFloor_id
       , gameCompletionFunc = customGameCompletionFunc
       , leverModelChangerFuncs = LastFloor.leverModelChangerFuncs
       , imgBaseDir = imgBaseDir_
       , started = True
-      , debugMode = False
+      , debugMode = True
       }
     , createRandomMap
     , randomlyPositionPlayer
@@ -179,58 +192,60 @@ common_window_height =
     12
 
 
+grid3 : Grid.Grid Tile
+grid3 =
+    { grid =
+        [ Caverns.gridCaverns.grid
+        , Basement.gridBasement.grid
+        , GroundFloor.gridGroundFloor.grid
+        , FirstFloor.gridFirstFloor.grid
+        , TheAttic.gridTheAttic.grid
+        , LastFloor.gridLastFloor.grid
+        ]
+            |> Array.fromList
+    }
+
+
 dStore : Dict Int GameModel.FloorStore
 dStore =
     Dict.fromList
         [ ( 0
-          , { level = Caverns.gridCaverns
-            , explored = setAllAsUnexplored Caverns.gridCaverns
-            , window_width = common_window_width
+          , { window_width = common_window_width
             , window_height = common_window_height
             , total_width = get_total_width config_params 11 -- caverns has 11 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
           )
         , ( 1
-          , { level = Basement.gridBasement
-            , explored = setAllAsUnexplored Basement.gridBasement
-            , window_width = common_window_width
+          , { window_width = common_window_width
             , window_height = common_window_height
             , total_width = get_total_width config_params 6 -- basement has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
           )
         , ( 2
-          , { level = GroundFloor.gridGroundFloor
-            , explored = setAllAsUnexplored GroundFloor.gridGroundFloor
-            , window_width = common_window_width
+          , { window_width = common_window_width
             , window_height = common_window_height
             , total_width = get_total_width config_params 7 -- groundFloor has 7room columns
             , total_height = get_total_height config_params 9 -- 9 room rows
             }
           )
         , ( 3
-          , { level = FirstFloor.gridFirstFloor
-            , explored = setAllAsUnexplored FirstFloor.gridFirstFloor
-            , window_width = common_window_width
+          , { window_width = common_window_width
             , window_height = common_window_height
             , total_width = get_total_width config_params 6 -- firstFloor has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
           )
         , ( 4
-          , { level = TheAttic.gridTheAttic
-            , explored = setAllAsUnexplored TheAttic.gridTheAttic
-            , window_width = common_window_width
+          , { window_width = common_window_width
             , window_height = common_window_height
             , total_width = get_total_width config_params 4 -- theAttic has 4 room columns
             , total_height = get_total_height config_params 4 -- 4 room rows
             }
           )
         , ( 5
-          , { level = LastFloor.gridLastFloor
-            , explored = setAllAsUnexplored LastFloor.gridLastFloor
-            , window_width = 18
+          , { window_width = 18
             , window_height = 18
             , total_width = get_total_width config_params 23 -- LastFloor has 23  columns
             , total_height = get_total_height config_params 17 -- 17  rows
@@ -250,7 +265,7 @@ generate_three_random_nrs_between_zero_and_four lrandints =
             if List.length lexisting >= maxnr || try_nr > 100 then
                 ( lexisting, lrand_ints )
 
-            else if not (inList nr lexisting) then
+            else if not (List.member nr lexisting) then
                 ( nr :: lexisting, List.drop 1 lrand_ints )
 
             else
@@ -268,35 +283,37 @@ generate_three_random_nrs_between_zero_and_four lrandints =
     ( l3, lrands3 )
 
 
-place_one_item_in_random_coords : Int -> Item.Item -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
-place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
+place_one_item_in_random_coords : Int -> Item.Item -> ( Grid.Grid Tile, List Int ) -> ( Grid.Grid Tile, List Int )
+place_one_item_in_random_coords floorId newItem ( grid_, lrandints ) =
     let
-        auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec floorid ( storeDict, lrands, try_nr ) =
+        auxFuncCheckIfEmptyAndPlaceOrRepeat floorid ( grid, lrands, try_nr ) =
             if try_nr > 100 then
-                ( storeDict, lrands )
+                ( grid, lrands )
 
             else
                 let
                     lcoords =
-                        Grid.toCoordinates floorRec.level
+                        --Grid.toCoordinates grid
+                        --    |> List.filter (\coords -> coords.z == floorId)
+                        Grid.getFloorGrid floorid grid
+                            |> Maybe.map Grid2.toCoordinates
+                            |> Maybe.withDefault []
 
                     ( index_nr, lrem_rands ) =
                         ( getRandIntNr_ZeroTo (List.length lcoords - 1) lrands, List.drop 1 lrands )
 
-                    thelevel =
-                        floorRec.level
-
+                    --thelevel =
+                    --    floorRec.level
                     mbcoords =
-                        lcoords |> List.drop index_nr |> List.head
+                        lcoords |> List.drop index_nr |> List.head |> Maybe.map (\c -> Grid.Coordinate c.x c.y floorid)
 
-                    mbNewLevel =
+                    mbNewGrid =
                         case mbcoords of
                             Nothing ->
                                 Nothing
 
                             Just coords ->
-                                thelevel
-                                    |> Grid.get coords
+                                Grid.get coords grid
                                     |> (\mbtile ->
                                             case mbtile of
                                                 Nothing ->
@@ -311,7 +328,7 @@ place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
                                                             in
                                                             case finfo.item of
                                                                 Nothing ->
-                                                                    Just (Grid.set coords tileWithItem thelevel)
+                                                                    Just (Grid.set coords tileWithItem grid)
 
                                                                 Just it ->
                                                                     Nothing
@@ -319,38 +336,22 @@ place_one_item_in_random_coords floorId newItem ( storedict, lrandints ) =
                                                         _ ->
                                                             Nothing
                                        )
-
-                    mbNewFloor =
-                        case mbNewLevel of
-                            Nothing ->
-                                Nothing
-
-                            Just newLevel ->
-                                Just { floorRec | level = newLevel }
                 in
-                case mbNewFloor of
+                case mbNewGrid of
                     Nothing ->
-                        auxFuncCheckIfEmptyAndPlaceOrRepeat floorRec floorid ( storeDict, lrem_rands, try_nr + 1 )
+                        auxFuncCheckIfEmptyAndPlaceOrRepeat floorid ( grid, lrem_rands, try_nr + 1 )
 
-                    Just newFloor ->
-                        ( Dict.update floorid (\_ -> Just newFloor) storeDict, lrem_rands )
+                    Just newGrid ->
+                        ( newGrid, lrem_rands )
 
-        floorInfo =
-            Dict.get floorId storedict
-
-        ( newStore, remainingRands ) =
-            case floorInfo of
-                Just afloorinfo ->
-                    auxFuncCheckIfEmptyAndPlaceOrRepeat afloorinfo floorId ( storedict, lrandints, 1 )
-
-                Nothing ->
-                    ( storedict, lrandints )
+        ( updatedGrid, remainingRands ) =
+            auxFuncCheckIfEmptyAndPlaceOrRepeat floorId ( grid_, lrandints, 1 )
     in
-    ( newStore, remainingRands )
+    ( updatedGrid, remainingRands )
 
 
-place_three_pieces_of_paper : ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
-place_three_pieces_of_paper ( storedict, lrands ) =
+place_three_pieces_of_paper : ( Grid.Grid Tile, List Int ) -> ( Grid.Grid Tile, List Int )
+place_three_pieces_of_paper ( grid, lrands ) =
     let
         newPaper pidx =
             Item.Paper (Item.PaperInfo pidx "" "" "")
@@ -359,11 +360,11 @@ place_three_pieces_of_paper ( storedict, lrands ) =
             generate_three_random_nrs_between_zero_and_four lrands
                 |> (\( lx, ly ) -> ( List.indexedMap (\i fnr -> ( fnr, newPaper (i + 1) )) lx, ly ))
     in
-    List.foldl (\( fid, paperitem ) ( storeacc, lrand ) -> place_one_item_in_random_coords fid paperitem ( storeacc, lrand )) ( storedict, lremainingrands ) lfloornr_paperItemTuples
+    List.foldl (\( fid, paperitem ) ( gridacc, lrand ) -> place_one_item_in_random_coords fid paperitem ( gridacc, lrand )) ( grid, lremainingrands ) lfloornr_paperItemTuples
 
 
-place_health_food_items_in_random_coords : Int -> Int -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
-place_health_food_items_in_random_coords floorid nrItems ( storedict, lrands ) =
+place_health_food_items_in_random_coords : Int -> Int -> ( Grid.Grid Tile, List Int ) -> ( Grid.Grid Tile, List Int )
+place_health_food_items_in_random_coords floorid nrItems ( grid, lrands ) =
     let
         newFoodItem =
             Item.Food "bread"
@@ -372,16 +373,16 @@ place_health_food_items_in_random_coords floorid nrItems ( storedict, lrands ) =
             --List.range 1 5 |> List.map ( ( floorid , newFoodItem)  )
             List.repeat nrItems ( floorid, newFoodItem )
     in
-    List.foldl (\( flid, fooditem ) ( storeacc, lrand ) -> place_one_item_in_random_coords flid fooditem ( storeacc, lrand )) ( storedict, lrands ) lfloornr_foodItemTuples
+    List.foldl (\( flid, fooditem ) ( gridacc, lrand ) -> place_one_item_in_random_coords flid fooditem ( gridacc, lrand )) ( grid, lrands ) lfloornr_foodItemTuples
 
 
-place_all_health_food_items : Int -> ( Dict Int GameModel.FloorStore, List Int ) -> ( Dict Int GameModel.FloorStore, List Int )
-place_all_health_food_items nrItemsPerFloor ( storedict, lrands ) =
+place_all_health_food_items : Int -> ( Grid.Grid Tile, List Int ) -> ( Grid.Grid Tile, List Int )
+place_all_health_food_items nrItemsPerFloor ( grid, lrands ) =
     let
         lfloorids =
             [ caverns_floor_id, basement_floor_id, groundFloor_id, firstFloor_id, theAttic_id ]
     in
-    List.foldl (\flid ( storeacc, lrand ) -> place_health_food_items_in_random_coords flid nrItemsPerFloor ( storeacc, lrand )) ( storedict, lrands ) lfloorids
+    List.foldl (\flid ( gridacc, lrand ) -> place_health_food_items_in_random_coords flid nrItemsPerFloor ( gridacc, lrand )) ( grid, lrands ) lfloorids
 
 
 
@@ -396,10 +397,3 @@ getRandIntNr_ZeroTo maxnr lrandints =
         |> Maybe.map (\x -> toFloat x * toFloat (maxnr + 1) / 100.0 |> Basics.ceiling)
         |> Maybe.withDefault 1
         |> (\x -> x - 1)
-
-
-inList : a -> List a -> Bool
-inList a_val la =
-    List.filter (\elem -> elem == a_val) la
-        |> List.length
-        |> (\x -> x > 0)

@@ -11,7 +11,8 @@ import Debug
 import Dict exposing (Dict)
 import GameModel exposing (Model)
 import GameUpdate exposing (Msg(..))
-import Grid
+import Grid2
+import Grid3 as Grid
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
@@ -624,7 +625,7 @@ mainScreen model =
     let
         ( subgrid, txtmsg ) =
             model.level
-                |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
+                |> Grid.getFloorSubGrid model.currentFloorId model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
 
         ( wwidth, wheight ) =
             ( subgrid.size.width, subgrid.size.height )
@@ -681,7 +682,7 @@ mainScreen model =
         fightingCharacter_ =
             let
                 relevantFightingCharactersDict =
-                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= model.viewport_topleft_x && fightChar.location.x - model.viewport_topleft_x < model.window_width) && (fightChar.location.y >= model.viewport_topleft_y && fightChar.location.y - model.viewport_topleft_y < model.window_height)) model.fightingCharacters
+                    Dict.filter (\fcharId fightChar -> (fightChar.location.z == model.currentFloorId) && (fightChar.location.x >= model.viewport_topleft_x && fightChar.location.x - model.viewport_topleft_x < model.window_width) && (fightChar.location.y >= model.viewport_topleft_y && fightChar.location.y - model.viewport_topleft_y < model.window_height)) model.fightingCharacters
 
                 mkfightingCharacter fcharId anfightingCharacter =
                     fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level) (getImgBaseDir model)
@@ -692,7 +693,7 @@ mainScreen model =
         otherCharacters_ =
             let
                 relevantOtherCharsDict =
-                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.viewport_topleft_x && char.location.x - model.viewport_topleft_x < model.window_width) && (char.location.y >= model.viewport_topleft_y && char.location.y - model.viewport_topleft_y < model.window_height)) model.otherCharacters
+                    Dict.filter (\charId char -> (char.location.z == model.currentFloorId) && (char.location.x >= model.viewport_topleft_x && char.location.x - model.viewport_topleft_x < model.window_width) && (char.location.y >= model.viewport_topleft_y && char.location.y - model.viewport_topleft_y < model.window_height)) model.otherCharacters
 
                 mkOtherChar ch_id achar =
                     otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level) (getImgBaseDir model)
@@ -703,8 +704,8 @@ mainScreen model =
         bg : Collage Msg
         bg =
             Collage.group
-                [ mkLayer (Grid.toList subgrid) (row (tileOverlay (getImgBaseDir model)))
-                , mkLayer (Grid.toList subgrid) (row (tile model.currentFloorId (getImgBaseDir model)))
+                [ mkLayer (Grid2.toList subgrid) (row (tileOverlay (getImgBaseDir model)))
+                , mkLayer (Grid2.toList subgrid) (row (tile model.currentFloorId (getImgBaseDir model)))
                 ]
                 |> name "background"
 
@@ -730,10 +731,10 @@ mainScreen model =
                 []
 
         visibilitySubGrid =
-            Grid.map (\t -> Tile.getTileVisibility t) subgrid
+            Grid2.map (\t -> Tile.getTileVisibility t) subgrid
 
         fogger =
-            mkLayer (Grid.toList visibilitySubGrid) (row fogT)
+            mkLayer (Grid2.toList visibilitySubGrid) (row fogT)
     in
     Collage.group
         ([ fogger
@@ -784,6 +785,8 @@ sidebar model pos =
             , "Coordination: " ++ String.fromInt model.player.coordination ++ "%" |> Text.fromString |> theColor |> Collage.rendered
             , "Power: " ++ String.fromInt model.player.power |> Text.fromString |> theColor |> Collage.rendered
             , "Initiative: " ++ String.fromInt model.player.initiative |> Text.fromString |> theColor |> Collage.rendered
+            , "Total_width : " ++ String.fromInt model.total_width |> Text.fromString |> theColor |> Collage.rendered
+            , "Total_height : " ++ String.fromInt model.total_height |> Text.fromString |> theColor |> Collage.rendered
             , "viewport_topleft_x: " ++ String.fromInt model.viewport_topleft_x |> Text.fromString |> theColor |> Collage.rendered
             , "viewport_topleft_y: " ++ String.fromInt model.viewport_topleft_y |> Text.fromString |> theColor |> Collage.rendered
             , "current_player_x : " ++ String.fromInt model.player.location.x |> Text.fromString |> theColor |> Collage.rendered
@@ -913,11 +916,11 @@ display model =
         ]
 
 
-gridToHtmlList : Grid.Grid a -> List (Html Msg)
+gridToHtmlList : Grid2.Grid a -> List (Html Msg)
 gridToHtmlList grid =
     let
         lofls =
-            Grid.toList grid
+            Grid2.toList grid
 
         funcListToString l =
             List.foldl (\x y -> y ++ " , " ++ "Todo ... convert grid element to string ") "" l
@@ -933,7 +936,7 @@ viewDebugGrid grid model =
     let
         ( subgrid, txtmsg ) =
             grid
-                |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
+                |> Grid.getFloorSubGrid model.currentFloorId model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
     in
     [ Html.div []
         ([ Html.h1 [] [ Html.text ("viewDebugGrid has been called with : " ++ txtmsg) ] ]

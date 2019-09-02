@@ -57,7 +57,7 @@ import GameModel
         , RoomType(..)
         , TunnelRectangle
         )
-import Grid
+import Grid2
 import MapGen
 import Tile
     exposing
@@ -73,13 +73,13 @@ import Tile
         )
 
 
-gridTheAttic : Grid.Grid Tile
+gridTheAttic : Grid2.Grid Tile
 gridTheAttic =
-    GameDefinitions.Common.gridInitializer 4 4 config_params
+    GameDefinitions.Common.grid2dInitializer 4 4 config_params
         |> addTheAtticCustomRoomsAndTunnels
 
 
-addTheAtticCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
+addTheAtticCustomRoomsAndTunnels : Grid2.Grid Tile -> Grid2.Grid Tile
 addTheAtticCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (theAtticInitialRoomRectangles ++ theAtticCustomRoomRectangles)
@@ -210,7 +210,7 @@ theAtticStairsTunnel =
     ]
 
 
-addTheAtticFloorStairs : Grid.Grid Tile -> Grid.Grid Tile
+addTheAtticFloorStairs : Grid2.Grid Tile -> Grid2.Grid Tile
 addTheAtticFloorStairs grid =
     let
         lstairs =

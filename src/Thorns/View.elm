@@ -2,7 +2,7 @@ module Thorns.View exposing (view)
 
 import Beings.Beings as Beings
 import Dict exposing (Dict)
-import Grid
+import Grid2 as Grid
 import Html exposing (Html, a, br, div, h1, h2, h3, p, span, text)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick, onMouseOut, onMouseOver)

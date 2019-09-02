@@ -4,7 +4,7 @@ import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId,
 import Dict exposing (Dict)
 import GameDefinitions.Common exposing (setAllAsUnexplored)
 import GameModel
-import Grid
+import Grid3 as Grid
 import Thorns.Types
 import Tile exposing (Tile(..), Visibility(..))
 
@@ -15,16 +15,16 @@ initialPlayer =
         elem =
             "@"
     in
-    Beings.playerCreationFunc elem "You"
+    Beings.playerCreationFunc elem "You" 10 10 0
 
 
-initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
-initialFightingCharacter fcharId species floorId =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> Int -> Int -> FightingCharacter
+initialFightingCharacter fcharId species x_coord y_coord floorId =
     let
         elem =
             "e" ++ String.fromInt fcharId
     in
-    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species floorId
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species x_coord y_coord floorId
 
 
 dimensions : ( Int, Int )
@@ -39,10 +39,10 @@ initialModelFunc imgBaseDir_ =
             initialPlayer
 
         fightingCharacter =
-            initialFightingCharacter 1 "slime" theFloorId
+            initialFightingCharacter 1 "slime" 5 5 theFloorId
 
         fightingCharacter2 =
-            initialFightingCharacter 2 "small_worm" theFloorId
+            initialFightingCharacter 2 "small_worm" 3 3 theFloorId
 
         levers =
             Dict.empty
@@ -54,7 +54,7 @@ initialModelFunc imgBaseDir_ =
             Tuple.second dimensions
 
         firstMap =
-            Grid.initialize { width = w, height = h } Tile.NoTileYet
+            Grid.initialize { width = w, height = h, nr_floors = 1 } Tile.NoTileYet
 
         roomsInfo =
             Just <| GameModel.RoomsInfo [] 20 12 7
@@ -63,7 +63,7 @@ initialModelFunc imgBaseDir_ =
             setAllAsUnexplored firstMap
 
         theFloorId =
-            1
+            0
 
         randomlyPositionPlayer =
             True

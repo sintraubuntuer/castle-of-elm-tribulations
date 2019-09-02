@@ -1,5 +1,7 @@
 module Main exposing (main)
 
+--import Grid2
+
 import Browser
 import Browser.Events
     exposing
@@ -12,7 +14,7 @@ import GameDefinitions.Game2.Game2Definitions
 import GameModel
 import GameUpdate
 import GameView
-import Grid
+import Grid3 as Grid
 import Html exposing (Html)
 import Html.Events exposing (keyCode)
 import Json.Decode as Decode exposing (Value)
@@ -94,7 +96,7 @@ init flags =
             GameDefinitions.Common.initialModelFunc flags.imgBaseDir
 
         gBounds =
-            Grid.getGridBoundsToPlacePlayer initModel.level
+            Grid.getGridBoundsToPlacePlayer 0 initModel.level
     in
     ( initModel, GameUpdate.cmdFillRandomIntsPool initModel )
 

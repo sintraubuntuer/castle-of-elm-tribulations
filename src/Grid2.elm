@@ -1,4 +1,4 @@
-module Grid exposing
+module Grid2 exposing
     ( Coordinate
     , Grid
     , Size
@@ -7,6 +7,7 @@ module Grid exposing
     , getColumnWithDefault
     , getGridBoundsToPlaceFightingCharacter
     , getGridBoundsToPlacePlayer
+    , getGridSize
     , getRow
     , getRowOrEmptyList
     , getRowWithDefault
@@ -66,6 +67,15 @@ getGridBoundsToPlaceFightingCharacter grid =
     , minY = 1
     , maxY = grid.size.height - 1
     }
+
+
+getGridSize : Array.Array (Array.Array a) -> Size
+getGridSize grid =
+    let
+        xs =
+            toList (Grid grid (Size 0 0))
+    in
+    Size (getTheLength << List.head <| xs) (List.length xs)
 
 
 toList : Grid a -> List (List a)

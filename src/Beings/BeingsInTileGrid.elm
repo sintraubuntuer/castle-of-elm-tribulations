@@ -1,6 +1,7 @@
 module Beings.BeingsInTileGrid exposing
     ( characterMove_RandomMove
     , characterMove_sameFloorAsPlayer_moveTowardsPlayer
+    , is2dGridTileWalkable
     , isGridTileWalkable
     , isTileWalkable
     , move
@@ -9,7 +10,8 @@ module Beings.BeingsInTileGrid exposing
 import Beings.Beings as Beings
 import Dict exposing (Dict)
 import GameModel exposing (CurrentDisplay(..), FloorStore)
-import Grid
+import Grid2
+import Grid3 as Grid
 import Tile exposing (Tile(..))
 
 
@@ -17,7 +19,7 @@ move : ( Int, Int ) -> Grid.Grid Tile -> (Grid.Coordinate -> { a | location : Gr
 move ( x_shift, y_shift ) grid isWalkableFunc a =
     let
         location =
-            Grid.Coordinate (a.location.x + x_shift) (a.location.y + y_shift)
+            Grid.Coordinate (a.location.x + x_shift) (a.location.y + y_shift) a.location.z
 
         initiative =
             a.initiative + 100
@@ -45,8 +47,8 @@ move ( x_shift, y_shift ) grid isWalkableFunc a =
             }
 
 
-characterMove_sameFloorAsPlayer_moveTowardsPlayer : { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }, List Int )
-characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorId grid floorDict lRandomInts =
+characterMove_sameFloorAsPlayer_moveTowardsPlayer : { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> Beings.Player -> Int -> Grid.Grid Tile -> List Int -> ( { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }, List Int )
+characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorId grid lRandomInts =
     let
         player_location =
             player.location
@@ -122,8 +124,8 @@ characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorI
     ( updatedCharacter, updatedRandInts )
 
 
-characterMove_RandomMove : { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, floorId : Int, inventory : Beings.Inventory, initiative : Int } -> Beings.Player -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, floorId : Int, inventory : Beings.Inventory, initiative : Int }, List Int )
-characterMove_RandomMove character player grid floorDict lRandomInts =
+characterMove_RandomMove : { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> Beings.Player -> Grid.Grid Tile -> List Int -> ( { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }, List Int )
+characterMove_RandomMove character player grid lRandomInts =
     -- for now we will just use a completely RandomMove if character is on a different floor relative to player
     let
         ( xrand, yrand, updatedRandInts ) =
@@ -154,16 +156,8 @@ characterMove_RandomMove character player grid floorDict lRandomInts =
             else
                 1
 
-        mb_relevant_grid =
-            Dict.get character.floorId floorDict
-
         updatedCharacter =
-            case mb_relevant_grid of
-                Nothing ->
-                    character
-
-                Just fstore ->
-                    move ( xscaled, yscaled ) fstore.level isGridTileWalkable character
+            move ( xscaled, yscaled ) grid isGridTileWalkable character
     in
     ( updatedCharacter, updatedRandInts )
 
@@ -180,6 +174,13 @@ ifOccupiedByPlayerGoBackToInitialPosition initial_char player_location fchar =
 isGridTileWalkable : Grid.Coordinate -> { a | inventory : Beings.Inventory } -> Grid.Grid Tile -> Bool
 isGridTileWalkable location_ being grid =
     Grid.get location_ grid
+        |> Maybe.map (isTileWalkable being)
+        |> Maybe.withDefault False
+
+
+is2dGridTileWalkable : Grid2.Coordinate -> { a | inventory : Beings.Inventory } -> Grid2.Grid Tile -> Bool
+is2dGridTileWalkable location_ being grid =
+    Grid2.get location_ grid
         |> Maybe.map (isTileWalkable being)
         |> Maybe.withDefault False
 

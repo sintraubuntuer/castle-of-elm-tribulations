@@ -42,10 +42,14 @@ module GameDefinitions.Common exposing
     , get_room_position_nr
     , get_total_height
     , get_total_width
+    , grid2dInitializer
     , gridInitializer
+    , gridUnexploredInitializer
     , initialFightingCharacter
     , initialModelFunc
     , initialPlayer
+    , setAll2dAsUnexplored
+    , setAllAsExplored
     , setAllAsUnexplored
     , setHolesInGrid
     , setItemsInGrid
@@ -56,7 +60,8 @@ module GameDefinitions.Common exposing
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Dict exposing (Dict)
 import GameModel exposing (RoomRectangle, RoomType(..), TunnelRectangle)
-import Grid
+import Grid2
+import Grid3 as Grid
 import Item exposing (Item(..), KeyInfo)
 import Thorns.Types
 import Tile exposing (HoleInfo, TeleporterInfo, TeleporterType(..), Tile(..), Visibility(..))
@@ -74,18 +79,41 @@ type alias ItemId =
     Int
 
 
-gridInitializer : Int -> Int -> ConfigParams -> Grid.Grid Tile
-gridInitializer nr_rows nr_cols config_params =
-    Grid.initialize { width = get_total_width config_params nr_cols, height = get_total_height config_params nr_rows } NoTileYet
+gridInitializer : Int -> Int -> Int -> ConfigParams -> Grid.Grid Tile
+gridInitializer nr_rows nr_cols nr_floors_ config_params =
+    Grid.initialize { width = get_total_width config_params nr_cols, height = get_total_height config_params nr_rows, nr_floors = nr_floors_ } NoTileYet
+
+
+grid2dInitializer : Int -> Int -> ConfigParams -> Grid2.Grid Tile
+grid2dInitializer nr_rows nr_cols config_params =
+    Grid2.initialize { width = get_total_width config_params nr_cols, height = get_total_height config_params nr_rows } NoTileYet
+
+
+gridUnexploredInitializer : Int -> Int -> Int -> ConfigParams -> Grid.Grid Visibility
+gridUnexploredInitializer nr_rows nr_cols nr_floors_ config_params =
+    Grid.initialize { width = get_total_width config_params nr_cols, height = get_total_height config_params nr_rows, nr_floors = nr_floors_ } Unexplored
+
+
+setAll2dAsUnexplored : Grid2.Grid Tile -> Grid2.Grid Visibility
+setAll2dAsUnexplored level =
+    let
+        grid =
+            Grid2.toList level
+    in
+    --List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid2.fromList
+    Grid2.map (\_ -> Unexplored) level
 
 
 setAllAsUnexplored : Grid.Grid Tile -> Grid.Grid Visibility
 setAllAsUnexplored level =
-    let
-        grid =
-            Grid.toList level
-    in
-    List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid.fromList
+    --List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid2.fromList
+    Grid.map (\_ -> Unexplored) level
+
+
+setAllAsExplored : Grid.Grid Tile -> Grid.Grid Visibility
+setAllAsExplored level =
+    --List.map (\row -> List.map (\_ -> Unexplored) row) grid |> Grid2.fromList
+    Grid.map (\_ -> Explored) level
 
 
 initialPlayer : Player
@@ -94,16 +122,16 @@ initialPlayer =
         elem =
             "@"
     in
-    Beings.playerCreationFunc elem "You"
+    Beings.playerCreationFunc elem "You" 10 10 0
 
 
-initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
-initialFightingCharacter fcharId species floor_id =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> Int -> Int -> FightingCharacter
+initialFightingCharacter fcharId species x_coord y_coord floor_id =
     let
         elem =
             "e" ++ String.fromInt fcharId
     in
-    Beings.fightingCharacterCreationFunc elem fcharId ("fightingCharacter" ++ String.fromInt fcharId) species floor_id
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingCharacter" ++ String.fromInt fcharId) species x_coord y_coord floor_id
 
 
 dimensions : ( Int, Int )
@@ -118,10 +146,10 @@ initialModelFunc imgBaseDir_ =
             initialPlayer
 
         fightingCharacter =
-            initialFightingCharacter 1 "ghost" theFloorId
+            initialFightingCharacter 1 "ghost" 5 5 theFloorId
 
         fightingCharacter2 =
-            initialFightingCharacter 2 "ghost" theFloorId
+            initialFightingCharacter 2 "ghost" 10 10 theFloorId
 
         levers =
             Dict.empty
@@ -133,10 +161,10 @@ initialModelFunc imgBaseDir_ =
             Tuple.second dimensions
 
         firstMap =
-            gridInitializer w h cParams
+            gridInitializer w h 1 cParams
 
         theFloorId =
-            1
+            0
 
         createRandomMap =
             False
@@ -148,8 +176,8 @@ initialModelFunc imgBaseDir_ =
                 , ( 2, fightingCharacter2 )
                 ]
       , otherCharacters = Dict.empty
-      , level = firstMap -- Grid.Grid Tile
-      , explored = setAllAsUnexplored firstMap -- Grid.Grid Visibility
+      , level = firstMap -- Grid2.Grid Tile
+      , explored = setAllAsUnexplored firstMap -- Grid2.Grid Visibility
       , log = [ "you enter the dungeon" ] --List String
       , gameOfThornsModel = Thorns.Types.initialModel player Nothing (Just imgBaseDir_)
       , listeningToKeyInput = True
@@ -455,7 +483,7 @@ getCustomRoom row_nr col_nr shift_x shift_y rwidth rheight config_params =
     new_room
 
 
-getStairsOnRoom : Int -> Int -> Int -> Int -> Int -> StairsOrientation -> Maybe RoomType -> ( Int, Int ) -> Maybe ( Int, Int ) -> ConfigParams -> Grid.Grid Tile -> Grid.Grid Tile
+getStairsOnRoom : Int -> Int -> Int -> Int -> Int -> StairsOrientation -> Maybe RoomType -> ( Int, Int ) -> Maybe ( Int, Int ) -> ConfigParams -> Grid2.Grid Tile -> Grid2.Grid Tile
 getStairsOnRoom row_nr col_nr stairsId toFloorId toStairsId orientation mbFromRoomType shiftOnDestinationTuple mbShiftLocationTuple config_params grid =
     let
         tunnel_width =
@@ -484,7 +512,7 @@ getStairsOnRoom row_nr col_nr stairsId toFloorId toStairsId orientation mbFromRo
         tileStairs =
             Tile.Stairs (Tile.StairsInfo stairsId toFloorId toStairsId shiftOnDestinationTuple False Unexplored)
     in
-    Grid.set (Grid.Coordinate top_left_x top_left_y) tileStairs grid
+    Grid2.set (Grid2.Coordinate top_left_x top_left_y) tileStairs grid
 
 
 get_room_width : RoomType -> ConfigParams -> Int
@@ -618,7 +646,7 @@ getItemCoordsAndItemInfo config_params itemInfo =
     ( ( x_coord, y_coord ), itemInfo )
 
 
-setItemsInGrid : ConfigParams -> Dict ItemId ItemCreationInfo -> Grid.Grid Tile -> Grid.Grid Tile
+setItemsInGrid : ConfigParams -> Dict ItemId ItemCreationInfo -> Grid2.Grid Tile -> Grid2.Grid Tile
 setItemsInGrid config_params dItemsToCreate grid =
     let
         lcoordsAndInfo =
@@ -630,7 +658,7 @@ setItemsInGrid config_params dItemsToCreate grid =
             Tile.Floor (createItemFloorInfo i_c_info)
 
         setTileFloorItem xcoord ycoord i_creation_info_ grid_ =
-            Grid.set (Grid.Coordinate xcoord ycoord) (tileItem i_creation_info_) grid_
+            Grid2.set (Grid2.Coordinate xcoord ycoord) (tileItem i_creation_info_) grid_
     in
     List.foldl (\( ( x_coord, y_coord ), i_creation_info ) gridacc -> setTileFloorItem x_coord y_coord i_creation_info gridacc) grid lcoordsAndInfo
 
@@ -640,7 +668,7 @@ createItemFloorInfo i_c_info =
     Tile.FloorInfo (Just i_c_info.item) Nothing True True False Unexplored ""
 
 
-setTeleportersInGrid : ConfigParams -> Dict TeleporterId TeleporterInfoWithLocation -> Grid.Grid Tile -> Grid.Grid Tile
+setTeleportersInGrid : ConfigParams -> Dict TeleporterId TeleporterInfoWithLocation -> Grid2.Grid Tile -> Grid2.Grid Tile
 setTeleportersInGrid config_params teleporterDict_ grid =
     let
         lcoordsAndInfo =
@@ -650,7 +678,7 @@ setTeleportersInGrid config_params teleporterDict_ grid =
         tryTileTeleporter xcoord ycoord tel_info grid_ =
             let
                 c_wall_info =
-                    Grid.get (Grid.Coordinate xcoord ycoord) grid_
+                    Grid2.get (Grid2.Coordinate xcoord ycoord) grid_
             in
             case c_wall_info of
                 Just (Tile.Wall winfo) ->
@@ -662,7 +690,7 @@ setTeleportersInGrid config_params teleporterDict_ grid =
         setTileTeleporter xcoord ycoord t_info grid_ =
             case tryTileTeleporter xcoord ycoord t_info grid_ of
                 Just atile ->
-                    Grid.set (Grid.Coordinate xcoord ycoord) atile grid_
+                    Grid2.set (Grid2.Coordinate xcoord ycoord) atile grid_
 
                 Nothing ->
                     grid_
@@ -873,7 +901,7 @@ getLandingTargetsCoordsAndTargetInfo targetInfo =
             ( ( targetInfo.x + x_shift, targetInfo.y + y_shift ), targetInfo )
 
 
-setLandingTargetsInGrid : Dict TargetId LandingTargetInfo -> Grid.Grid Tile -> Grid.Grid Tile
+setLandingTargetsInGrid : Dict TargetId LandingTargetInfo -> Grid2.Grid Tile -> Grid2.Grid Tile
 setLandingTargetsInGrid landingTargetsDict_ grid =
     let
         lcoordsAndInfo =
@@ -884,7 +912,7 @@ setLandingTargetsInGrid landingTargetsDict_ grid =
             Tile.Floor (createLandingTargetFloorInfo lt_info)
 
         setTileLandingTarget xcoord ycoord h_info grid_ =
-            Grid.set (Grid.Coordinate xcoord ycoord) (tileLandingTarget h_info) grid_
+            Grid2.set (Grid2.Coordinate xcoord ycoord) (tileLandingTarget h_info) grid_
     in
     List.foldl (\( ( x_coord, y_coord ), hinfo ) gridacc -> setTileLandingTarget x_coord y_coord hinfo gridacc) grid lcoordsAndInfo
 
@@ -904,7 +932,7 @@ getHoleCoordsAndHoleInfo holeInfLoc =
     ( ( holeInfLoc.holeLocation.x, holeInfLoc.holeLocation.y ), holeInfLoc.holeInfo )
 
 
-setHolesInGrid : Dict HoleId HoleInfoWithLocation -> Grid.Grid Tile -> Grid.Grid Tile
+setHolesInGrid : Dict HoleId HoleInfoWithLocation -> Grid2.Grid Tile -> Grid2.Grid Tile
 setHolesInGrid holesDict_ grid =
     let
         lcoordsAndInfo =
@@ -915,7 +943,7 @@ setHolesInGrid holesDict_ grid =
             Hole h_info
 
         setTileHole xcoord ycoord h_info grid_ =
-            Grid.set (Grid.Coordinate xcoord ycoord) (tileHole h_info) grid_
+            Grid2.set (Grid2.Coordinate xcoord ycoord) (tileHole h_info) grid_
     in
     List.foldl (\( ( x_coord, y_coord ), hinfo ) gridacc -> setTileHole x_coord y_coord hinfo gridacc) grid lcoordsAndInfo
 
@@ -927,7 +955,7 @@ getHolesByFloorId floorId dHoles =
 
 type alias HoleInfoWithLocation =
     { holeInfo : HoleInfo
-    , holeLocation : Grid.Coordinate
+    , holeLocation : Grid2.Coordinate
     }
 
 
@@ -943,5 +971,5 @@ createHoleInfoWithLocation holeId floorId row_nr col_nr pos_nr roomType targetId
             get_room_position_nr row_nr col_nr pos_nr roomType config_params
     in
     { holeInfo = HoleInfo holeId floorId targetId False Unexplored
-    , holeLocation = Grid.Coordinate pos_x pos_y
+    , holeLocation = Grid2.Coordinate pos_x pos_y
     }

@@ -8,7 +8,7 @@ module Thorns.OpponentInteraction exposing
 
 import Beings.Beings as Beings exposing (FightingCharacter, Player)
 import Dict exposing (Dict)
-import Grid
+import Grid2 as Grid
 import Item exposing (Item)
 
 

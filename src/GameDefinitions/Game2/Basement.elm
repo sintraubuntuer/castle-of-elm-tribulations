@@ -60,7 +60,8 @@ import GameModel
         , RoomType(..)
         , TunnelRectangle
         )
-import Grid
+import Grid2
+import Grid3 as Grid
 import MapGen
 import Tile
     exposing
@@ -76,13 +77,13 @@ import Tile
         )
 
 
-gridBasement : Grid.Grid Tile
+gridBasement : Grid2.Grid Tile
 gridBasement =
-    GameDefinitions.Common.gridInitializer 7 6 config_params
+    GameDefinitions.Common.grid2dInitializer 7 6 config_params
         |> addBasementCustomRoomsAndTunnels
 
 
-addBasementCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
+addBasementCustomRoomsAndTunnels : Grid2.Grid Tile -> Grid2.Grid Tile
 addBasementCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (basementInitialRoomRectangles ++ basementCustomRoomRectangles)
@@ -245,7 +246,7 @@ basementStairsTunnel =
     ]
 
 
-addBasementStairs : Grid.Grid Tile -> Grid.Grid Tile
+addBasementStairs : Grid2.Grid Tile -> Grid2.Grid Tile
 addBasementStairs grid =
     let
         lstairs =

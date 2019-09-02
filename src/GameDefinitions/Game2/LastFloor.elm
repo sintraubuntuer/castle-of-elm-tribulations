@@ -17,7 +17,8 @@ import GameDefinitions.Game2.ConfigParamsAndInfo
         , theAttic_id
         )
 import GameModel
-import Grid
+import Grid2
+import Grid3 as Grid
 import Tile
     exposing
         ( StairsInfo
@@ -65,17 +66,17 @@ modelChangerFuncsForLever1 =
             { model
                 | level =
                     model.level
-                        |> Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo)
-                        |> Grid.set (Grid.Coordinate 16 2) (Tile.Water Tile.walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 17 2) (Tile.Water Tile.walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 20 13) (Tile.Grass defaultGrassInfo)
+                        |> Grid.set (Grid.Coordinate 15 2 lastFloor_id) (Tile.Floor Tile.defaultFloorInfo)
+                        |> Grid.set (Grid.Coordinate 16 2 lastFloor_id) (Tile.Water Tile.walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 17 2 lastFloor_id) (Tile.Water Tile.walkableWaterInfo)
+                        |> Grid.set (Grid.Coordinate 20 13 lastFloor_id) (Tile.Grass defaultGrassInfo)
             }
 
         else
             { model
                 | level =
                     model.level
-                        |> Grid.set (Grid.Coordinate 15 2) (Tile.Floor Tile.defaultFloorInfo)
+                        |> Grid.set (Grid.Coordinate 15 2 lastFloor_id) (Tile.Floor Tile.defaultFloorInfo)
                         |> Grid.set coords (Lever customLeverInfo)
             }
     ]
@@ -507,7 +508,7 @@ lastFloorGridTiles =
     ]
 
 
-addLastFloorStairs : Grid.Grid Tile -> Grid.Grid Tile
+addLastFloorStairs : Grid2.Grid Tile -> Grid2.Grid Tile
 addLastFloorStairs grid =
     let
         recstairs =
@@ -525,7 +526,7 @@ addLastFloorStairs grid =
         tileStairs =
             Stairs (StairsInfo recstairs.stairsId recstairs.toFloorId recstairs.toStairsId recstairs.shift False Unexplored)
     in
-    Grid.set (Grid.Coordinate recstairs.room_x recstairs.room_y) tileStairs grid
+    Grid2.set (Grid2.Coordinate recstairs.room_x recstairs.room_y) tileStairs grid
 
 
 nr_cols =
@@ -536,7 +537,7 @@ nr_rows =
     17
 
 
-getTileAtCoords : Grid.Coordinate -> Tile
+getTileAtCoords : Grid2.Coordinate -> Tile
 getTileAtCoords coords =
     let
         mb_relevant_row =
@@ -550,14 +551,14 @@ getTileAtCoords coords =
         |> Maybe.withDefault NoTileYet
 
 
-gridLastFloor : Grid.Grid Tile
+gridLastFloor : Grid2.Grid Tile
 gridLastFloor =
     let
         grid =
-            Grid.initialize { width = nr_cols, height = nr_rows } NoTileYet
+            Grid2.initialize { width = nr_cols, height = nr_rows } NoTileYet
 
         lcoords =
-            Grid.toCoordinates grid
+            Grid2.toCoordinates grid
     in
-    List.foldl (\coords gridacc -> Grid.set coords (getTileAtCoords coords) gridacc) grid lcoords
+    List.foldl (\coords gridacc -> Grid2.set coords (getTileAtCoords coords) gridacc) grid lcoords
         |> addLastFloorStairs

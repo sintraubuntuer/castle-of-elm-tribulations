@@ -15,7 +15,7 @@ import Beings.BeingsInTileGrid as BeingsInTileGrid
         )
 import Dict exposing (Dict)
 import GameModel exposing (CurrentDisplay(..), FloorStore)
-import Grid
+import Grid3 as Grid
 import Tile exposing (Tile(..))
 
 
@@ -79,10 +79,10 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
                         ( opponents_and_player_rec, Nothing )
 
                     Just fightingCharacter ->
-                        if fightingCharacter.floorId == currentFloorId && fightingCharacter.indexOfLight < fightingCharacter.indexOfLightMax && opponents_and_player_rec.player.health > 0 && currentDisplay /= DisplayGameOfThorns then
+                        if fightingCharacter.location.z == currentFloorId && fightingCharacter.indexOfLight < fightingCharacter.indexOfLightMax && opponents_and_player_rec.player.health > 0 && currentDisplay /= DisplayGameOfThorns then
                             let
                                 outRec =
-                                    attackIfClose_OtherwiseMove fightingCharacter opponents_and_player_rec.player currentFloorId opponents_and_player_rec.grid opponents_and_player_rec.floorDict opponents_and_player_rec.lrandInts
+                                    attackIfClose_OtherwiseMove fightingCharacter opponents_and_player_rec.player currentFloorId opponents_and_player_rec.grid opponents_and_player_rec.lrandInts
 
                                 newEnPlayerRec =
                                     ( { opponents_and_player_rec
@@ -99,7 +99,7 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
                             newEnPlayerRec
 
                         else
-                            ( fightingCharacterMove fightingCharacter opponents_and_player_rec.player currentFloorId opponents_and_player_rec.grid opponents_and_player_rec.floorDict opponents_and_player_rec.lrandInts
+                            ( fightingCharacterMove fightingCharacter opponents_and_player_rec.player currentFloorId opponents_and_player_rec.grid opponents_and_player_rec.lrandInts
                                 |> (\( fchar, lrand ) -> { opponents_and_player_rec | fightingCharacters = Dict.update fcharId (\_ -> Just fchar) opponents_and_player_rec.fightingCharacters, lrandInts = lrand })
                                 |> (\x -> increseNrOfFightingCharacterMovesInCurrentTurn fcharId x)
                             , Nothing
@@ -113,12 +113,12 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
                 ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec2
 
 
-attackIfClose_OtherwiseMove : Beings.FightingCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> { fightingCharacter : Beings.FightingCharacter, player : Beings.Player, mbFightingCharacterForGameOfThorns : Maybe Beings.FightingCharacter, textMsg : String, lrandInts : List Int }
-attackIfClose_OtherwiseMove fightingCharacter player currentFloorId grid floorDict pseudoRandomIntsPool =
-    if fightingCharacter.floorId /= currentFloorId && fightingCharacter.health > 0 then
+attackIfClose_OtherwiseMove : Beings.FightingCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> List Int -> { fightingCharacter : Beings.FightingCharacter, player : Beings.Player, mbFightingCharacterForGameOfThorns : Maybe Beings.FightingCharacter, textMsg : String, lrandInts : List Int }
+attackIfClose_OtherwiseMove fightingCharacter player currentFloorId grid pseudoRandomIntsPool =
+    if fightingCharacter.location.z /= currentFloorId && fightingCharacter.health > 0 then
         let
             ( updatedFightingCharacter, updatedRandInts ) =
-                fightingCharacterMove fightingCharacter player currentFloorId grid floorDict pseudoRandomIntsPool
+                fightingCharacterMove fightingCharacter player currentFloorId grid pseudoRandomIntsPool
         in
         { fightingCharacter = updatedFightingCharacter, player = player, mbFightingCharacterForGameOfThorns = Nothing, textMsg = "", lrandInts = updatedRandInts }
 
@@ -143,7 +143,7 @@ attackIfClose_OtherwiseMove fightingCharacter player currentFloorId grid floorDi
             [] ->
                 let
                     ( updatedFightingCharacter, updatedRandInts ) =
-                        fightingCharacterMove fightingCharacter player currentFloorId grid floorDict pseudoRandomIntsPool
+                        fightingCharacterMove fightingCharacter player currentFloorId grid pseudoRandomIntsPool
                 in
                 { fightingCharacter = updatedFightingCharacter, player = player, mbFightingCharacterForGameOfThorns = Nothing, textMsg = "", lrandInts = updatedRandInts }
 
@@ -215,18 +215,18 @@ attack dude1 dude2 lprandInts =
     { dudeA = { dude1 | initiative = dude1.initiative + 100 }, dudeB = { dude2 | health = result }, textMsg = msg, randInts = newprandInts2 }
 
 
-fightingCharacterMove : Beings.FightingCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( Beings.FightingCharacter, List Int )
-fightingCharacterMove fightingCharacter player currentFloorId grid floorDict lRandomInts =
-    if fightingCharacter.floorId /= currentFloorId then
-        BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid floorDict lRandomInts
+fightingCharacterMove : Beings.FightingCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> List Int -> ( Beings.FightingCharacter, List Int )
+fightingCharacterMove fightingCharacter player currentFloorId grid lRandomInts =
+    if fightingCharacter.location.z /= currentFloorId then
+        BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid lRandomInts
 
     else
         case fightingCharacter.movingStrategy of
             Just Beings.MoveTowardsPlayer ->
-                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer fightingCharacter player currentFloorId grid floorDict lRandomInts
+                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer fightingCharacter player currentFloorId grid lRandomInts
 
             Just Beings.MoveRandomly ->
-                BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid floorDict lRandomInts
+                BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid lRandomInts
 
             Just Beings.DontMove ->
                 ( fightingCharacter, lRandomInts )

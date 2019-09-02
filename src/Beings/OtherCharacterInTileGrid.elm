@@ -13,7 +13,7 @@ import Beings.BeingsInTileGrid as BeingsInTileGrid
         )
 import Dict exposing (Dict)
 import GameModel exposing (CurrentDisplay(..))
-import Grid
+import Grid3 as Grid
 import Tile exposing (Tile(..))
 
 
@@ -77,7 +77,7 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
 
                     Just otherCharacter ->
                         if otherCharacter.health > 0 && currentDisplay /= DisplayGameOfThorns then
-                            otherCharacterMove otherCharacter opponents_and_player_rec.player currentFloorId opponents_and_player_rec.grid opponents_and_player_rec.floorDict opponents_and_player_rec.lrandInts
+                            otherCharacterMove otherCharacter opponents_and_player_rec.player currentFloorId opponents_and_player_rec.grid opponents_and_player_rec.lrandInts
                                 |> (\( fchar, lrand ) -> { opponents_and_player_rec | otherCharacters = Dict.update fcharId (\_ -> Just fchar) opponents_and_player_rec.otherCharacters, lrandInts = lrand })
                                 |> (\x -> increseNrOfOtherCharacterMovesInCurrentTurn fcharId x)
 
@@ -87,18 +87,18 @@ ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec =
         ai_helper_func currentDisplay currentFloorId fcharId opponents_and_player_rec2
 
 
-otherCharacterMove : Beings.OtherCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int GameModel.FloorStore -> List Int -> ( Beings.OtherCharacter, List Int )
-otherCharacterMove otherCharacter player currentFloorId grid floorDict lRandomInts =
-    if otherCharacter.floorId /= currentFloorId then
-        BeingsInTileGrid.characterMove_RandomMove otherCharacter player grid floorDict lRandomInts
+otherCharacterMove : Beings.OtherCharacter -> Beings.Player -> Int -> Grid.Grid Tile -> List Int -> ( Beings.OtherCharacter, List Int )
+otherCharacterMove otherCharacter player currentFloorId grid lRandomInts =
+    if otherCharacter.location.z /= currentFloorId then
+        BeingsInTileGrid.characterMove_RandomMove otherCharacter player grid lRandomInts
 
     else
         case otherCharacter.movingStrategy of
             Just Beings.MoveTowardsPlayer ->
-                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer otherCharacter player currentFloorId grid floorDict lRandomInts
+                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer otherCharacter player currentFloorId grid lRandomInts
 
             Just Beings.MoveRandomly ->
-                BeingsInTileGrid.characterMove_RandomMove otherCharacter player grid floorDict lRandomInts
+                BeingsInTileGrid.characterMove_RandomMove otherCharacter player grid lRandomInts
 
             Just Beings.DontMove ->
                 ( otherCharacter, lRandomInts )

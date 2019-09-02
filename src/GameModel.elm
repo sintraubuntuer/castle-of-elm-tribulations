@@ -41,7 +41,8 @@ import Beings.Beings as Beings
         , Player
         )
 import Dict exposing (Dict)
-import Grid
+import Grid2
+import Grid3 as Grid
 import Item exposing (Item(..), KeyInfo)
 import Thorns.Types
 import Tile exposing (Tile(..))
@@ -93,9 +94,7 @@ type alias Model =
 
 
 type alias FloorStore =
-    { level : Grid.Grid Tile
-    , explored : Grid.Grid Tile.Visibility
-    , window_width : Int
+    { window_width : Int
     , window_height : Int
     , total_width : Int
     , total_height : Int
@@ -104,9 +103,7 @@ type alias FloorStore =
 
 getCurrentFloorInfoToStore : Model -> FloorStore
 getCurrentFloorInfoToStore model =
-    { level = model.level
-    , explored = model.explored
-    , window_width = model.window_width
+    { window_width = model.window_width
     , window_height = model.window_height
     , total_width = model.total_width
     , total_height = model.total_height
@@ -190,7 +187,7 @@ type Input
     | Nop
 
 
-location : Int -> Int -> Location
+location : Int -> Int -> Int -> Location
 location =
     Grid.Coordinate
 
@@ -304,7 +301,7 @@ randomlyPlaceExistingFightingCharacters lpairIntIds model =
 
 visible : Model -> List Location
 visible model =
-    Grid.neighborhoodCalc 8 model.player.location
+    Grid.neighborhoodCalc 5 model.player.location
 
 
 visibility : Model -> Location -> Tile.Visibility

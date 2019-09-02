@@ -21,6 +21,7 @@ module GameUpdate exposing
     , update
     )
 
+import Array
 import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId, OPPONENT_INTERACTION_OPTIONS(..), Player)
 import Beings.BeingsInTileGrid as BeingsInTileGrid
 import Beings.FightingCharacterInTileGrid as FightingCharacterInTileGrid
@@ -29,7 +30,8 @@ import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
 import GameModel exposing (Model)
-import Grid
+import Grid2
+import Grid3 as Grid
 import Item exposing (Item(..), KeyInfo)
 import MapGen
 import Random
@@ -65,7 +67,7 @@ type Msg
     | ChangeFloorTo FloorId ( Int, Int )
     | NewRandomPointToPlacePlayer ( Int, Int )
     | NewGridCoordinatesIndexToPlaceFightingCharacter FightingCharacterId Int
-    | NewRandomPointToPlaceFightingCharacter FightingCharacterId ( Int, Int )
+    | NewRandom2dPointToPlaceFightingCharacter FightingCharacterId ( Int, Int )
     | NewRandomFloatsForGenCave (List Float)
     | RandomInitiativeValue String (Maybe FightingCharacterId) Int
     | NewRandomIntsAddToPool (List Int)
@@ -160,16 +162,20 @@ update msg model =
                             ( model, False, False )
 
                 gBounds =
-                    Grid.getGridBoundsToPlacePlayer initModel.level
+                    Grid.getGridBoundsToPlacePlayer initModel.currentFloorId initModel.level
 
                 floorGridCoordinates floorId =
-                    if floorId == model.currentFloorId then
-                        Grid.toCoordinates model.level
+                    Grid.toFloorCoordinates floorId model.level
 
-                    else
-                        Dict.get floorId model.floorDict
-                            |> Maybe.map (\g -> Grid.toCoordinates g.level)
-                            |> Maybe.withDefault []
+                {- }
+                   if floorId == model.currentFloorId then
+                       Grid.toCoordinates model.level
+
+                   else
+                       Dict.get floorId model.floorDict
+                           |> Maybe.map (\g -> Grid.toCoordinates g.level)
+                           |> Maybe.withDefault []
+                -}
             in
             ( initModel |> position_display_anchor_in_order_to_center_player
             , Cmd.batch
@@ -186,7 +192,7 @@ update msg model =
                     Cmd.none
                  , Cmd.map ThornsMsg (ThornsUpdate.cmdFillRandomIntsPool True initModel.gameOfThornsModel)
                  ]
-                    ++ (Dict.map (\fcharId fightingCharacter -> cmdGetRandomPositionedFightingCharacter fightingCharacter fcharId (floorGridCoordinates fightingCharacter.floorId |> List.length)) initModel.fightingCharacters
+                    ++ (Dict.map (\fcharId fightingCharacter -> cmdGetRandomPositionedFightingCharacter fightingCharacter fcharId (floorGridCoordinates fightingCharacter.location.z |> List.length)) initModel.fightingCharacters
                             |> Dict.values
                        )
                     ++ (Dict.map (\fcharId fightingCharacter -> cmdGenerateRandomInitiativeValue "fightingCharacter" (Just fcharId) 1 100) initModel.fightingCharacters
@@ -308,7 +314,7 @@ update msg model =
                 player =
                     model.player
 
-                { x, y } =
+                { x, y, z } =
                     player.location
 
                 x_ =
@@ -321,28 +327,28 @@ update msg model =
                     ( x + x_, y + y_ )
 
                 newModel =
-                    case Grid.get (GameModel.location x2 y2) model.level of
+                    case Grid.get (GameModel.location x2 y2 z) model.level of
                         Just (Tile.Lever leverinfo) ->
                             if leverinfo.isUp then
                                 model
 
                             else
-                                { model | level = Grid.set (GameModel.location x2 y2) (Tile.Lever { leverinfo | isUp = True }) model.level }
-                                    |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2) modacc) xmodel (getModelChangerFuncs leverinfo.leverId model))
+                                { model | level = Grid.set (GameModel.location x2 y2 z) (Tile.Lever { leverinfo | isUp = True }) model.level }
+                                    |> (\xmodel -> List.foldl (\cfunc modacc -> cfunc (GameModel.location x2 y2 z) modacc) xmodel (getModelChangerFuncs leverinfo.leverId model))
 
                         _ ->
                             model
                                 |> (\model_ ->
-                                        case Grid.get (GameModel.location x2 y2) model_.level of
+                                        case Grid.get (GameModel.location x2 y2 z) model_.level of
                                             Just (Tile.ConverterTile initialTile newTile) ->
-                                                { model_ | level = Grid.set (GameModel.location x2 y2) newTile model_.level }
+                                                { model_ | level = Grid.set (GameModel.location x2 y2 z) newTile model_.level }
 
                                             _ ->
                                                 model_
                                    )
 
                 mbFightChar =
-                    case Dict.filter (\fcharId fightingCharacter -> fightingCharacter.floorId == model.currentFloorId && fightingCharacter.location == GameModel.location x2 y2) model.fightingCharacters |> Dict.values of
+                    case Dict.filter (\fcharId fightingCharacter -> fightingCharacter.location.z == model.currentFloorId && fightingCharacter.location == GameModel.location x2 y2 z) model.fightingCharacters |> Dict.values of
                         [] ->
                             Nothing
 
@@ -465,10 +471,10 @@ update msg model =
                     model.player
 
                 newLocation =
-                    GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition)
+                    GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition) oldPlayer.location.z
 
                 gridBounds =
-                    Grid.getGridBoundsToPlacePlayer model.level
+                    Grid.getGridBoundsToPlacePlayer model.currentFloorId model.level
 
                 newPlayer =
                     { oldPlayer | location = newLocation, placed = True }
@@ -492,36 +498,43 @@ update msg model =
                 mbActualFightChar =
                     Dict.get fcharId model.fightingCharacters
 
+                mbFloorGrid : Maybe (Grid2.Grid Tile)
                 mbFloorGrid =
                     case mbActualFightChar of
                         Nothing ->
                             Nothing
 
                         Just fchar ->
-                            if fchar.floorId == model.currentFloorId then
-                                Just model.level
+                            Grid.getFloorGrid fchar.location.z model.level
 
-                            else
-                                Dict.get fchar.floorId model.floorDict
-                                    |> Maybe.map .level
+                {- }
+                   if fchar.location.z == model.currentFloorId then
+                       Just model.level
 
-                gridCoordinates =
+                   else
+                       Dict.get fchar.floorId model.floorDict
+                           |> Maybe.map .level
+                -}
+                grid2dCoordinates =
                     mbFloorGrid
-                        |> Maybe.map (\g -> Grid.toCoordinates g)
+                        |> Maybe.map (\g -> Grid2.toCoordinates g)
                         |> Maybe.withDefault []
             in
-            List.drop idxPosition gridCoordinates
+            List.drop idxPosition grid2dCoordinates
                 |> List.head
-                |> Maybe.withDefault (Grid.Coordinate 1 1)
-                |> (\coords -> update (NewRandomPointToPlaceFightingCharacter fcharId ( coords.x, coords.y )) model)
+                |> Maybe.withDefault (Grid.Coordinate2 1 1)
+                |> (\coords -> update (NewRandom2dPointToPlaceFightingCharacter fcharId ( coords.x, coords.y )) model)
 
-        NewRandomPointToPlaceFightingCharacter fcharId tupPosition ->
+        NewRandom2dPointToPlaceFightingCharacter fcharId tupPosition ->
             let
+                _ =
+                    Debug.log "Trying to randomly place character : " fcharId
+
                 mbActualFightChar =
                     Dict.get fcharId model.fightingCharacters
 
-                newLocation =
-                    GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition)
+                newLocation fchar =
+                    GameModel.location (Tuple.first tupPosition) (Tuple.second tupPosition) fchar.location.z
 
                 mbFloorGrid =
                     case mbActualFightChar of
@@ -529,26 +542,21 @@ update msg model =
                             Nothing
 
                         Just fchar ->
-                            if fchar.floorId == model.currentFloorId then
-                                Just model.level
+                            Grid.getFloorGrid fchar.location.z model.level
 
-                            else
-                                Dict.get fchar.floorId model.floorDict
-                                    |> Maybe.map .level
-
-                gridCoordinates =
+                grid2dCoordinates =
                     mbFloorGrid
-                        |> Maybe.map (\g -> Grid.toCoordinates g)
+                        |> Maybe.map (\g -> Grid2.toCoordinates g)
                         |> Maybe.withDefault []
             in
-            case ( mbActualFightChar, mbFloorGrid ) of
-                ( Just actualFightChar, Just actualFloorGrid ) ->
-                    case BeingsInTileGrid.isGridTileWalkable newLocation actualFightChar actualFloorGrid of
+            case mbActualFightChar of
+                Just actualFightChar ->
+                    case BeingsInTileGrid.isGridTileWalkable (newLocation actualFightChar) actualFightChar model.level of
                         True ->
-                            ( { model | fightingCharacters = GameModel.placeExistingFightingCharacter fcharId newLocation model.fightingCharacters }, Cmd.none )
+                            ( { model | fightingCharacters = GameModel.placeExistingFightingCharacter fcharId (newLocation actualFightChar) model.fightingCharacters }, Cmd.none )
 
                         False ->
-                            ( model, cmdGetRandomPositionedFightingCharacter actualFightChar fcharId (gridCoordinates |> List.length) )
+                            ( model, cmdGetRandomPositionedFightingCharacter actualFightChar fcharId (grid2dCoordinates |> List.length) )
 
                 _ ->
                     ( model, Cmd.none )
@@ -556,12 +564,13 @@ update msg model =
         NewRandomFloatsForGenCave lfloats ->
             let
                 theSize =
-                    model.level.size
+                    --model.level.size
+                    Grid.getFloorSize 0 model.level
 
                 newGrid =
                     MapGen.randomCave ( theSize.width, theSize.height ) lfloats
             in
-            ( { model | level = newGrid }, Cmd.none )
+            ( { model | level = { grid = [ newGrid.grid ] |> Array.fromList } }, Cmd.none )
 
         RandomInitiativeValue strCharacter mbCharacterId intval ->
             if strCharacter == "player" then
@@ -600,19 +609,27 @@ update msg model =
                 minRoomSize =
                     model.roomsInfo |> Maybe.map .minRoomSize |> Maybe.withDefault 0
 
+                floor02dGrid =
+                    case Grid.getFloorGrid 0 model.level of
+                        Just t2grid ->
+                            t2grid
+
+                        Nothing ->
+                            Grid2.initialize { width = 10, height = 10 } Tile.NoTileYet
+
                 genOutputRecord =
                     --{ tileGrid , lroomRectangles , ltunnelRectangles , unusedRandoms  }
-                    MapGen.randomMapGeneratorWithRooms model.total_width model.total_height maxNrOfRooms maxRoomSize minRoomSize lints model.level
+                    MapGen.randomMapGeneratorWithRooms model.total_width model.total_height maxNrOfRooms maxRoomSize minRoomSize lints floor02dGrid
 
                 gridAsList =
-                    Grid.toList genOutputRecord.tileGrid |> List.concatMap identity
+                    Grid2.toList genOutputRecord.tileGrid |> List.concatMap identity
 
                 wallPercentage =
                     getWallPercentage gridAsList
 
                 newmodel =
                     { model
-                        | level = genOutputRecord.tileGrid
+                        | level = { grid = [ genOutputRecord.tileGrid.grid ] |> Array.fromList }
                         , pseudoRandomIntsPool = genOutputRecord.unusedRandoms
                         , wallPercentage = Just wallPercentage
                     }
@@ -661,7 +678,10 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
         Just (Tile.Hole hinfo) ->
             let
                 lfloorIds =
-                    model.floorDict |> Dict.filter (\floorId v -> floorId < model.currentFloorId) |> Dict.keys
+                    --model.floorDict |> Dict.filter (\floorId v -> floorId < model.currentFloorId) |> Dict.keys
+                    Array.toList model.level.grid
+                        |> List.length
+                        |> (\x -> List.range 0 (x - 1))
 
                 mbDestinationFloorAndCoordsTuple =
                     List.map (\floorId -> searchFloorForTargetId floorId hinfo.target_id model) lfloorIds
@@ -686,7 +706,10 @@ checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor model =
                             model.currentFloorId
 
                         lOtherFloorIds =
-                            model.floorDict |> Dict.filter (\floorId v -> floorId /= model.currentFloorId) |> Dict.keys
+                            --model.floorDict |> Dict.filter (\floorId v -> floorId /= model.currentFloorId) |> Dict.keys
+                            Array.toList model.level.grid
+                                |> List.length
+                                |> (\x -> List.range 0 (x - 1))
 
                         mbDestinationFloorAndCoordsTuple =
                             case searchFloorForTeleporterId sameFloorId teleporter.target_id model of
@@ -714,13 +737,14 @@ searchFloorForTeleporterId : Int -> Int -> Model -> Maybe ( Int, Int, Int )
 searchFloorForTeleporterId fid target_id_ model =
     let
         mbFloorGrid =
-            Dict.get fid model.floorDict
+            --Dict.get fid model.floorDict
+            Grid.getFloorGrid fid model.level
 
         getlcoords fgrid =
-            Grid.toCoordinates fgrid
+            Grid2.toCoordinates fgrid
 
         checkCoords coords_ fgrid =
-            case Grid.get coords_ fgrid of
+            case Grid2.get coords_ fgrid of
                 Just (Tile.Wall wallinfo) ->
                     case wallinfo.mbTeleporterObject of
                         Just ateleporter ->
@@ -734,7 +758,7 @@ searchFloorForTeleporterId fid target_id_ model =
     in
     case mbFloorGrid of
         Just floorGrid ->
-            List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
+            List.filter (\coords -> checkCoords coords floorGrid) (getlcoords floorGrid)
                 |> List.head
                 |> Maybe.map (\rec -> ( fid, rec.x, rec.y ))
 
@@ -746,13 +770,14 @@ searchFloorForTargetId : Int -> Int -> Model -> Maybe ( Int, Int, Int )
 searchFloorForTargetId fid target_id model =
     let
         mbFloorGrid =
-            Dict.get fid model.floorDict
+            --Dict.get fid model.floorDict
+            Grid.getFloorGrid fid model.level
 
         getlcoords fgrid =
-            Grid.toCoordinates fgrid
+            Grid2.toCoordinates fgrid
 
         checkCoords coords_ fgrid =
-            case Grid.get coords_ fgrid of
+            case Grid2.get coords_ fgrid of
                 Just (Tile.Floor finfo) ->
                     case finfo.floorDrawing of
                         Just (Tile.LandingTargetDrawing tid) ->
@@ -766,7 +791,7 @@ searchFloorForTargetId fid target_id model =
     in
     case mbFloorGrid of
         Just floorGrid ->
-            List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
+            List.filter (\coords -> checkCoords coords floorGrid) (getlcoords floorGrid)
                 |> List.head
                 |> Maybe.map (\rec -> ( fid, rec.x, rec.y ))
 
@@ -778,13 +803,14 @@ searchFloorForStairsId : Int -> Int -> Model -> Maybe ( Int, Int )
 searchFloorForStairsId floorId stairsId model =
     let
         mbFloorGrid =
-            Dict.get floorId model.floorDict
+            --Dict.get floorId model.floorDict
+            Grid.getFloorGrid floorId model.level
 
         getlcoords fgrid =
-            Grid.toCoordinates fgrid
+            Grid2.toCoordinates fgrid
 
         checkCoords coords_ fgrid =
-            case Grid.get coords_ fgrid of
+            case Grid2.get coords_ fgrid of
                 Just (Tile.Stairs sinfo) ->
                     sinfo.stairsId == stairsId
 
@@ -793,7 +819,7 @@ searchFloorForStairsId floorId stairsId model =
     in
     case mbFloorGrid of
         Just floorGrid ->
-            List.filter (\coords -> checkCoords coords floorGrid.level) (getlcoords floorGrid.level)
+            List.filter (\coords -> checkCoords coords floorGrid) (getlcoords floorGrid)
                 |> List.head
                 |> Maybe.map (\rec -> ( rec.x, rec.y ))
 
@@ -804,36 +830,42 @@ searchFloorForStairsId floorId stairsId model =
 changeFloorTo : Model -> Int -> ( Int, Int ) -> Model
 changeFloorTo model floorId locTuple =
     let
+        _ =
+            Debug.log "Changing floor to " floorId
+
+        _ =
+            Debug.log "moving to coords  " locTuple
+
         newModel =
             if model.currentFloorId == floorId then
                 model
 
             else
                 let
-                    currentFloorInfo =
-                        GameModel.getCurrentFloorInfoToStore model
-
-                    newStore =
-                        Dict.update model.currentFloorId (\_ -> Just currentFloorInfo) model.floorDict
-
                     newCurrentFloor =
                         Dict.get floorId model.floorDict
                 in
                 case newCurrentFloor of
                     Just cFloor ->
                         { model
-                            | level = cFloor.level
-                            , explored = cFloor.explored
-                            , window_width = cFloor.window_width
+                            | window_width = cFloor.window_width
                             , window_height = cFloor.window_height
                             , total_width = cFloor.total_width
                             , total_height = cFloor.total_height
-                            , floorDict = newStore
                             , currentFloorId = floorId
                         }
 
                     Nothing ->
-                        { model | floorDict = newStore }
+                        { model
+                            | currentFloorId = floorId
+                        }
+
+        newPlayerLocation =
+            Grid.Coordinate model.player.location.x model.player.location.y floorId
+
+        playerInNewFloor =
+            newModel.player
+                |> (\rec -> { rec | location = newPlayerLocation })
 
         delta_x =
             Tuple.first locTuple - newModel.player.location.x
@@ -842,7 +874,7 @@ changeFloorTo model floorId locTuple =
             Tuple.second locTuple - newModel.player.location.y
 
         player_ =
-            move ( delta_x, delta_y ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player
+            move ( delta_x, delta_y ) newModel.level BeingsInTileGrid.isGridTileWalkable playerInNewFloor
     in
     { newModel
         | player = player_
@@ -868,7 +900,7 @@ updateWallPercentageValue model =
             model.level
 
         gridAsList =
-            Grid.toList thegrid |> List.concatMap identity
+            Grid.toList thegrid |> List.concatMap identity |> List.concatMap identity
 
         wallPercentage =
             getWallPercentage gridAsList
@@ -1154,26 +1186,60 @@ otherCharacters_AI model =
 
 
 -- Right now this just reveals a box around the player
+--reveal : Model -> Model
+--reveal model =
+-- Just  temporary for debugging
+--    model
 
 
 reveal : Model -> Model
 reveal model =
     let
-        intermediateModelGrid =
-            Grid.map
-                (\t ->
-                    if Tile.getTileVisibility t == Visible then
-                        Tile.setTileVisibility Explored t
+        mbCurrentFloorGrid =
+            Grid.getFloorGrid model.currentFloorId model.level
 
-                    else
-                        t
-                )
-                model.level
+        intermediateModelGrid : Maybe (Grid2.Grid Tile)
+        intermediateModelGrid =
+            case mbCurrentFloorGrid of
+                Nothing ->
+                    Nothing
+
+                Just currFloor ->
+                    Just <|
+                        Grid2.map
+                            (\t ->
+                                if Tile.getTileVisibility t == Visible then
+                                    Tile.setTileVisibility Explored t
+
+                                else
+                                    t
+                            )
+                            currFloor
+
+        tileatloc loc_ grid_ =
+            Grid2.get loc_ grid_
+                |> Maybe.withDefault Tile.NoTileYet
+
+        update2dGrid =
+            case intermediateModelGrid of
+                Just iGrid ->
+                    Just <| List.foldl (\loc gridacc -> Grid2.set loc (Tile.setTileVisibility Visible (tileatloc loc gridacc)) gridacc) iGrid (GameModel.visible model |> List.map (\rec -> Grid.Coordinate2 rec.x rec.y))
+
+                Nothing ->
+                    Nothing
+
+        newGrid =
+            case update2dGrid of
+                Nothing ->
+                    model.level.grid
+
+                Just iModelGrid ->
+                    Array.set model.currentFloorId iModelGrid.grid model.level.grid
 
         intermediateModel =
-            { model | level = intermediateModelGrid }
+            { model | level = { grid = newGrid } }
 
-        newModel =
-            List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc Visible imodel) intermediateModel (GameModel.visible model)
+        --newModel =
+        --    List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc Visible imodel) intermediateModel (GameModel.visible model)
     in
-    newModel
+    intermediateModel

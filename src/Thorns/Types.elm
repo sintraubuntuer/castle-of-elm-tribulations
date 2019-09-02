@@ -7,7 +7,7 @@ module Thorns.Types exposing
 
 import Beings.Beings as Beings
 import Dict exposing (Dict)
-import Grid
+import Grid2 as Grid
 import Thorns.ThornGrid as ThornGrid
 
 

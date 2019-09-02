@@ -17,7 +17,7 @@ module Beings.Beings exposing
     )
 
 import Dict exposing (Dict)
-import Grid
+import Grid3 as Grid
 import Item exposing (Item, KeyInfo)
 
 
@@ -82,7 +82,6 @@ type MovingStrategy
 
 type alias FightingCharacter =
     { location : Location
-    , floorId : Int
     , id : FightingCharacterId
     , textAvatar : String
     , name : String
@@ -113,7 +112,6 @@ type alias FightingCharacter =
 
 type alias OtherCharacter =
     { location : Location
-    , floorId : Int
     , id : OtherCharacterId
     , textAvatar : String
     , name : String
@@ -136,10 +134,9 @@ type alias OtherCharacter =
     }
 
 
-otherCharacterCreationFunc : Int -> String -> Int -> OtherCharacter
-otherCharacterCreationFunc id_ ename floor_id_ =
-    { location = Grid.Coordinate 9 9
-    , floorId = floor_id_
+otherCharacterCreationFunc : Int -> String -> Int -> Int -> Int -> OtherCharacter
+otherCharacterCreationFunc id_ ename x_coord y_coord floor_id_ =
+    { location = Grid.Coordinate x_coord y_coord floor_id_
     , id = id_
     , textAvatar = ""
     , name = ename
@@ -173,9 +170,9 @@ type OPPONENT_INTERACTION_OPTIONS
     | OPPONENT_ENLIGHTENMENT_SPELL
 
 
-playerCreationFunc : String -> String -> Player
-playerCreationFunc elem pname =
-    { location = Grid.Coordinate 10 10
+playerCreationFunc : String -> String -> Int -> Int -> Int -> Player
+playerCreationFunc elem pname x_coord y_coord floor_nr =
+    { location = Grid.Coordinate x_coord y_coord floor_nr
     , textAvatar = elem
     , name = pname
     , direction = Down
@@ -198,10 +195,9 @@ playerCreationFunc elem pname =
     }
 
 
-fightingCharacterCreationFunc : String -> FightingCharacterId -> String -> String -> Int -> FightingCharacter
-fightingCharacterCreationFunc elem fcharId ename species_ floor_id =
-    { location = Grid.Coordinate 14 4
-    , floorId = floor_id
+fightingCharacterCreationFunc : String -> FightingCharacterId -> String -> String -> Int -> Int -> Int -> FightingCharacter
+fightingCharacterCreationFunc elem fcharId ename species_ x_coord y_coord floor_id =
+    { location = Grid.Coordinate x_coord y_coord floor_id
     , id = fcharId
     , textAvatar = elem
     , name = ename

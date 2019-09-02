@@ -61,7 +61,7 @@ import GameModel
         , RoomType(..)
         , TunnelRectangle
         )
-import Grid
+import Grid2
 import Item
 import MapGen
 import Tile
@@ -79,13 +79,13 @@ import Tile
         )
 
 
-gridGroundFloor : Grid.Grid Tile
+gridGroundFloor : Grid2.Grid Tile
 gridGroundFloor =
-    GameDefinitions.Common.gridInitializer 9 7 config_params
+    GameDefinitions.Common.grid2dInitializer 9 7 config_params
         |> addGroundFloorCustomRoomsAndTunnels
 
 
-addGroundFloorCustomRoomsAndTunnels : Grid.Grid Tile -> Grid.Grid Tile
+addGroundFloorCustomRoomsAndTunnels : Grid2.Grid Tile -> Grid2.Grid Tile
 addGroundFloorCustomRoomsAndTunnels grid =
     grid
         |> MapGen.listRoomRectangleToGridFunc (groundFloorInitialRoomRectangles ++ groundFloorCustomRoomRectangles)
@@ -306,7 +306,7 @@ groundFloorStairsTunnel =
     List.map (\( tun, opt ) -> tun) groundFloorStairsTunnelWithOptions
 
 
-addGroundFloorStairs : Grid.Grid Tile -> Grid.Grid Tile
+addGroundFloorStairs : Grid2.Grid Tile -> Grid2.Grid Tile
 addGroundFloorStairs grid =
     let
         lstairs =
