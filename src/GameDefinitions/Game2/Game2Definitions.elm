@@ -175,7 +175,7 @@ initialModelFunc lrandints imgBaseDir_ =
       , leverModelChangerFuncs = LastFloor.leverModelChangerFuncs
       , imgBaseDir = imgBaseDir_
       , started = True
-      , debugMode = True
+      , debugMode = False
       }
     , createRandomMap
     , randomlyPositionPlayer

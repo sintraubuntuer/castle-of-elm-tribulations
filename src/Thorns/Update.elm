@@ -127,7 +127,7 @@ update msg model =
                     ThornGrid.randomizeGrid gridInteractionOptions lrandints model.player
 
                 newModel =
-                    { model | gridInteractionOptions = newGrid, pseudoRandomIntsPool = newlrandints }
+                    { model | gridInteractionOptions = newGrid, pseudoRandomIntsPool = newlrandints, helpStr = Nothing }
             in
             ( newModel, cmdFillRandomIntsPool False newModel )
 

@@ -125,40 +125,6 @@ lastFloor_id =
 
 holesDict : Dict HoleId HoleInfoWithLocation
 holesDict =
-    let
-        ( x1, y1 ) =
-            get_room_position_nr 1 1 5 HorizontalRoom config_params
-
-        ( x2, y2 ) =
-            get_room_position_nr 1 4 8 HorizontalRoom config_params
-
-        ( x3, y3 ) =
-            get_room_position_nr 3 5 4 SquareRoom config_params
-
-        ( x4, y4 ) =
-            get_room_position_nr 5 5 5 SquareRoom config_params
-
-        ( x5, y5 ) =
-            get_room_position_nr 3 4 6 SquareRoom config_params
-
-        ( x6, y6 ) =
-            get_room_position_nr 3 3 5 VerticalRoom config_params
-
-        ( x7, y7 ) =
-            get_room_position_nr 5 3 2 VerticalRoom config_params
-
-        ( x8, y8 ) =
-            get_room_position_nr 1 2 8 SquareRoom config_params
-
-        ( x9, y9 ) =
-            get_room_position_nr 3 4 5 SquareRoom config_params
-
-        ( x10, y10 ) =
-            get_room_position_nr 2 1 5 SquareRoom config_params
-
-        ( x11, y11 ) =
-            get_room_position_nr 2 3 6 SquareRoom config_params
-    in
     Dict.fromList
         ([ ( 1, createHoleInfoWithLocation 1 groundFloor_id 1 1 5 HorizontalRoom 1 )
          , ( 2, createHoleInfoWithLocation 2 groundFloor_id 1 4 8 HorizontalRoom 2 )

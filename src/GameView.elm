@@ -276,7 +276,7 @@ acidOverlay =
 
 notileyet : Collage Msg
 notileyet =
-    rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform black)
+    rectangle (toFloat xScale) (toFloat yScale) |> filled (uniform white)
 
 
 notileyetOverlay : Collage Msg
@@ -1106,13 +1106,10 @@ viewStartMenuChoices model imgBaseDir =
             ]
         , Html.br [] []
         , Html.br [] []
-
-        {- }
-           , Html.div []
-               [ Html.h3 []
-                   [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
-                   ]
-               ]
-           , Html.br [] []
-        -}
+        , Html.div []
+            [ Html.h3 []
+                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
+                ]
+            ]
+        , Html.br [] []
         ]

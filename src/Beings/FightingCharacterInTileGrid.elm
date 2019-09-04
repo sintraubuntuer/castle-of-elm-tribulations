@@ -223,7 +223,14 @@ fightingCharacterMove fightingCharacter player currentFloorId grid lRandomInts =
     else
         case fightingCharacter.movingStrategy of
             Just Beings.MoveTowardsPlayer ->
-                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer fightingCharacter player currentFloorId grid lRandomInts
+                BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer fightingCharacter player 0.85 grid lRandomInts
+
+            Just (Beings.CustomMoveTowardsPlayerBeforeAndAfterEnl prob_before prob_after) ->
+                if fightingCharacter.indexOfLight < fightingCharacter.indexOfLightMax then
+                    BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer fightingCharacter player prob_before grid lRandomInts
+
+                else
+                    BeingsInTileGrid.characterMove_sameFloorAsPlayer_moveTowardsPlayer fightingCharacter player prob_after grid lRandomInts
 
             Just Beings.MoveRandomly ->
                 BeingsInTileGrid.characterMove_RandomMove fightingCharacter player grid lRandomInts

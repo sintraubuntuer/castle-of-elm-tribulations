@@ -31,6 +31,7 @@ import Tile
         , defaultLeverInfo
         , defaultPineTreeInfo
         , defaultRoundTreeInfo
+        , defaultVisibleGrassInfo
         , defaultWallInfo
         , defaultWallUpInfo
         , defaultWaterInfo
@@ -69,7 +70,7 @@ modelChangerFuncsForLever1 =
                         |> Grid.set (Grid.Coordinate 15 2 lastFloor_id) (Tile.Floor Tile.defaultFloorInfo)
                         |> Grid.set (Grid.Coordinate 16 2 lastFloor_id) (Tile.Water Tile.walkableWaterInfo)
                         |> Grid.set (Grid.Coordinate 17 2 lastFloor_id) (Tile.Water Tile.walkableWaterInfo)
-                        |> Grid.set (Grid.Coordinate 20 13 lastFloor_id) (Tile.Grass defaultGrassInfo)
+                        |> Grid.set (Grid.Coordinate 20 13 lastFloor_id) (Tile.Grass defaultVisibleGrassInfo)
             }
 
         else
