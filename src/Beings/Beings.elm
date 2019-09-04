@@ -76,6 +76,7 @@ type Direction
 
 type MovingStrategy
     = MoveTowardsPlayer
+    | CustomMoveTowardsPlayerBeforeAndAfterEnl Float Float
     | MoveRandomly
     | DontMove
 
@@ -182,7 +183,7 @@ playerCreationFunc elem pname =
     , health = 30
     , indexOfLight = 10
     , energy = 10
-    , mana = 100
+    , mana = 200
     , enlSpellEffect = IncreaseIndexOfLight
     , inventory = Dict.empty
     , hunger = 10
@@ -220,7 +221,7 @@ fightingCharacterCreationFunc elem fcharId ename species_ floor_id =
     , initiative = 1 -- this will be altered by generating a random int between 1 and 100
     , attacksUsingGameOfThorns = True
     , indexOfLightMax = 11
-    , movingStrategy = Just MoveTowardsPlayer
+    , movingStrategy = Just (CustomMoveTowardsPlayerBeforeAndAfterEnl 0.85 0.6)
     , disappearsWhenHealthIsZero = False
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False

@@ -37,6 +37,7 @@ module Tile exposing
     , defaultPineTreeInfo
     , defaultRedDoorInfo
     , defaultRoundTreeInfo
+    , defaultVisibleGrassInfo
     , defaultWallInfo
     , defaultWallUpInfo
     , defaultWaterInfo
@@ -262,6 +263,11 @@ defaultGrassWithDirtInfo =
 defaultGrassInfo : GrassInfo
 defaultGrassInfo =
     { description = "grass", isTransparent = False, isWalkable = True, isExplored = False, visibility = Unexplored }
+
+
+defaultVisibleGrassInfo : GrassInfo
+defaultVisibleGrassInfo =
+    { description = "grass", isTransparent = False, isWalkable = True, isExplored = False, visibility = Visible }
 
 
 defaultPineTreeInfo : TreeInfo

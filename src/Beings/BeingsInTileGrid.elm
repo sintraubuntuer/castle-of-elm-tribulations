@@ -24,7 +24,13 @@ move ( x_shift, y_shift ) grid isWalkableFunc a =
     in
     case isWalkableFunc location a grid of
         False ->
-            a
+            if x_shift /= 0 && y_shift /= 0 then
+                a
+                    |> move ( x_shift, 0 ) grid isWalkableFunc
+                    |> move ( 0, y_shift ) grid isWalkableFunc
+
+            else
+                a
 
         True ->
             { a
@@ -45,8 +51,16 @@ move ( x_shift, y_shift ) grid isWalkableFunc a =
             }
 
 
-characterMove_sameFloorAsPlayer_moveTowardsPlayer : { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> Beings.Player -> Int -> Grid.Grid Tile -> Dict Int FloorStore -> List Int -> ( { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }, List Int )
-characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorId grid floorDict lRandomInts =
+characterMove_sameFloorAsPlayer_moveTowardsPlayer :
+    { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }
+    -> Beings.Player
+    -> Int
+    -> Float
+    -> Grid.Grid Tile
+    -> Dict Int FloorStore
+    -> List Int
+    -> ( { a | location : Grid.Coordinate, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }, List Int )
+characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorId probability grid floorDict lRandomInts =
     let
         player_location =
             player.location
@@ -65,18 +79,24 @@ characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorI
         y_delta_toPlayer =
             player_location.y - character.location.y
 
+        intProb =
+            if probability <= 1 && probability >= 0 then
+                (probability * 100.0)
+                    |> Basics.round
+
+            else
+                1
+
         xscaled =
             if x_delta_toPlayer > 0 then
-                if xrand <= 85 then
-                    -- 85% probability
+                if xrand <= intProb then
                     1
 
                 else
                     -1
 
             else if x_delta_toPlayer < 0 then
-                if xrand <= 85 then
-                    -- 85% probability
+                if xrand <= intProb then
                     -1
 
                 else
@@ -93,14 +113,14 @@ characterMove_sameFloorAsPlayer_moveTowardsPlayer character player currentFloorI
 
         yscaled =
             if y_delta_toPlayer > 0 then
-                if yrand <= 85 then
+                if yrand <= intProb then
                     1
 
                 else
                     -1
 
             else if y_delta_toPlayer < 0 then
-                if yrand <= 85 then
+                if yrand <= intProb then
                     -1
 
                 else

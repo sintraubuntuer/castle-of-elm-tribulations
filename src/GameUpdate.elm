@@ -406,6 +406,7 @@ update msg model =
                     , fightingCharacters = Dict.empty
                     , otherCharacters = Dict.empty
                   }
+                    |> reveal
                 , Cmd.none
                 )
 

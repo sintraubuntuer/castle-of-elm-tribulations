@@ -304,7 +304,7 @@ randomlyPlaceExistingFightingCharacters lpairIntIds model =
 
 visible : Model -> List Location
 visible model =
-    Grid.neighborhoodCalc 8 model.player.location
+    Grid.neighborhoodCalc 5 model.player.location
 
 
 visibility : Model -> Location -> Tile.Visibility

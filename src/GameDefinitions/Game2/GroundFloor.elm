@@ -275,12 +275,13 @@ groundFloorStairsTunnelWithOptions =
 
     --
     , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
-        --, defaultNoDoorOptions
-      , { left = Tile.UseDoor (customBlackDoorInfo Tile.DoorToTheRight)
-        , top = Tile.NoDoorNoWall
-        , right = Tile.NoDoorNoWall
-        , bottom = Tile.NoDoorNoWall
-        }
+      , defaultNoDoorOptions
+        {- }, { left = Tile.UseDoor (customBlackDoorInfo Tile.DoorToTheRight)
+           , top = Tile.NoDoorNoWall
+           , right = Tile.NoDoorNoWall
+           , bottom = Tile.NoDoorNoWall
+           }
+        -}
       )
     ]
         |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))
