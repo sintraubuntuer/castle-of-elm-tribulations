@@ -9,22 +9,22 @@ import Thorns.Types
 import Tile exposing (Tile(..), Visibility(..))
 
 
-initialPlayer : Player
-initialPlayer =
+initialPlayer : Int -> Int -> Int -> Player
+initialPlayer x y z =
     let
         elem =
             "@"
     in
-    Beings.playerCreationFunc elem "You"
+    Beings.playerCreationFunc elem "You" x y z
 
 
-initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
-initialFightingCharacter fcharId species floorId =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> Int -> Int -> FightingCharacter
+initialFightingCharacter fcharId species x y floorId =
     let
         elem =
             "e" ++ String.fromInt fcharId
     in
-    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species floorId
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species x y floorId
 
 
 dimensions : ( Int, Int )
@@ -35,14 +35,14 @@ dimensions =
 initialModelFunc : Maybe String -> ( GameModel.Model, Bool, Bool )
 initialModelFunc imgBaseDir_ =
     let
-        player =
-            initialPlayer
+        player_ =
+            initialPlayer 10 10 0
 
         fightingCharacter =
-            initialFightingCharacter 1 "slime" theFloorId
+            initialFightingCharacter 1 "slime" 5 5 theFloorId
 
         fightingCharacter2 =
-            initialFightingCharacter 2 "small_worm" theFloorId
+            initialFightingCharacter 2 "small_worm" 3 3 theFloorId
 
         levers =
             Dict.empty
@@ -71,7 +71,7 @@ initialModelFunc imgBaseDir_ =
         createRandomMap =
             True
     in
-    ( { player = player
+    ( { player = player_
       , fightingCharacters =
             Dict.fromList
                 [ ( 1, fightingCharacter )
@@ -81,7 +81,7 @@ initialModelFunc imgBaseDir_ =
       , level = firstMap -- Grid.Grid Tile
       , explored = firstExplored -- Grid.Grid Visibility
       , log = [ "you enter the dungeon" ] --List String
-      , gameOfThornsModel = Thorns.Types.initialModel player Nothing imgBaseDir_
+      , gameOfThornsModel = Thorns.Types.initialModel player_ Nothing imgBaseDir_
       , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
       , viewport_topleft_x = 3 -- Int
@@ -90,6 +90,9 @@ initialModelFunc imgBaseDir_ =
       , window_height = 12
       , total_width = Tuple.first dimensions
       , total_height = Tuple.second dimensions
+      , radius_of_visibility = 5
+      , tileWidth = 64
+      , tileHeight = 64
       , currentDisplay = GameModel.DisplayRegularGame
       , displayStatsOverlay = False
       , showBlood = True

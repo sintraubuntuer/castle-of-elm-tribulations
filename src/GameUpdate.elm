@@ -171,7 +171,7 @@ update msg model =
                             |> Maybe.map (\g -> Grid.toCoordinates g.level)
                             |> Maybe.withDefault []
             in
-            ( initModel |> position_display_anchor_in_order_to_center_player
+            ( initModel |> position_viewport_in_order_to_center_player
             , Cmd.batch
                 ([ if createRandomMap then
                     cmdFillRandomIntsPoolAndGenerateRandomMap initModel
@@ -254,6 +254,29 @@ update msg model =
                           }
                         , Cmd.none
                         )
+
+                    GameModel.ViewMap ->
+                        let
+                            newModel =
+                                if model.currentDisplay == GameModel.DisplayMap then
+                                    { model
+                                        | currentDisplay = GameModel.DisplayRegularGame
+                                        , tileWidth = 64
+                                        , tileHeight = 64
+                                        , window_width = 12
+                                        , window_height = 12
+                                    }
+
+                                else
+                                    { model
+                                        | currentDisplay = GameModel.DisplayMap
+                                        , tileWidth = 8
+                                        , tileHeight = 8
+                                        , window_width = 12 * 8
+                                        , window_height = 12 * 8
+                                    }
+                        in
+                        ( newModel, Cmd.none )
 
                     GameModel.Nop ->
                         ( model, Cmd.none )
@@ -853,8 +876,8 @@ changeFloorTo model floorId locTuple =
         |> reveal
 
 
-position_display_anchor_in_order_to_center_player : Model -> Model
-position_display_anchor_in_order_to_center_player model =
+position_viewport_in_order_to_center_player : Model -> Model
+position_viewport_in_order_to_center_player model =
     { model
         | viewport_topleft_x = max 0 (model.player.location.x - round (toFloat model.window_width / 2.0))
         , viewport_topleft_y = max 0 (model.player.location.y - round (toFloat model.window_height / 2))

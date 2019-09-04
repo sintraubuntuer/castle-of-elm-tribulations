@@ -93,7 +93,11 @@ viewSuggestion model =
 viewHealthReport : Model -> Html Msg
 viewHealthReport model =
     div []
-        [ div [] [ text ("Your Health : " ++ String.fromInt model.player.health) ]
+        [ div []
+            [ text ("Your Health : " ++ String.fromInt model.player.health)
+            , br [] []
+            , text ("Your Mana : " ++ String.fromInt model.player.mana)
+            ]
         , case model.opponent of
             Just (Types.FightingCharacter opponent) ->
                 div []

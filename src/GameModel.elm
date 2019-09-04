@@ -55,6 +55,7 @@ type CurrentDisplay
     | DisplayOpponentReport
     | DisplayHelpScreen
     | DisplayInventory
+    | DisplayMap
 
 
 type ModelChangerFuncs
@@ -77,6 +78,9 @@ type alias Model =
     , window_height : Int
     , total_width : Int
     , total_height : Int
+    , radius_of_visibility : Int
+    , tileWidth : Int
+    , tileHeight : Int
     , currentDisplay : CurrentDisplay
     , displayStatsOverlay : Bool
     , showBlood : Bool
@@ -187,6 +191,7 @@ type Input
     | ViewStatsOverlay
     | ViewOpponentReport
     | ViewHelpMode
+    | ViewMap
     | Nop
 
 
@@ -304,7 +309,7 @@ randomlyPlaceExistingFightingCharacters lpairIntIds model =
 
 visible : Model -> List Location
 visible model =
-    Grid.neighborhoodCalc 5 model.player.location
+    Grid.neighborhoodCalc model.radius_of_visibility model.player.location
 
 
 visibility : Model -> Location -> Tile.Visibility

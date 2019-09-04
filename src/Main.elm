@@ -78,6 +78,9 @@ fromCode keyCode =
         72 ->
             GameModel.ViewHelpMode
 
+        77 ->
+            GameModel.ViewMap
+
         _ ->
             GameModel.Nop
 

@@ -42,26 +42,26 @@ import Tile
         )
 
 
-initialPlayer : Player
-initialPlayer =
+initialPlayer : Int -> Int -> Int -> Player
+initialPlayer x y z =
     let
         elem =
             "@"
     in
-    Beings.playerCreationFunc elem "You"
+    Beings.playerCreationFunc elem "You" x y z
 
 
-initialFightingCharacter : FightingCharacterId -> String -> Int -> FightingCharacter
-initialFightingCharacter fcharId species floorId =
+initialFightingCharacter : FightingCharacterId -> String -> Int -> Int -> Int -> FightingCharacter
+initialFightingCharacter fcharId species x_coord y_coord floorId =
     let
         elem =
             "e" ++ String.fromInt fcharId
     in
-    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species floorId
+    Beings.fightingCharacterCreationFunc elem fcharId ("fightingChar" ++ String.fromInt fcharId) species x_coord y_coord floorId
 
 
 otherCharacterFunc =
-    Beings.otherCharacterCreationFunc 1 "otherYou" lastFloor_id
+    Beings.otherCharacterCreationFunc 1 "otherYou" 10 10 lastFloor_id
 
 
 customGameCompletionFunc : Int -> Grid.Coordinate -> Bool
@@ -72,38 +72,38 @@ customGameCompletionFunc floorid coords =
 initialModelFunc : List Int -> Maybe String -> ( GameModel.Model, Bool, Bool )
 initialModelFunc lrandints imgBaseDir_ =
     let
-        player =
-            initialPlayer
+        player_ =
+            initialPlayer 67 36 groundFloor_id
 
         fightingCharacter1 =
-            initialFightingCharacter 1 "ghost" caverns_floor_id
+            initialFightingCharacter 1 "ghost" 5 5 caverns_floor_id
 
         fightingCharacter2 =
-            initialFightingCharacter 2 "snake" caverns_floor_id
+            initialFightingCharacter 2 "snake" 10 10 caverns_floor_id
 
         fightingCharacter3 =
-            initialFightingCharacter 3 "bat" basement_floor_id
+            initialFightingCharacter 3 "bat" 5 5 basement_floor_id
 
         fightingCharacter4 =
-            initialFightingCharacter 4 "slime" basement_floor_id
+            initialFightingCharacter 4 "slime" 10 10 basement_floor_id
 
         fightingCharacter5 =
-            initialFightingCharacter 5 "small_worm" groundFloor_id
+            initialFightingCharacter 5 "small_worm" 5 5 groundFloor_id
 
         fightingCharacter6 =
-            initialFightingCharacter 6 "pumpking" groundFloor_id
+            initialFightingCharacter 6 "pumpking" 10 10 groundFloor_id
 
         fightingCharacter7 =
-            initialFightingCharacter 7 "ghost" firstFloor_id
+            initialFightingCharacter 7 "ghost" 5 5 firstFloor_id
 
         fightingCharacter8 =
-            initialFightingCharacter 8 "pumpking" firstFloor_id
+            initialFightingCharacter 8 "pumpking" 10 10 firstFloor_id
 
         fightingCharacter9 =
-            initialFightingCharacter 9 "ghost" theAttic_id
+            initialFightingCharacter 9 "ghost" 5 5 theAttic_id
 
         fightingCharacter10 =
-            initialFightingCharacter 10 "bat" theAttic_id
+            initialFightingCharacter 10 "bat" 10 10 theAttic_id
 
         levers =
             Dict.empty
@@ -121,7 +121,7 @@ initialModelFunc lrandints imgBaseDir_ =
         createRandomMap =
             False
     in
-    ( { player = { player | location = { x = 67, y = 36 } }
+    ( { player = player_
       , fightingCharacters =
             Dict.fromList
                 [ ( fightingCharacter1.id, fightingCharacter1 )
@@ -142,7 +142,7 @@ initialModelFunc lrandints imgBaseDir_ =
       , level = Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .level |> Maybe.withDefault GroundFloor.gridGroundFloor -- Grid.Grid Tile
       , explored = setAllAsUnexplored GroundFloor.gridGroundFloor -- Grid.Grid Visibility
       , log = [ "you enter the dungeons Ground Floor " ] --List String
-      , gameOfThornsModel = Thorns.Types.initialModel player Nothing imgBaseDir_
+      , gameOfThornsModel = Thorns.Types.initialModel player_ Nothing imgBaseDir_
       , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
       , viewport_topleft_x = 3 -- Int , this value doesn't really matter because after the player is randomly placed this value is readjusted
@@ -151,6 +151,9 @@ initialModelFunc lrandints imgBaseDir_ =
       , window_height = common_window_height
       , total_width = get_total_width config_params 7
       , total_height = get_total_height config_params 9
+      , radius_of_visibility = 5
+      , tileWidth = 64
+      , tileHeight = 64
       , currentDisplay = GameModel.DisplayRegularGame
       , displayStatsOverlay = False
       , showBlood = True

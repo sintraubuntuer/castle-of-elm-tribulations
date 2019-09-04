@@ -37,6 +37,7 @@ module Tile exposing
     , defaultPineTreeInfo
     , defaultRedDoorInfo
     , defaultRoundTreeInfo
+    , defaultStripedDoorInfo
     , defaultVisibleGrassInfo
     , defaultWallInfo
     , defaultWallUpInfo
@@ -312,6 +313,11 @@ defaultBlueDoorInfo dorientation =
 defaultBlackDoorInfo : DoorOrientation -> DoorInfo
 defaultBlackDoorInfo dorientation =
     { isOpen = False, color = Just "black", orientation = dorientation, requiresToOpen = [ Key { keyColor = "black" } ], isExplored = False, visibility = Unexplored }
+
+
+defaultStripedDoorInfo : DoorOrientation -> DoorInfo
+defaultStripedDoorInfo dorientation =
+    { isOpen = False, color = Just "striped", orientation = dorientation, requiresToOpen = [ Key { keyColor = "striped" } ], isExplored = False, visibility = Unexplored }
 
 
 defaultRedDoorInfo : DoorOrientation -> DoorInfo

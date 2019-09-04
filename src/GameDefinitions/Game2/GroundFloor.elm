@@ -180,8 +180,6 @@ groundFloorInitialRoomRectangles =
 
     --
     , getRoom 8 2 VerticalRoom
-
-    --, getRoom 9 2 SquareRoom
     ]
         |> List.map (\xfunc -> xfunc config_params)
 
@@ -209,10 +207,10 @@ groundFloorInitialVerticalTunnelRectanglesWithOptions =
     --
     , ( getCommonVerticalTunnel 1 6 config_params, defaultVerticalGreenDoorOptions )
 
-    --, getCommonVerticalTunnel 2 6
+    --
     , ( getVerticalTunnel 2 6 TunnelDown Nothing Nothing (Just VerticalRoom) (Just HorizontalRoom) Nothing config_params, defaultVerticalOpenDoorOptions )
 
-    --, getCommonVerticalTunnel 5 6
+    --
     , ( getVerticalTunnel 5 6 TunnelDown Nothing Nothing (Just HorizontalRoom) Nothing Nothing config_params, defaultVerticalGreenDoorOptions )
     , ( getCommonVerticalTunnel 6 6 config_params, defaultVerticalOpenDoorOptions )
 
@@ -236,7 +234,6 @@ groundFloorInitialHorizontalTunnelRectanglesWithOptions =
     , ( getCommonHorizontalTunnel 1 5, defaultHorizontalRedDoorOptions )
 
     --
-    --  , getCommonHorizontalTunnel 3 2
     , ( getHorizontalTunnel 3 2 TunnelToTheRight Nothing Nothing (Just VerticalRoom) (Just SquareRoom) Nothing, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 3 3, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 3 4, defaultHorizontalBlueDoorOptions )
@@ -244,12 +241,10 @@ groundFloorInitialHorizontalTunnelRectanglesWithOptions =
     , ( getCommonHorizontalTunnel 3 6, defaultHorizontalOpenDoorOptions )
 
     --
-    --, getCommonHorizontalTunnel 4 5
     , ( getHorizontalTunnel 4 5 TunnelToTheRight Nothing Nothing (Just VerticalRoom) (Just HorizontalRoom) Nothing, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 4 6, defaultHorizontalOpenDoorOptions )
 
     --
-    --, getCommonHorizontalTunnel 5 2
     , ( getHorizontalTunnel 5 2 TunnelToTheRight Nothing Nothing (Just VerticalRoom) (Just SquareRoom) Nothing, defaultHorizontalGreenDoorOptions )
     , ( getCommonHorizontalTunnel 5 3, defaultHorizontalOpenDoorOptions )
     , ( getCommonHorizontalTunnel 5 4, defaultHorizontalOpenDoorOptions )
@@ -275,22 +270,21 @@ groundFloorStairsTunnelWithOptions =
 
     --
     , ( getHorizontalTunnel 4 7 TunnelToTheRight (Just (config_params.vertical_wall_width + 1)) Nothing Nothing Nothing Nothing
-      , defaultNoDoorOptions
-        {- }, { left = Tile.UseDoor (customBlackDoorInfo Tile.DoorToTheRight)
-           , top = Tile.NoDoorNoWall
-           , right = Tile.NoDoorNoWall
-           , bottom = Tile.NoDoorNoWall
-           }
-        -}
+        --, defaultNoDoorOptions
+      , { left = Tile.UseDoor (customStripedDoorInfo Tile.DoorToTheRight)
+        , top = Tile.NoDoorNoWall
+        , right = Tile.NoDoorNoWall
+        , bottom = Tile.NoDoorNoWall
+        }
       )
     ]
         |> List.map (\( xfunc, y ) -> ( xfunc config_params, y ))
 
 
-customBlackDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
-customBlackDoorInfo dorientation =
+customStripedDoorInfo : Tile.DoorOrientation -> Tile.DoorInfo
+customStripedDoorInfo dorientation =
     { isOpen = False
-    , color = Just "black"
+    , color = Just "striped"
     , orientation = dorientation
     , requiresToOpen =
         [ Item.Paper (Item.PaperInfo 1 "" "" "")
