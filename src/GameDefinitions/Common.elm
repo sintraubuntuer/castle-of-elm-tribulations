@@ -154,6 +154,7 @@ initialModelFunc imgBaseDir_ =
       , gameOfThornsModel = Thorns.Types.initialModel player_ Nothing (Just imgBaseDir_)
       , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
+      , useFog = True
       , viewport_topleft_x = 3 -- Int
       , viewport_topleft_y = 3 --Int
       , window_width = 10

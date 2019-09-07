@@ -63,6 +63,7 @@ type Msg
     | CleanUpAndFightingCharacterLogic
     | StartOpponentInteraction FightingCharacter
     | ChangeFloorTo FloorId ( Int, Int )
+    | ShowMap Float
     | NewRandomPointToPlacePlayer ( Int, Int )
     | NewGridCoordinatesIndexToPlaceFightingCharacter FightingCharacterId Int
     | NewRandomPointToPlaceFightingCharacter FightingCharacterId ( Int, Int )
@@ -202,19 +203,39 @@ update msg model =
             else
                 case input of
                     GameModel.Up ->
-                        update (TryShiftPlayerPosition ( 0, 0 - 1 )) model
+                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                            update (TryShiftPlayerPosition ( 0, 0 - 1 )) model
+
+                        else
+                            ( model, Cmd.none )
 
                     GameModel.Down ->
-                        update (TryShiftPlayerPosition ( 0, 0 + 1 )) model
+                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                            update (TryShiftPlayerPosition ( 0, 0 + 1 )) model
+
+                        else
+                            ( model, Cmd.none )
 
                     GameModel.Left ->
-                        update (TryShiftPlayerPosition ( 0 - 1, 0 )) model
+                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                            update (TryShiftPlayerPosition ( 0 - 1, 0 )) model
+
+                        else
+                            ( model, Cmd.none )
 
                     GameModel.Right ->
-                        update (TryShiftPlayerPosition ( 0 + 1, 0 )) model
+                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                            update (TryShiftPlayerPosition ( 0 + 1, 0 )) model
+
+                        else
+                            ( model, Cmd.none )
 
                     GameModel.PickUpItem ->
-                        update TryAddToPlayerInventory model
+                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                            update TryAddToPlayerInventory model
+
+                        else
+                            ( model, Cmd.none )
 
                     GameModel.ViewStatsOverlay ->
                         ( { model | displayStatsOverlay = not model.displayStatsOverlay }, Cmd.none )
@@ -225,8 +246,11 @@ update msg model =
                                 if model.currentDisplay == GameModel.DisplayHelpScreen then
                                     GameModel.DisplayRegularGame
 
-                                else
+                                else if model.currentDisplay == GameModel.DisplayRegularGame then
                                     GameModel.DisplayHelpScreen
+
+                                else
+                                    model.currentDisplay
                           }
                         , Cmd.none
                         )
@@ -237,8 +261,11 @@ update msg model =
                                 if model.currentDisplay == GameModel.DisplayOpponentReport then
                                     GameModel.DisplayRegularGame
 
-                                else
+                                else if model.currentDisplay == GameModel.DisplayRegularGame then
                                     GameModel.DisplayOpponentReport
+
+                                else
+                                    model.currentDisplay
                           }
                         , Cmd.none
                         )
@@ -249,8 +276,11 @@ update msg model =
                                 if model.currentDisplay == GameModel.DisplayInventory then
                                     GameModel.DisplayRegularGame
 
-                                else
+                                else if model.currentDisplay == GameModel.DisplayRegularGame then
                                     GameModel.DisplayInventory
+
+                                else
+                                    model.currentDisplay
                           }
                         , Cmd.none
                         )
@@ -261,25 +291,46 @@ update msg model =
                                 if model.currentDisplay == GameModel.DisplayMap then
                                     { model
                                         | currentDisplay = GameModel.DisplayRegularGame
-                                        , tileWidth = 64
-                                        , tileHeight = 64
-                                        , window_width = 12
-                                        , window_height = 12
+                                        , tileWidth = model.tileWidth * 8
+                                        , tileHeight = model.tileHeight * 8
+                                        , window_width = model.window_width // 8
+                                        , window_height = model.window_height // 8
+                                    }
+
+                                else if model.currentDisplay == GameModel.DisplayRegularGame then
+                                    { model
+                                        | currentDisplay = GameModel.AboutToDisplayMap
+                                        , tileWidth = model.tileWidth // 8
+                                        , tileHeight = model.tileHeight // 8
+                                        , window_width = model.window_width * 8
+                                        , window_height = model.window_height * 8
                                     }
 
                                 else
-                                    { model
-                                        | currentDisplay = GameModel.DisplayMap
-                                        , tileWidth = 8
-                                        , tileHeight = 8
-                                        , window_width = 12 * 8
-                                        , window_height = 12 * 8
-                                    }
+                                    model
+                        in
+                        ( newModel, Cmd.none )
+
+                    GameModel.ViewHideFog ->
+                        let
+                            newModel =
+                                if model.currentDisplay == GameModel.DisplayRegularGame then
+                                    { model | useFog = not model.useFog }
+
+                                else
+                                    model
                         in
                         ( newModel, Cmd.none )
 
                     GameModel.Nop ->
                         ( model, Cmd.none )
+
+        ShowMap t ->
+            if model.currentDisplay == GameModel.AboutToDisplayMap then
+                ( { model | currentDisplay = GameModel.DisplayMap }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
         TryAddToPlayerInventory ->
             let
@@ -1030,7 +1081,17 @@ cmdGenFloatsForRandomCave w h =
     Random.generate NewRandomFloatsForGenCave (Random.list nrFloats (Random.float 0 1))
 
 
-move : ( Int, Int ) -> Grid.Grid Tile -> (GameModel.Location -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> Grid.Grid Tile -> Bool) -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int } -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, inventory : Beings.Inventory, initiative : Int }
+move :
+    ( Int, Int )
+    -> Grid.Grid Tile
+    ->
+        (GameModel.Location
+         -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, canMoveThroughHoles : Bool, canUseTeleporters : Bool, inventory : Beings.Inventory, initiative : Int }
+         -> Grid.Grid Tile
+         -> Bool
+        )
+    -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, canMoveThroughHoles : Bool, canUseTeleporters : Bool, inventory : Beings.Inventory, initiative : Int }
+    -> { a | location : GameModel.Location, direction : Beings.Direction, movingStrategy : Maybe Beings.MovingStrategy, canMoveThroughHoles : Bool, canUseTeleporters : Bool, inventory : Beings.Inventory, initiative : Int }
 move ( x_shift, y_shift ) grid isWalkableFunc a =
     BeingsInTileGrid.move ( x_shift, y_shift ) grid isWalkableFunc a
 

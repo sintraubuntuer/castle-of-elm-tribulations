@@ -492,14 +492,19 @@ tileOverlay tileWidth tileHeight imgBaseDir t =
             notileyetOverlay
 
 
-fogT : Int -> Int -> Tile.Visibility -> Collage Msg
-fogT tileWidth tileHeight visibility =
+fogT : Int -> Int -> GameModel.CurrentDisplay -> Tile.Visibility -> Collage Msg
+fogT tileWidth tileHeight displayMode visibility =
     case visibility of
         Visible ->
             noForm
 
         Explored ->
-            halfFog tileWidth tileHeight
+            case displayMode of
+                GameModel.DisplayMap ->
+                    noForm
+
+                _ ->
+                    halfFog tileWidth tileHeight
 
         Unexplored ->
             fog tileWidth tileHeight
@@ -550,55 +555,59 @@ playerImg player_ visibility tileWidth tileHeight imgBaseDir =
 
 fightingCharacterView : Beings.FightingCharacter -> Bool -> Tile.Visibility -> Int -> Int -> String -> Collage Msg
 fightingCharacterView fightChar showBlood visibility tileWidth tileHeight imgBaseDir =
-    case visibility of
-        Tile.Visible ->
-            let
-                fileStr =
-                    if fightChar.indexOfLight >= fightChar.indexOfLightMax then
-                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
+    --case visibility of
+    --    Tile.Visible ->
+    let
+        fileStr =
+            if fightChar.indexOfLight >= fightChar.indexOfLightMax then
+                imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
 
-                    else if fightChar.health > 0 then
-                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ ".png"
+            else if fightChar.health > 0 then
+                imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ ".png"
 
-                    else if fightChar.health <= 0 && showBlood then
-                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
+            else if fightChar.health <= 0 && showBlood then
+                imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
 
-                    else
-                        imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
-            in
-            Collage.image ( toFloat tileWidth, toFloat tileHeight ) fileStr
+            else
+                imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
+    in
+    Collage.image ( toFloat tileWidth, toFloat tileHeight ) fileStr
 
-        _ ->
-            noForm
+
+
+--  _ ->
+--     noForm
 
 
 otherCharacterView : Beings.OtherCharacter -> Bool -> Tile.Visibility -> Int -> Int -> String -> Collage Msg
 otherCharacterView character showBlood visibility tileWidth tileHeight imgBaseDir =
-    case visibility of
-        Tile.Visible ->
-            let
-                fileStr =
-                    imgBaseDir ++ "/pc/right.png"
+    --case visibility of
+    --    Tile.Visible ->
+    let
+        fileStr =
+            imgBaseDir ++ "/pc/right.png"
 
-                {-
-                     if character.indexOfLight >= character.indexOfLightMax then
-                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
+        {-
+             if character.indexOfLight >= character.indexOfLightMax then
+                 imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_enlightened.png"
 
-                     else if character.health > 0 then
-                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ ".png"
+             else if character.health > 0 then
+                 imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ ".png"
 
-                     else if character.health <= 0 && showBlood then
-                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
+             else if character.health <= 0 && showBlood then
+                 imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead_blood.png"
 
-                     else
-                         imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
-                   -
-                -}
-            in
-            Collage.image ( toFloat tileWidth, toFloat tileHeight ) fileStr
+             else
+                 imgBaseDir ++ "/characters/" ++ String.toLower fightChar.species ++ "_dead.png"
+           -
+        -}
+    in
+    Collage.image ( toFloat tileWidth, toFloat tileHeight ) fileStr
 
-        _ ->
-            noForm
+
+
+--  _ ->
+--      noForm
 
 
 guy : { r | textAvatar : String } -> Tile.Visibility -> Int -> Int -> Collage Msg
@@ -628,8 +637,19 @@ mainScreen : Model -> Collage Msg
 mainScreen model =
     let
         ( subgrid, txtmsg ) =
-            model.level
-                |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
+            if model.currentDisplay /= GameModel.DisplayMap then
+                model.level
+                    |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
+
+            else
+                ( model.level, "" )
+
+        ( viewport_topleft_x, viewport_topleft_y ) =
+            if model.currentDisplay /= GameModel.DisplayMap then
+                ( model.viewport_topleft_x, model.viewport_topleft_y )
+
+            else
+                ( 0, 0 )
 
         ( wwidth, wheight ) =
             ( subgrid.size.width, subgrid.size.height )
@@ -639,11 +659,11 @@ mainScreen model =
 
         xOffset : Int -> Float
         xOffset n =
-            (toFloat n - toFloat model.viewport_topleft_x - toFloat wwidth / 2) * toFloat model.tileWidth
+            (toFloat n - toFloat viewport_topleft_x - toFloat wwidth / 2) * toFloat model.tileWidth
 
         yOffset : Int -> Float
         yOffset n =
-            (toFloat n - toFloat model.viewport_topleft_y - toFloat wheight / 2) * toFloat model.tileHeight
+            (toFloat n - toFloat viewport_topleft_y - toFloat wheight / 2) * toFloat model.tileHeight
 
         xOffset_for_subgrid : Int -> Float
         xOffset_for_subgrid n =
@@ -686,7 +706,7 @@ mainScreen model =
         fightingCharacter_ =
             let
                 relevantFightingCharactersDict =
-                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= model.viewport_topleft_x && fightChar.location.x - model.viewport_topleft_x < model.window_width) && (fightChar.location.y >= model.viewport_topleft_y && fightChar.location.y - model.viewport_topleft_y < model.window_height)) model.fightingCharacters
+                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= viewport_topleft_x && fightChar.location.x - viewport_topleft_x < model.window_width) && (fightChar.location.y >= viewport_topleft_y && fightChar.location.y - viewport_topleft_y < model.window_height)) model.fightingCharacters
 
                 mkfightingCharacter fcharId anfightingCharacter =
                     fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level) model.tileWidth model.tileHeight (getImgBaseDir model)
@@ -697,7 +717,7 @@ mainScreen model =
         otherCharacters_ =
             let
                 relevantOtherCharsDict =
-                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= model.viewport_topleft_x && char.location.x - model.viewport_topleft_x < model.window_width) && (char.location.y >= model.viewport_topleft_y && char.location.y - model.viewport_topleft_y < model.window_height)) model.otherCharacters
+                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= viewport_topleft_x && char.location.x - viewport_topleft_x < model.window_width) && (char.location.y >= viewport_topleft_y && char.location.y - viewport_topleft_y < model.window_height)) model.otherCharacters
 
                 mkOtherChar ch_id achar =
                     otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level) model.tileWidth model.tileHeight (getImgBaseDir model)
@@ -738,10 +758,14 @@ mainScreen model =
             Grid.map (\t -> Tile.getTileVisibility t) subgrid
 
         fogger =
-            mkLayer (Grid.toList visibilitySubGrid) (row (fogT model.tileWidth model.tileHeight))
+            mkLayer (Grid.toList visibilitySubGrid) (row (fogT model.tileWidth model.tileHeight model.currentDisplay))
     in
     Collage.group
-        ([ fogger
+        ([ if not model.useFog && model.currentDisplay == GameModel.DisplayRegularGame then
+            noForm
+
+           else
+            fogger
          , pg |> shift ( 0, 0 )
          , eg
          , ocg
@@ -773,6 +797,11 @@ sidebar model pos =
             [ model.player.textAvatar ++ " : " ++ model.player.name |> Text.fromString |> theColor |> Collage.rendered
             , "Health: " ++ String.fromInt model.player.health |> Text.fromString |> theColor |> Collage.rendered
             , "mana: " ++ String.fromInt model.player.mana |> Text.fromString |> theColor |> Collage.rendered
+            , if model.currentDisplay == GameModel.DisplayMap then
+                "rendering map : " |> Text.fromString |> theColor |> Collage.rendered
+
+              else
+                noForm
             ]
                 |> List.indexedMap (\i elem -> shift ( -100, 200 - toFloat i * 25 ) elem)
                 |> Collage.group
@@ -1041,6 +1070,10 @@ viewHelpMode model =
         , Html.br [] []
         , Html.text "E for Opponent Report "
         , Html.br [] []
+        , Html.text "F to turn fog on and off"
+        , Html.br [] []
+        , Html.text "M for map ( use with caution - algo is still being optimized - right now it takes 3 , 4 secs to render the map ) "
+        , Html.br [] []
         , Html.text "and H for Help"
         , Html.br [] []
         , Html.br [] []
@@ -1065,6 +1098,18 @@ view model =
 
                     GameModel.DisplayHelpScreen ->
                         viewHelpMode model
+
+                    GameModel.AboutToDisplayMap ->
+                        Html.div []
+                            [ Html.div [] [ Html.text "going to display map - be patient , it might take a few seconds ..." ]
+                            ]
+
+                    GameModel.DisplayMap ->
+                        Html.div []
+                            [ Html.div [] [ Html.text "Press M to leave Map " ]
+                            , display model
+                                |> svg
+                            ]
 
                     _ ->
                         Html.div []
@@ -1108,10 +1153,13 @@ viewStartMenuChoices model imgBaseDir =
             ]
         , Html.br [] []
         , Html.br [] []
-        , Html.div []
-            [ Html.h3 []
-                [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
-                ]
-            ]
+
+        {-
+           , Html.div []
+               [ Html.h3 []
+                   [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
+                   ]
+               ]
+        -}
         , Html.br [] []
         ]

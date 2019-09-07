@@ -63,6 +63,8 @@ type alias Player =
     , initiative : Int
     , indexOfLightMax : Int
     , movingStrategy : Maybe MovingStrategy
+    , canMoveThroughHoles : Bool
+    , canUseTeleporters : Bool
     , placed : Bool
     }
 
@@ -103,6 +105,8 @@ type alias FightingCharacter =
     , attacksUsingGameOfThorns : Bool
     , indexOfLightMax : Int
     , movingStrategy : Maybe MovingStrategy
+    , canMoveThroughHoles : Bool
+    , canUseTeleporters : Bool
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
@@ -128,6 +132,8 @@ type alias OtherCharacter =
     , initiative : Int
     , indexOfLightMax : Int
     , movingStrategy : Maybe MovingStrategy
+    , canMoveThroughHoles : Bool
+    , canUseTeleporters : Bool
     , disappearsWhenHealthIsZero : Bool
     , playerCanWalkOverIfDead : Bool
     , disappearsWhenIndexOfLightMax : Bool
@@ -154,6 +160,8 @@ otherCharacterCreationFunc id_ ename x_coord y_coord floor_id_ =
     , initiative = 100
     , indexOfLightMax = 30
     , movingStrategy = Just DontMove
+    , canMoveThroughHoles = False
+    , canUseTeleporters = False
     , disappearsWhenHealthIsZero = True
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False
@@ -195,6 +203,8 @@ playerCreationFunc elem pname x_coord y_coord floor_nr =
     , initiative = 2 -- this will be altered by generating a random int between 1 and 100
     , indexOfLightMax = 20
     , movingStrategy = Nothing
+    , canMoveThroughHoles = True
+    , canUseTeleporters = True
     , placed = False
     }
 
@@ -222,6 +232,8 @@ fightingCharacterCreationFunc elem fcharId ename species_ x_coord y_coord floor_
     , attacksUsingGameOfThorns = True
     , indexOfLightMax = 11
     , movingStrategy = Just (CustomMoveTowardsPlayerBeforeAndAfterEnl 0.85 0.6)
+    , canMoveThroughHoles = False
+    , canUseTeleporters = False
     , disappearsWhenHealthIsZero = False
     , playerCanWalkOverIfDead = True
     , disappearsWhenIndexOfLightMax = False

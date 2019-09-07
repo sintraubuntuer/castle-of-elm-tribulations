@@ -55,6 +55,7 @@ type CurrentDisplay
     | DisplayOpponentReport
     | DisplayHelpScreen
     | DisplayInventory
+    | AboutToDisplayMap
     | DisplayMap
 
 
@@ -72,6 +73,7 @@ type alias Model =
     , gameOfThornsModel : Thorns.Types.Model
     , listeningToKeyInput : Bool
     , pseudoRandomIntsPool : List Int
+    , useFog : Bool
     , viewport_topleft_x : Int
     , viewport_topleft_y : Int
     , window_width : Int
@@ -192,6 +194,7 @@ type Input
     | ViewOpponentReport
     | ViewHelpMode
     | ViewMap
+    | ViewHideFog
     | Nop
 
 

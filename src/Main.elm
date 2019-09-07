@@ -3,7 +3,8 @@ module Main exposing (main)
 import Browser
 import Browser.Events
     exposing
-        ( onKeyDown
+        ( onAnimationFrameDelta
+        , onKeyDown
         )
 import Dict exposing (Dict)
 import GameDefinitions.Common
@@ -32,7 +33,12 @@ seed =
 subscriptions : GameModel.Model -> Sub GameUpdate.Msg
 subscriptions model =
     Sub.batch
-        [ onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
+        [ if model.currentDisplay == GameModel.AboutToDisplayMap then
+            onAnimationFrameDelta GameUpdate.ShowMap
+
+          else
+            Sub.none
+        , onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
         ]
 
 
@@ -80,6 +86,9 @@ fromCode keyCode =
 
         77 ->
             GameModel.ViewMap
+
+        70 ->
+            GameModel.ViewHideFog
 
         _ ->
             GameModel.Nop

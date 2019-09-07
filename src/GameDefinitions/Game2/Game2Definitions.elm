@@ -145,6 +145,7 @@ initialModelFunc lrandints imgBaseDir_ =
       , gameOfThornsModel = Thorns.Types.initialModel player_ Nothing imgBaseDir_
       , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
+      , useFog = True
       , viewport_topleft_x = 3 -- Int , this value doesn't really matter because after the player is randomly placed this value is readjusted
       , viewport_topleft_y = 3 --Int   , this value doesn't really matter because after the player is randomly placed this value is readjusted
       , window_width = common_window_width

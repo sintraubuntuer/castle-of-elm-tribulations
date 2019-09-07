@@ -111,7 +111,7 @@ update msg model =
                             info_rec.player.health <= 0 || info_rec.opponent.health <= 0 || info_rec.opponent.indexOfLight >= info_rec.opponent.indexOfLightMax
 
                         newModel =
-                            { model | gridInteractionOptions = newGrid, currentSegment = [], player = info_rec.player, opponent = Just (Types.FightingCharacter info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_ }
+                            { model | gridInteractionOptions = newGrid, currentSegment = [], player = info_rec.player, opponent = Just (Types.FightingCharacter info_rec.opponent), pseudoRandomIntsPool = newlrands, interactionHasFinished = interactionHasFinished_, helpStr = Nothing }
                     in
                     ( newModel, cmdFillRandomIntsPool False newModel )
 
