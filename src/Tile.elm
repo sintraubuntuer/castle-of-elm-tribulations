@@ -46,7 +46,10 @@ module Tile exposing
     , defaultWaterWallUpInfo
     , defaultYellowDoorInfo
     , getTileVisibility
+    , getTileVisibility_withItemsAllwaysVisible
+    , hasItem
     , isConverterTile
+    , isDoor
     , isFloor
     , isGrass
     , isHole
@@ -370,6 +373,20 @@ walkableWaterInfo =
     { description = "just_water", isTransparent = False, isWalkable = True, isExplored = False, visibility = Unexplored }
 
 
+getTileVisibility_withItemsAllwaysVisible : Tile -> Visibility
+getTileVisibility_withItemsAllwaysVisible tile =
+    case tile of
+        Floor floorinfo ->
+            if floorinfo.item /= Nothing then
+                Visible
+
+            else
+                floorinfo.visibility
+
+        _ ->
+            getTileVisibility tile
+
+
 getTileVisibility : Tile -> Visibility
 getTileVisibility tile =
     case tile of
@@ -472,6 +489,16 @@ isFloor tile =
             False
 
 
+hasItem : Tile -> Bool
+hasItem tile =
+    case tile of
+        Floor finfo ->
+            finfo.item /= Nothing
+
+        _ ->
+            False
+
+
 isWall : Tile -> Bool
 isWall tile =
     case tile of
@@ -526,6 +553,16 @@ isHole : Tile -> Bool
 isHole tile =
     case tile of
         Hole _ ->
+            True
+
+        _ ->
+            False
+
+
+isDoor : Tile -> Bool
+isDoor tile =
+    case tile of
+        Door _ ->
             True
 
         _ ->

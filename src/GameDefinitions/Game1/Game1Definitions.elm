@@ -80,7 +80,6 @@ initialModelFunc imgBaseDir_ =
                 ]
       , otherCharacters = Dict.empty
       , level = firstMap -- Grid.Grid Tile
-      , explored = firstExplored -- Grid.Grid Visibility
       , log = [ "you enter the dungeon" ] --List String
       , gameOfThornsModel = Thorns.Types.initialModel player_ Nothing imgBaseDir_
       , listeningToKeyInput = True
@@ -105,6 +104,7 @@ initialModelFunc imgBaseDir_ =
       , gameCompletionFunc = \fid coords -> False
       , leverModelChangerFuncs = Dict.empty
       , imgBaseDir = imgBaseDir_
+      , mapImgStr = Nothing
       , loadingScreenImg = Just "/game/randomDungeonGame.png"
       , started = True
       , debugMode = False

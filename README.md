@@ -9,7 +9,8 @@ The game is already functional , and i strongly advise you to play it :-)  , but
 
 The project ( on my part ) started as an attempt to convert the C# RogueSharp library ( https://github.com/FaronBracy/RogueSharp ) to Elm and that's what most of  MapGen module is all about ( although some algorithms  are still  missing ) ...
 
-... and this year i suddenly decided to also use it to make a nice little game for LOWREZJAM 2019  
+... and this year i suddenly decided to also use it to make a nice little game for LOWREZJAM 2019 
+( a game with just around 600kb and that only pushes CPU temps to around 60º  :D  )
 
 
 There's still a lot of code cleanup to do but i decided to share it anyway 
@@ -30,10 +31,17 @@ E for Opponent Report
 
 F to turn fog on and off
 
-M for map ( use with caution - algo is still being optimized - right now it takes 3 , 4 secs to render the map )
+M for map ( use with caution - algo is still being optimized - right now it takes around 3 secs to render the map )
 
 and H for Help"
 
+
+### Grid-3d 
+I tried to use a 3d Grid , which makes the code cleaner and nicer ( and added a branch for that ) , 
+instead of using a 2d-grid that gets replaced  when the player changes floors ,
+but ended up deciding not to use it , because it makes the game run slower .
+Maybe someone can help in optimizing the code ... ( not sure if that's possible )
+The branch is 3d-Grid-try-version
 
 
 ## Instructions to run

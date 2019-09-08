@@ -1,6 +1,6 @@
 module GameUpdate exposing
     ( Msg(..)
-    , checkAndAlterDisplayAnchorIfNecessary
+    , checkAndAlterViewportAnchorIfNecessary
     , cleanup
     , cmdFillRandomIntsPool
     , cmdFillRandomIntsPoolAndGenerateRandomMap
@@ -215,28 +215,28 @@ update msg model =
             else
                 case input of
                     GameModel.Up ->
-                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                        if model.currentDisplay == GameModel.DisplayRegularGame || model.currentDisplay == GameModel.DisplayGameCompleted then
                             update (TryShiftPlayerPosition ( 0, 0 - 1 )) model
 
                         else
                             ( model, Cmd.none )
 
                     GameModel.Down ->
-                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                        if model.currentDisplay == GameModel.DisplayRegularGame || model.currentDisplay == GameModel.DisplayGameCompleted then
                             update (TryShiftPlayerPosition ( 0, 0 + 1 )) model
 
                         else
                             ( model, Cmd.none )
 
                     GameModel.Left ->
-                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                        if model.currentDisplay == GameModel.DisplayRegularGame || model.currentDisplay == GameModel.DisplayGameCompleted then
                             update (TryShiftPlayerPosition ( 0 - 1, 0 )) model
 
                         else
                             ( model, Cmd.none )
 
                     GameModel.Right ->
-                        if model.currentDisplay == GameModel.DisplayRegularGame then
+                        if model.currentDisplay == GameModel.DisplayRegularGame || model.currentDisplay == GameModel.DisplayGameCompleted then
                             update (TryShiftPlayerPosition ( 0 + 1, 0 )) model
 
                         else
@@ -447,7 +447,7 @@ update msg model =
                                 ( { newModel | player = move ( x_, y_ ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
-                                    |> checkAndAlterDisplayAnchorIfNecessary
+                                    |> checkAndAlterViewportAnchorIfNecessary
                                 , CleanUpAndFightingCharacterLogic
                                 )
 
@@ -459,7 +459,7 @@ update msg model =
                                 ( { newModel | player = move ( x_, y_ ) newModel.level BeingsInTileGrid.isGridTileWalkable newModel.player }
                                     |> checkIfPlayerStandingOnStairsOrHoleAndMoveToNewFloor
                                     |> openDoorIfPlayerStandingOnDoorAndClosed
-                                    |> checkAndAlterDisplayAnchorIfNecessary
+                                    |> checkAndAlterViewportAnchorIfNecessary
                                 , CleanUpAndFightingCharacterLogic
                                 )
 
@@ -912,11 +912,11 @@ changeFloorTo model floorId locTuple =
                     Just cFloor ->
                         { model
                             | level = cFloor.level
-                            , explored = cFloor.explored
                             , viewport_width = cFloor.viewport_width
                             , viewport_height = cFloor.viewport_height
                             , total_width = cFloor.total_width
                             , total_height = cFloor.total_height
+                            , mapImgStr = cFloor.mapImgStr
                             , floorDict = newStore
                             , currentFloorId = floorId
                         }
@@ -985,8 +985,8 @@ getWallPercentage gridAsList =
         |> (\tup -> (Tuple.first tup |> toFloat) / (Tuple.second tup |> toFloat))
 
 
-checkAndAlterDisplayAnchorIfNecessary : Model -> Model
-checkAndAlterDisplayAnchorIfNecessary model =
+checkAndAlterViewportAnchorIfNecessary : Model -> Model
+checkAndAlterViewportAnchorIfNecessary model =
     let
         p_x_dist =
             5
@@ -1273,6 +1273,6 @@ reveal model =
             { model | level = intermediateModelGrid }
 
         newModel =
-            List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc Visible imodel) intermediateModel (GameModel.visible model)
+            List.foldl (\loc imodel -> GameModel.setModelTileVisibility loc Visible imodel) intermediateModel (GameModel.visible intermediateModel)
     in
     newModel

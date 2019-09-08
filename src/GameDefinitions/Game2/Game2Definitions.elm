@@ -141,14 +141,13 @@ initialModelFunc lrandints imgBaseDir_ =
                 [ ( 1, otherCharacter )
                 ]
       , level = Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .level |> Maybe.withDefault GroundFloor.gridGroundFloor -- Grid.Grid Tile
-      , explored = setAllAsUnexplored GroundFloor.gridGroundFloor -- Grid.Grid Visibility
       , log = [ "you enter the dungeons Ground Floor " ] --List String
       , gameOfThornsModel = Thorns.Types.initialModel player_ Nothing imgBaseDir_
       , listeningToKeyInput = True
       , pseudoRandomIntsPool = [] -- List Int
       , useFog = True
-      , viewport_topleft_x = 3 -- Int , this value doesn't really matter because after the player is randomly placed this value is readjusted
-      , viewport_topleft_y = 3 --Int   , this value doesn't really matter because after the player is randomly placed this value is readjusted
+      , viewport_topleft_x = 3 -- Int , this value doesn't really matter because after the player is  placed this value is readjusted
+      , viewport_topleft_y = 3 --Int   , this value doesn't really matter because after the player is  placed this value is readjusted
       , viewport_width = common_window_width
       , viewport_height = common_window_height
       , total_width = get_total_width config_params 7
@@ -166,6 +165,7 @@ initialModelFunc lrandints imgBaseDir_ =
       , gameCompletionFunc = customGameCompletionFunc
       , leverModelChangerFuncs = LastFloor.leverModelChangerFuncs
       , imgBaseDir = imgBaseDir_
+      , mapImgStr = Dict.get groundFloor_id storeDictWithPlacedPapers |> Maybe.map .mapImgStr |> Maybe.withDefault Nothing
       , loadingScreenImg = Just "/game/casteleOfElmTribulations_.png"
       , started = True
       , debugMode = False
@@ -190,56 +190,56 @@ dStore =
     Dict.fromList
         [ ( 0
           , { level = Caverns.gridCaverns
-            , explored = setAllAsUnexplored Caverns.gridCaverns
             , viewport_width = common_window_width
             , viewport_height = common_window_height
             , total_width = get_total_width config_params 11 -- caverns has 11 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
+            , mapImgStr = Just "/maps/caverns_map.png"
             }
           )
         , ( 1
           , { level = Basement.gridBasement
-            , explored = setAllAsUnexplored Basement.gridBasement
             , viewport_width = common_window_width
             , viewport_height = common_window_height
             , total_width = get_total_width config_params 6 -- basement has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
+            , mapImgStr = Just "/maps/basement_map.png"
             }
           )
         , ( 2
           , { level = GroundFloor.gridGroundFloor
-            , explored = setAllAsUnexplored GroundFloor.gridGroundFloor
             , viewport_width = common_window_width
             , viewport_height = common_window_height
             , total_width = get_total_width config_params 7 -- groundFloor has 7room columns
             , total_height = get_total_height config_params 9 -- 9 room rows
+            , mapImgStr = Just "/maps/groundFloor_map.png"
             }
           )
         , ( 3
           , { level = FirstFloor.gridFirstFloor
-            , explored = setAllAsUnexplored FirstFloor.gridFirstFloor
             , viewport_width = common_window_width
             , viewport_height = common_window_height
             , total_width = get_total_width config_params 6 -- firstFloor has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
+            , mapImgStr = Just "/maps/the_first_floor_map.png"
             }
           )
         , ( 4
           , { level = TheAttic.gridTheAttic
-            , explored = setAllAsUnexplored TheAttic.gridTheAttic
             , viewport_width = common_window_width
             , viewport_height = common_window_height
             , total_width = get_total_width config_params 4 -- theAttic has 4 room columns
             , total_height = get_total_height config_params 4 -- 4 room rows
+            , mapImgStr = Just "/maps/the_attic_map.png"
             }
           )
         , ( 5
           , { level = LastFloor.gridLastFloor
-            , explored = setAllAsUnexplored LastFloor.gridLastFloor
             , viewport_width = 18
             , viewport_height = 18
             , total_width = get_total_width config_params 23 -- LastFloor has 23  columns
             , total_height = get_total_height config_params 17 -- 17  rows
+            , mapImgStr = Nothing
             }
           )
         ]

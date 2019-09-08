@@ -70,7 +70,6 @@ type alias Model =
     , fightingCharacters : Dict FightingCharacterId FightingCharacter
     , otherCharacters : Dict CharacterId OtherCharacter
     , level : Grid.Grid Tile
-    , explored : Grid.Grid Tile.Visibility
     , log : List String
     , gameOfThornsModel : Thorns.Types.Model
     , listeningToKeyInput : Bool
@@ -95,6 +94,7 @@ type alias Model =
     , gameCompletionFunc : Int -> Grid.Coordinate -> Bool
     , leverModelChangerFuncs : Dict Tile.LeverId ModelChangerFuncs
     , imgBaseDir : Maybe String
+    , mapImgStr : Maybe String
     , loadingScreenImg : Maybe String
     , started : Bool
     , debugMode : Bool
@@ -103,22 +103,22 @@ type alias Model =
 
 type alias FloorStore =
     { level : Grid.Grid Tile
-    , explored : Grid.Grid Tile.Visibility
     , viewport_width : Int
     , viewport_height : Int
     , total_width : Int
     , total_height : Int
+    , mapImgStr : Maybe String
     }
 
 
 getCurrentFloorInfoToStore : Model -> FloorStore
 getCurrentFloorInfoToStore model =
     { level = model.level
-    , explored = model.explored
     , viewport_width = model.viewport_width
     , viewport_height = model.viewport_height
     , total_width = model.total_width
     , total_height = model.total_height
+    , mapImgStr = model.mapImgStr
     }
 
 
