@@ -25,6 +25,7 @@ import Beings.Beings as Beings exposing (FightingCharacter, FightingCharacterId,
 import Beings.BeingsInTileGrid as BeingsInTileGrid
 import Beings.FightingCharacterInTileGrid as FightingCharacterInTileGrid
 import Beings.OtherCharacterInTileGrid as OtherCharacterInTileGrid
+import Delay
 import Dict exposing (Dict)
 import GameDefinitions.Game1.Game1Definitions
 import GameDefinitions.Game2.Game2Definitions
@@ -37,6 +38,7 @@ import Thorns.ThornGrid as ThornGrid
 import Thorns.Types
 import Thorns.Update as ThornsUpdate
 import Tile exposing (Tile(..), Visibility(..))
+import Time
 
 
 log : String -> Model -> Model
@@ -63,7 +65,8 @@ type Msg
     | CleanUpAndFightingCharacterLogic
     | StartOpponentInteraction FightingCharacter
     | ChangeFloorTo FloorId ( Int, Int )
-    | ShowMap Float
+    | ShowMap
+    | AboutToStartGameNr Int String String
     | NewRandomPointToPlacePlayer ( Int, Int )
     | NewGridCoordinatesIndexToPlaceFightingCharacter FightingCharacterId Int
     | NewRandomPointToPlaceFightingCharacter FightingCharacterId ( Int, Int )
@@ -146,6 +149,15 @@ update msg model =
                         { model | gameOfThornsModel = newThornsModel }
             in
             ( newModel, Cmd.map ThornsMsg thorns_cmds )
+
+        AboutToStartGameNr nr gname imgStr ->
+            ( { model
+                | currentDisplay = GameModel.DisplayAboutToStartGame nr gname imgStr
+                , started = True
+              }
+            , Cmd.batch
+                [ Delay.after 200.0 Delay.Millisecond (StartGameNr nr) ]
+            )
 
         StartGameNr nr ->
             let
@@ -293,8 +305,8 @@ update msg model =
                                         | currentDisplay = GameModel.DisplayRegularGame
                                         , tileWidth = model.tileWidth * 8
                                         , tileHeight = model.tileHeight * 8
-                                        , window_width = model.window_width // 8
-                                        , window_height = model.window_height // 8
+                                        , viewport_width = model.viewport_width // 8
+                                        , viewport_height = model.viewport_height // 8
                                     }
 
                                 else if model.currentDisplay == GameModel.DisplayRegularGame then
@@ -302,14 +314,16 @@ update msg model =
                                         | currentDisplay = GameModel.AboutToDisplayMap
                                         , tileWidth = model.tileWidth // 8
                                         , tileHeight = model.tileHeight // 8
-                                        , window_width = model.window_width * 8
-                                        , window_height = model.window_height * 8
+                                        , viewport_width = model.viewport_width * 8
+                                        , viewport_height = model.viewport_height * 8
                                     }
 
                                 else
                                     model
                         in
-                        ( newModel, Cmd.none )
+                        ( newModel
+                        , Cmd.batch [ Delay.after 200.0 Delay.Millisecond ShowMap ]
+                        )
 
                     GameModel.ViewHideFog ->
                         let
@@ -325,7 +339,7 @@ update msg model =
                     GameModel.Nop ->
                         ( model, Cmd.none )
 
-        ShowMap t ->
+        ShowMap ->
             if model.currentDisplay == GameModel.AboutToDisplayMap then
                 ( { model | currentDisplay = GameModel.DisplayMap }, Cmd.none )
 
@@ -552,8 +566,8 @@ update msg model =
                 True ->
                     ( { model
                         | player = newPlayer
-                        , viewport_topleft_x = max 0 (newLocation.x - round (toFloat model.window_width / 2.0))
-                        , viewport_topleft_y = max 0 (newLocation.y - round (toFloat model.window_height / 2))
+                        , viewport_topleft_x = max 0 (newLocation.x - round (toFloat model.viewport_width / 2.0))
+                        , viewport_topleft_y = max 0 (newLocation.y - round (toFloat model.viewport_height / 2))
                       }
                         |> reveal
                     , Cmd.none
@@ -899,8 +913,8 @@ changeFloorTo model floorId locTuple =
                         { model
                             | level = cFloor.level
                             , explored = cFloor.explored
-                            , window_width = cFloor.window_width
-                            , window_height = cFloor.window_height
+                            , viewport_width = cFloor.viewport_width
+                            , viewport_height = cFloor.viewport_height
                             , total_width = cFloor.total_width
                             , total_height = cFloor.total_height
                             , floorDict = newStore
@@ -921,8 +935,8 @@ changeFloorTo model floorId locTuple =
     in
     { newModel
         | player = player_
-        , viewport_topleft_x = max 0 (Tuple.first locTuple - round (toFloat newModel.window_width / 2.0))
-        , viewport_topleft_y = max 0 (Tuple.second locTuple - round (toFloat newModel.window_height / 2))
+        , viewport_topleft_x = max 0 (Tuple.first locTuple - round (toFloat newModel.viewport_width / 2.0))
+        , viewport_topleft_y = max 0 (Tuple.second locTuple - round (toFloat newModel.viewport_height / 2))
     }
         |> reveal
 
@@ -930,8 +944,8 @@ changeFloorTo model floorId locTuple =
 position_viewport_in_order_to_center_player : Model -> Model
 position_viewport_in_order_to_center_player model =
     { model
-        | viewport_topleft_x = max 0 (model.player.location.x - round (toFloat model.window_width / 2.0))
-        , viewport_topleft_y = max 0 (model.player.location.y - round (toFloat model.window_height / 2))
+        | viewport_topleft_x = max 0 (model.player.location.x - round (toFloat model.viewport_width / 2.0))
+        , viewport_topleft_y = max 0 (model.player.location.y - round (toFloat model.viewport_height / 2))
     }
         |> reveal
 
@@ -979,10 +993,10 @@ checkAndAlterDisplayAnchorIfNecessary model =
 
         newXanchor =
             if model.player.location.x <= model.viewport_topleft_x then
-                max 0 (model.viewport_topleft_x - (model.window_width - p_x_dist))
+                max 0 (model.viewport_topleft_x - (model.viewport_width - p_x_dist))
 
-            else if model.player.location.x >= (model.viewport_topleft_x + (model.window_width - 1)) then
-                min (model.viewport_topleft_x + (model.window_width - p_x_dist)) (model.total_width - (model.window_width - p_x_dist))
+            else if model.player.location.x >= (model.viewport_topleft_x + (model.viewport_width - 1)) then
+                min (model.viewport_topleft_x + (model.viewport_width - p_x_dist)) (model.total_width - (model.viewport_width - p_x_dist))
 
             else
                 model.viewport_topleft_x
@@ -992,10 +1006,10 @@ checkAndAlterDisplayAnchorIfNecessary model =
 
         newYanchor =
             if model.player.location.y <= model.viewport_topleft_y then
-                max 0 (model.viewport_topleft_y - (model.window_height - p_y_dist))
+                max 0 (model.viewport_topleft_y - (model.viewport_height - p_y_dist))
 
-            else if model.player.location.y >= (model.viewport_topleft_y + (model.window_height - 1)) then
-                min (model.viewport_topleft_y + (model.window_height - p_y_dist)) (model.total_height - (model.window_height - p_y_dist))
+            else if model.player.location.y >= (model.viewport_topleft_y + (model.viewport_height - 1)) then
+                min (model.viewport_topleft_y + (model.viewport_height - p_y_dist)) (model.total_height - (model.viewport_height - p_y_dist))
 
             else
                 model.viewport_topleft_y

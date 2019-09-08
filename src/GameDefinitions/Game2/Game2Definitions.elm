@@ -121,7 +121,8 @@ initialModelFunc lrandints imgBaseDir_ =
         createRandomMap =
             False
     in
-    ( { player = player_
+    ( { gameName = Just "Castle of Elm Tribulations"
+      , player = player_
       , fightingCharacters =
             Dict.fromList
                 [ ( fightingCharacter1.id, fightingCharacter1 )
@@ -148,8 +149,8 @@ initialModelFunc lrandints imgBaseDir_ =
       , useFog = True
       , viewport_topleft_x = 3 -- Int , this value doesn't really matter because after the player is randomly placed this value is readjusted
       , viewport_topleft_y = 3 --Int   , this value doesn't really matter because after the player is randomly placed this value is readjusted
-      , window_width = common_window_width
-      , window_height = common_window_height
+      , viewport_width = common_window_width
+      , viewport_height = common_window_height
       , total_width = get_total_width config_params 7
       , total_height = get_total_height config_params 9
       , radius_of_visibility = 5
@@ -165,6 +166,7 @@ initialModelFunc lrandints imgBaseDir_ =
       , gameCompletionFunc = customGameCompletionFunc
       , leverModelChangerFuncs = LastFloor.leverModelChangerFuncs
       , imgBaseDir = imgBaseDir_
+      , loadingScreenImg = Just "/game/casteleOfElmTribulations_.png"
       , started = True
       , debugMode = False
       }
@@ -189,8 +191,8 @@ dStore =
         [ ( 0
           , { level = Caverns.gridCaverns
             , explored = setAllAsUnexplored Caverns.gridCaverns
-            , window_width = common_window_width
-            , window_height = common_window_height
+            , viewport_width = common_window_width
+            , viewport_height = common_window_height
             , total_width = get_total_width config_params 11 -- caverns has 11 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
@@ -198,8 +200,8 @@ dStore =
         , ( 1
           , { level = Basement.gridBasement
             , explored = setAllAsUnexplored Basement.gridBasement
-            , window_width = common_window_width
-            , window_height = common_window_height
+            , viewport_width = common_window_width
+            , viewport_height = common_window_height
             , total_width = get_total_width config_params 6 -- basement has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
@@ -207,8 +209,8 @@ dStore =
         , ( 2
           , { level = GroundFloor.gridGroundFloor
             , explored = setAllAsUnexplored GroundFloor.gridGroundFloor
-            , window_width = common_window_width
-            , window_height = common_window_height
+            , viewport_width = common_window_width
+            , viewport_height = common_window_height
             , total_width = get_total_width config_params 7 -- groundFloor has 7room columns
             , total_height = get_total_height config_params 9 -- 9 room rows
             }
@@ -216,8 +218,8 @@ dStore =
         , ( 3
           , { level = FirstFloor.gridFirstFloor
             , explored = setAllAsUnexplored FirstFloor.gridFirstFloor
-            , window_width = common_window_width
-            , window_height = common_window_height
+            , viewport_width = common_window_width
+            , viewport_height = common_window_height
             , total_width = get_total_width config_params 6 -- firstFloor has 6 room columns
             , total_height = get_total_height config_params 7 -- 7 room rows
             }
@@ -225,8 +227,8 @@ dStore =
         , ( 4
           , { level = TheAttic.gridTheAttic
             , explored = setAllAsUnexplored TheAttic.gridTheAttic
-            , window_width = common_window_width
-            , window_height = common_window_height
+            , viewport_width = common_window_width
+            , viewport_height = common_window_height
             , total_width = get_total_width config_params 4 -- theAttic has 4 room columns
             , total_height = get_total_height config_params 4 -- 4 room rows
             }
@@ -234,8 +236,8 @@ dStore =
         , ( 5
           , { level = LastFloor.gridLastFloor
             , explored = setAllAsUnexplored LastFloor.gridLastFloor
-            , window_width = 18
-            , window_height = 18
+            , viewport_width = 18
+            , viewport_height = 18
             , total_width = get_total_width config_params 23 -- LastFloor has 23  columns
             , total_height = get_total_height config_params 17 -- 17  rows
             }

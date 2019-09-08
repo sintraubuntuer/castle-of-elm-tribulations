@@ -71,7 +71,8 @@ initialModelFunc imgBaseDir_ =
         createRandomMap =
             True
     in
-    ( { player = player_
+    ( { gameName = Nothing
+      , player = player_
       , fightingCharacters =
             Dict.fromList
                 [ ( 1, fightingCharacter )
@@ -87,8 +88,8 @@ initialModelFunc imgBaseDir_ =
       , useFog = True
       , viewport_topleft_x = 3 -- Int
       , viewport_topleft_y = 3 --Int
-      , window_width = 15
-      , window_height = 12
+      , viewport_width = 15
+      , viewport_height = 12
       , total_width = Tuple.first dimensions
       , total_height = Tuple.second dimensions
       , radius_of_visibility = 5
@@ -104,6 +105,7 @@ initialModelFunc imgBaseDir_ =
       , gameCompletionFunc = \fid coords -> False
       , leverModelChangerFuncs = Dict.empty
       , imgBaseDir = imgBaseDir_
+      , loadingScreenImg = Just "/game/randomDungeonGame.png"
       , started = True
       , debugMode = False
       }

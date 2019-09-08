@@ -33,12 +33,7 @@ seed =
 subscriptions : GameModel.Model -> Sub GameUpdate.Msg
 subscriptions model =
     Sub.batch
-        [ if model.currentDisplay == GameModel.AboutToDisplayMap then
-            onAnimationFrameDelta GameUpdate.ShowMap
-
-          else
-            Sub.none
-        , onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
+        [ onKeyDown (Decode.map (\kCode -> GameUpdate.KeyDown (fromCode kCode)) keyCode)
         ]
 
 

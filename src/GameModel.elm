@@ -56,6 +56,7 @@ type CurrentDisplay
     | DisplayHelpScreen
     | DisplayInventory
     | AboutToDisplayMap
+    | DisplayAboutToStartGame Int String String
     | DisplayMap
 
 
@@ -64,7 +65,8 @@ type ModelChangerFuncs
 
 
 type alias Model =
-    { player : Player
+    { gameName : Maybe String
+    , player : Player
     , fightingCharacters : Dict FightingCharacterId FightingCharacter
     , otherCharacters : Dict CharacterId OtherCharacter
     , level : Grid.Grid Tile
@@ -76,8 +78,8 @@ type alias Model =
     , useFog : Bool
     , viewport_topleft_x : Int
     , viewport_topleft_y : Int
-    , window_width : Int
-    , window_height : Int
+    , viewport_width : Int
+    , viewport_height : Int
     , total_width : Int
     , total_height : Int
     , radius_of_visibility : Int
@@ -93,6 +95,7 @@ type alias Model =
     , gameCompletionFunc : Int -> Grid.Coordinate -> Bool
     , leverModelChangerFuncs : Dict Tile.LeverId ModelChangerFuncs
     , imgBaseDir : Maybe String
+    , loadingScreenImg : Maybe String
     , started : Bool
     , debugMode : Bool
     }
@@ -101,8 +104,8 @@ type alias Model =
 type alias FloorStore =
     { level : Grid.Grid Tile
     , explored : Grid.Grid Tile.Visibility
-    , window_width : Int
-    , window_height : Int
+    , viewport_width : Int
+    , viewport_height : Int
     , total_width : Int
     , total_height : Int
     }
@@ -112,8 +115,8 @@ getCurrentFloorInfoToStore : Model -> FloorStore
 getCurrentFloorInfoToStore model =
     { level = model.level
     , explored = model.explored
-    , window_width = model.window_width
-    , window_height = model.window_height
+    , viewport_width = model.viewport_width
+    , viewport_height = model.viewport_height
     , total_width = model.total_width
     , total_height = model.total_height
     }

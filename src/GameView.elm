@@ -184,49 +184,53 @@ wallOverlay wallinfo tileWidth tileHeight imgBaseDir =
     woverlay
 
 
-door : Tile.DoorInfo -> Int -> Int -> String -> Collage Msg
-door doorinfo tileWidth tileHeight imgBaseDir =
-    let
-        mbFileStr =
-            if doorinfo.isOpen && (doorinfo.orientation == Tile.DoorToUp || doorinfo.orientation == Tile.DoorToDown) then
-                Just <| imgBaseDir ++ "/doors/doorUp_open_floorBg.png"
+door : GameModel.CurrentDisplay -> Tile.DoorInfo -> Int -> Int -> String -> Collage Msg
+door currentDisplay doorinfo tileWidth tileHeight imgBaseDir =
+    if currentDisplay == GameModel.DisplayMap then
+        rectangle (toFloat tileWidth) (toFloat tileHeight) |> filled (uniform (stringToColor (doorinfo.color |> Maybe.withDefault "white")))
 
-            else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheLeft then
-                Just <| imgBaseDir ++ "/doors/doorLeft_open_floorBg.png"
+    else
+        let
+            mbFileStr =
+                if doorinfo.isOpen && (doorinfo.orientation == Tile.DoorToUp || doorinfo.orientation == Tile.DoorToDown) then
+                    Just <| imgBaseDir ++ "/doors/doorUp_open_floorBg.png"
 
-            else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheRight then
-                Just <| imgBaseDir ++ "/doors/doorRight_open_floorBg.png"
+                else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheLeft then
+                    Just <| imgBaseDir ++ "/doors/doorLeft_open_floorBg.png"
 
-            else if doorinfo.isOpen then
-                Just <| imgBaseDir ++ "/floor/floor_01.png"
+                else if doorinfo.isOpen && doorinfo.orientation == Tile.DoorToTheRight then
+                    Just <| imgBaseDir ++ "/doors/doorRight_open_floorBg.png"
 
-            else if doorinfo.color == Just "blue" then
-                Just <| imgBaseDir ++ "/doors/blueDoorClosed_floorBg.png"
+                else if doorinfo.isOpen then
+                    Just <| imgBaseDir ++ "/floor/floor_01.png"
 
-            else if doorinfo.color == Just "green" then
-                Just <| imgBaseDir ++ "/doors/greenDoorClosed_floorBg.png"
+                else if doorinfo.color == Just "blue" then
+                    Just <| imgBaseDir ++ "/doors/blueDoorClosed_floorBg.png"
 
-            else if doorinfo.color == Just "red" then
-                Just <| imgBaseDir ++ "/doors/redDoorClosed_floorBg.png"
+                else if doorinfo.color == Just "green" then
+                    Just <| imgBaseDir ++ "/doors/greenDoorClosed_floorBg.png"
 
-            else if doorinfo.color == Just "yellow" then
-                Just <| imgBaseDir ++ "/doors/yellowDoorClosed_floorBg.png"
+                else if doorinfo.color == Just "red" then
+                    Just <| imgBaseDir ++ "/doors/redDoorClosed_floorBg.png"
 
-            else if doorinfo.color == Just "black" then
-                Just <| imgBaseDir ++ "/doors/blackDoorClosed_floorBg.png"
+                else if doorinfo.color == Just "yellow" then
+                    Just <| imgBaseDir ++ "/doors/yellowDoorClosed_floorBg.png"
 
-            else if doorinfo.color == Just "striped" then
-                Just <| imgBaseDir ++ "/doors/stripedDoorClosed_floorBg.png"
+                else if doorinfo.color == Just "black" then
+                    Just <| imgBaseDir ++ "/doors/blackDoorClosed_floorBg.png"
 
-            else
-                Just <| imgBaseDir ++ "/doors/doorClosed_floorBg.png"
-    in
-    case mbFileStr of
-        Just fileStr ->
-            Collage.image ( toFloat tileWidth, toFloat tileHeight ) fileStr
+                else if doorinfo.color == Just "striped" then
+                    Just <| imgBaseDir ++ "/doors/stripedDoorClosed_floorBg.png"
 
-        Nothing ->
-            noForm
+                else
+                    Just <| imgBaseDir ++ "/doors/doorClosed_floorBg.png"
+        in
+        case mbFileStr of
+            Just fileStr ->
+                Collage.image ( toFloat tileWidth, toFloat tileHeight ) fileStr
+
+            Nothing ->
+                noForm
 
 
 stringToColor : String -> Color
@@ -298,11 +302,15 @@ halfFog tileWidth tileHeight =
     rectangle (toFloat tileWidth) (toFloat tileHeight) |> filled (uniform (rgba 0 0 0 0.6))
 
 
-tile : Int -> Int -> Int -> String -> Tile -> Collage Msg
-tile currentFloorId tileWidth tileHeight imgBaseDir t =
+tile : GameModel.CurrentDisplay -> Int -> Int -> Int -> String -> Tile -> Collage Msg
+tile currentDisplay currentFloorId tileWidth tileHeight imgBaseDir t =
     case t of
         Tile.Floor floorinfo ->
-            floor_ floorinfo tileWidth tileHeight imgBaseDir
+            if currentDisplay == GameModel.DisplayMap then
+                floor floorinfo tileWidth tileHeight
+
+            else
+                floor_ floorinfo tileWidth tileHeight imgBaseDir
 
         Tile.Stairs sinfo ->
             if sinfo.toFloorId > currentFloorId then
@@ -318,7 +326,10 @@ tile currentFloorId tileWidth tileHeight imgBaseDir t =
             hole tileWidth tileHeight imgBaseDir
 
         Tile.Wall wallinfo ->
-            if wallinfo.orientation == "four_way" then
+            if currentDisplay == GameModel.DisplayMap then
+                rectangle (toFloat tileWidth) (toFloat tileHeight) |> filled (uniform grey)
+
+            else if wallinfo.orientation == "four_way" then
                 wall "four_way" tileWidth tileHeight imgBaseDir
 
             else if wallinfo.orientation == "three_way_at_bottom" then
@@ -370,7 +381,7 @@ tile currentFloorId tileWidth tileHeight imgBaseDir t =
                 wall "horizontal" tileWidth tileHeight imgBaseDir
 
         Tile.Door doorinfo ->
-            door doorinfo tileWidth tileHeight imgBaseDir
+            door currentDisplay doorinfo tileWidth tileHeight imgBaseDir
 
         Tile.NoTileYet ->
             notileyet tileWidth tileHeight
@@ -389,7 +400,7 @@ tile currentFloorId tileWidth tileHeight imgBaseDir t =
             grass grassinfo tileWidth tileHeight imgBaseDir
 
         Tile.ConverterTile it ct ->
-            tile currentFloorId tileWidth tileHeight imgBaseDir it
+            tile currentDisplay currentFloorId tileWidth tileHeight imgBaseDir it
 
         _ ->
             notileyet tileWidth tileHeight
@@ -639,7 +650,7 @@ mainScreen model =
         ( subgrid, txtmsg ) =
             if model.currentDisplay /= GameModel.DisplayMap then
                 model.level
-                    |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
+                    |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.viewport_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.viewport_height - 1)
 
             else
                 ( model.level, "" )
@@ -706,7 +717,7 @@ mainScreen model =
         fightingCharacter_ =
             let
                 relevantFightingCharactersDict =
-                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= viewport_topleft_x && fightChar.location.x - viewport_topleft_x < model.window_width) && (fightChar.location.y >= viewport_topleft_y && fightChar.location.y - viewport_topleft_y < model.window_height)) model.fightingCharacters
+                    Dict.filter (\fcharId fightChar -> (fightChar.floorId == model.currentFloorId) && (fightChar.location.x >= viewport_topleft_x && fightChar.location.x - viewport_topleft_x < model.viewport_width) && (fightChar.location.y >= viewport_topleft_y && fightChar.location.y - viewport_topleft_y < model.viewport_height)) model.fightingCharacters
 
                 mkfightingCharacter fcharId anfightingCharacter =
                     fightingCharacterView anfightingCharacter model.showBlood (GameModel.getGridTileVisibility anfightingCharacter.location model.level) model.tileWidth model.tileHeight (getImgBaseDir model)
@@ -717,7 +728,7 @@ mainScreen model =
         otherCharacters_ =
             let
                 relevantOtherCharsDict =
-                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= viewport_topleft_x && char.location.x - viewport_topleft_x < model.window_width) && (char.location.y >= viewport_topleft_y && char.location.y - viewport_topleft_y < model.window_height)) model.otherCharacters
+                    Dict.filter (\charId char -> (char.floorId == model.currentFloorId) && (char.location.x >= viewport_topleft_x && char.location.x - viewport_topleft_x < model.viewport_width) && (char.location.y >= viewport_topleft_y && char.location.y - viewport_topleft_y < model.viewport_height)) model.otherCharacters
 
                 mkOtherChar ch_id achar =
                     otherCharacterView achar model.showBlood (GameModel.getGridTileVisibility achar.location model.level) model.tileWidth model.tileHeight (getImgBaseDir model)
@@ -729,7 +740,7 @@ mainScreen model =
         bg =
             Collage.group
                 [ mkLayer (Grid.toList subgrid) (row (tileOverlay model.tileWidth model.tileHeight (getImgBaseDir model)))
-                , mkLayer (Grid.toList subgrid) (row (tile model.currentFloorId model.tileWidth model.tileHeight (getImgBaseDir model)))
+                , mkLayer (Grid.toList subgrid) (row (tile model.currentDisplay model.currentFloorId model.tileWidth model.tileHeight (getImgBaseDir model)))
                 ]
                 |> name "background"
 
@@ -967,7 +978,7 @@ viewDebugGrid grid model =
     let
         ( subgrid, txtmsg ) =
             grid
-                |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.window_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.window_height - 1)
+                |> Grid.getSubGrid model.viewport_topleft_x (model.viewport_topleft_x + model.viewport_width - 1) model.viewport_topleft_y (model.viewport_topleft_y + model.viewport_height - 1)
     in
     [ Html.div []
         ([ Html.h1 [] [ Html.text ("viewDebugGrid has been called with : " ++ txtmsg) ] ]
@@ -1099,20 +1110,42 @@ view model =
                     GameModel.DisplayHelpScreen ->
                         viewHelpMode model
 
+                    GameModel.DisplayAboutToStartGame nr gname imgStr ->
+                        --Html.div [ Attr.align "center" ] [ Html.text "Loading Game ! please wait ..." ]
+                        viewLoadingGame model nr gname imgStr (getImgBaseDir model)
+
                     GameModel.AboutToDisplayMap ->
-                        Html.div []
-                            [ Html.div [] [ Html.text "going to display map - be patient , it might take a few seconds ..." ]
+                        let
+                            theColor =
+                                Text.color white
+                        in
+                        Html.div [ Attr.align "center" ]
+                            [ Collage.group
+                                ([ ([ "rendering map ... (be patient , it might take a few seconds ... ): " |> Text.fromString |> theColor |> Collage.rendered
+                                    ]
+                                        |> List.indexedMap (\i elem -> shift ( 0, 150 - toFloat i * 25 ) elem)
+                                   )
+                                    ++ [ rectangle (toFloat <| model.viewport_width * model.tileWidth) (toFloat <| model.viewport_height * model.tileHeight)
+                                            |> filled (uniform (rgba 0 0 0 1))
+                                            |> shift ( 0, 100 )
+                                       ]
+
+                                 --display model ]
+                                 ]
+                                    |> List.concatMap identity
+                                )
+                                |> svg
                             ]
 
                     GameModel.DisplayMap ->
-                        Html.div []
+                        Html.div [ Attr.align "center" ]
                             [ Html.div [] [ Html.text "Press M to leave Map " ]
                             , display model
                                 |> svg
                             ]
 
                     _ ->
-                        Html.div []
+                        Html.div [ Attr.align "center" ]
                             ([ display model
                                 |> svg
                              ]
@@ -1143,23 +1176,45 @@ viewStartMenuChoices model imgBaseDir =
         [ Html.div [ Attr.align "center" ]
             [ Html.h3 []
                 [ Html.a
-                    [ Html.Events.onClick (GameUpdate.StartGameNr 2) ]
+                    [ Html.Events.onClick (GameUpdate.AboutToStartGameNr 2 "Castle of Elm Tribulations" "/game/casteleOfElmTribulations_.png") ]
                     [ Html.text "Start - Castle of Elm Tribulations" ]
                 , Html.br [] []
                 , Html.a
-                    [ Html.Events.onClick (GameUpdate.StartGameNr 2) ]
+                    [ Html.Events.onClick (GameUpdate.AboutToStartGameNr 2 "Castle of Elm Tribulations" "/game/casteleOfElmTribulations_.png") ]
                     [ Html.img [ Attr.src (imgBaseDir ++ "/game/casteleOfElmTribulations_.png") ] [] ]
                 ]
             ]
         , Html.br [] []
         , Html.br [] []
-
-        {-
-           , Html.div []
-               [ Html.h3 []
-                   [ Html.a [ Html.Events.onClick (GameUpdate.StartGameNr 1) ] [ Html.text "Start Game 1 - Random Dungeon " ]
-                   ]
-               ]
-        -}
+        , Html.div []
+            [ Html.h3 []
+                [ Html.a [ Html.Events.onClick (GameUpdate.AboutToStartGameNr 1 "Random Dungeon Game" "/game/randomDungeonGame.png") ] [ Html.text "Start Game 1 - Random Dungeon " ]
+                ]
+            ]
         , Html.br [] []
+        ]
+
+
+viewLoadingGame : Model -> Int -> String -> String -> String -> Html GameUpdate.Msg
+viewLoadingGame model gameNr gname imgStr imgBaseDir =
+    let
+        fileStr =
+            imgBaseDir ++ imgStr
+
+        theColor =
+            Text.color white
+    in
+    Html.div [ Attr.align "center" ]
+        [ Html.h3 []
+            [ Html.text <| "Loading " ++ gname ++ " ! "
+            ]
+        , Collage.group
+            [ ("Loading " ++ gname ++ " ! Please Wait ... ")
+                |> Text.fromString
+                |> theColor
+                |> Collage.rendered
+                |> shift ( 0, 0 )
+            , Collage.image ( toFloat (model.viewport_width * model.tileWidth) * 1.03, toFloat (model.viewport_height * model.tileHeight) * 1.03 ) fileStr
+            ]
+            |> svg
         ]

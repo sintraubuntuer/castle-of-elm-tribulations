@@ -16,7 +16,7 @@ There's still a lot of code cleanup to do but i decided to share it anyway
 
 
 Game Hints :
-Find your way through the Caverns, Basement , The Ground Floor , First Floor and the Attic , pick up the three pieces of paper with the codes to unlock the black door and move towards enlightenment !!!
+Find your way through the Caverns, Basement , The Ground Floor , First Floor and the Attic , pick up the three pieces of paper with the codes to unlock the striped door and move towards enlightenment !!!
 
 Use Q, A , O , P ( or Arrow keys) to move  
 
@@ -27,6 +27,21 @@ I for inventory
 S for Stats  
 
 E for Opponent Report
+
+F to turn fog on and off
+
+M for map ( use with caution - algo is still being optimized - right now it takes 3 , 4 secs to render the map )
+
+and H for Help"
+
+
+
+## Instructions to run
+
+1. Install elm [elm-lang.org/install](http://elm-lang.org/install)
+2. Clone this repo and `cd` into it
+3. Run `elm make src/Main.elm --output ./dist/castleOfElmTribulations.js`
+4. Open `index.html` in the browser
 
 
 
